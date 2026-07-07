@@ -11,4 +11,5 @@ export interface Issue {
         name: string;
     };
     createdAt: string;
+    archivedAt: string | null;
 }

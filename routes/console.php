@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('backup:database')->daily();
+Schedule::command('issues:archive-done')->hourly();
