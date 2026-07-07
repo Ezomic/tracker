@@ -17,6 +17,13 @@ class StoreIssueWebRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('parent_id') === '') {
+            $this->merge(['parent_id' => null]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -29,6 +36,11 @@ class StoreIssueWebRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
+            'parent_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('issues', 'id')->where('parent_id', null),
+            ],
         ];
     }
 }

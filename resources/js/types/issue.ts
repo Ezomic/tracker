@@ -13,4 +13,21 @@ export interface Issue {
     };
     createdAt: string;
     archivedAt: string | null;
+    childrenCount: number;
+    parent: {
+        id: number;
+        identifier: string;
+        title: string;
+    } | null;
+    children: {
+        identifier: string;
+        title: string;
+        status: Issue['status'];
+    }[];
+}
+
+export interface EpicOption {
+    id: number;
+    identifier: string;
+    title: string;
 }

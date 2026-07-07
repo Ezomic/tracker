@@ -23,23 +23,27 @@ class IssueController extends Controller
         return Inertia::render('issues/Index', [
             'issues' => Issue::query()
                 ->notArchived()
+                ->withCount('children')
                 ->with('team')
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
             'teams' => Team::query()->orderBy('key')->get(['id', 'key', 'name']),
+            'epics' => $this->eligibleParents(),
         ]);
     }
 
     public function store(StoreIssueWebRequest $request, CreateIssueAction $action): RedirectResponse
     {
         $team = Team::where('id', $request->validated('team_id'))->firstOrFail();
+        $parent = $this->findParent($request->validated('parent_id'));
 
         $issue = $action->handle(
             team: $team,
             title: $request->validated('title'),
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description'),
+            parent: $parent,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue created.')]);
@@ -49,10 +53,11 @@ class IssueController extends Controller
 
     public function show(Issue $issue): Response
     {
-        $issue->load('team');
+        $issue->load(['team', 'parent', 'children' => fn ($query) => $query->orderBy('number')]);
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
+            'epics' => $this->eligibleParents($issue),
         ]);
     }
 
@@ -70,6 +75,7 @@ class IssueController extends Controller
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
                 ->notArchived()
+                ->withCount('children')
                 ->with('team')
                 ->latest()
                 ->get()
@@ -87,6 +93,34 @@ class IssueController extends Controller
         ])->save();
 
         return back();
+    }
+
+    private function findParent(mixed $parentId): ?Issue
+    {
+        if ($parentId === null || $parentId === '') {
+            return null;
+        }
+
+        return Issue::query()->where('id', $parentId)->first();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function eligibleParents(?Issue $excluding = null): array
+    {
+        return Issue::query()
+            ->whereNull('parent_id')
+            ->when($excluding, fn ($query) => $query->where('id', '!=', $excluding->id))
+            ->notArchived()
+            ->orderBy('identifier')
+            ->get(['id', 'identifier', 'title'])
+            ->map(fn (Issue $issue) => [
+                'id' => $issue->id,
+                'identifier' => $issue->identifier,
+                'title' => $issue->title,
+            ])
+            ->all();
     }
 
     /**
@@ -109,6 +143,18 @@ class IssueController extends Controller
             ],
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),
+            'childrenCount' => $issue->children_count
+                ?? ($issue->relationLoaded('children') ? $issue->children->count() : 0),
+            'parent' => $issue->relationLoaded('parent') && $issue->parent !== null ? [
+                'id' => $issue->parent->id,
+                'identifier' => $issue->parent->identifier,
+                'title' => $issue->parent->title,
+            ] : null,
+            'children' => $issue->relationLoaded('children') ? $issue->children->map(fn (Issue $child) => [
+                'identifier' => $child->identifier,
+                'title' => $child->title,
+                'status' => $child->status->value,
+            ])->all() : [],
         ];
     }
 }
