@@ -3,6 +3,7 @@ import { Form, Head } from '@inertiajs/vue3';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import PriorityBadge from '@/components/PriorityBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ defineOptions({
             />
             <div class="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{{ issue.type }}</Badge>
+                <PriorityBadge :priority="issue.priority" />
                 <Badge variant="secondary">{{ issue.status }}</Badge>
                 <Badge v-if="issue.archivedAt" variant="outline"
                     >Archived</Badge
@@ -92,6 +94,23 @@ defineOptions({
                     </SelectContent>
                 </Select>
                 <InputError :message="errors.type" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="priority">Priority</Label>
+                <Select name="priority" :default-value="issue.priority">
+                    <SelectTrigger id="priority" class="w-full">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">No priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError :message="errors.priority" />
             </div>
 
             <div class="grid gap-2">
