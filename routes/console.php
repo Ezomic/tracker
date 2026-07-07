@@ -8,5 +8,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('backup:database')->daily();
-Schedule::command('issues:archive-done')->hourly();
+$backup = Schedule::command('backup:database')->daily();
+$archive = Schedule::command('issues:archive-done')->hourly();
+
+if ($adminEmail = config('tracker.admin_email')) {
+    $backup->emailOutputOnFailure($adminEmail);
+    $archive->emailOutputOnFailure($adminEmail);
+}
