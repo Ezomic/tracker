@@ -3,6 +3,7 @@ import { Form, Head, Link } from '@inertiajs/vue3';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import PriorityBadge from '@/components/PriorityBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -128,11 +129,12 @@ defineOptions({
                     <TableHead>Identifier</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Priority</TableHead>
                     <TableHead>Status</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableEmpty v-if="issues.length === 0" :colspan="4">
+                <TableEmpty v-if="issues.length === 0" :colspan="5">
                     No issues yet - create one above.
                 </TableEmpty>
                 <TableRow v-for="issue in issues" :key="issue.identifier">
@@ -147,6 +149,9 @@ defineOptions({
                     <TableCell>{{ issue.title }}</TableCell>
                     <TableCell>
                         <Badge variant="outline">{{ issue.type }}</Badge>
+                    </TableCell>
+                    <TableCell>
+                        <PriorityBadge :priority="issue.priority" />
                     </TableCell>
                     <TableCell>
                         <Badge variant="secondary">{{ issue.status }}</Badge>

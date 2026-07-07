@@ -99,6 +99,7 @@ class IssueController extends Controller
             'title' => $issue->title,
             'description' => $issue->description,
             'type' => $issue->type->value,
+            'priority' => $issue->priority->value,
             'status' => $issue->status->value,
             'branchName' => $issue->branch_name,
             'githubPrUrl' => $issue->github_pr_url,

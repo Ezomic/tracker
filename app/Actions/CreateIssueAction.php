@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
@@ -39,6 +40,7 @@ class CreateIssueAction
                 'slug' => $slug,
                 'description' => $description,
                 'type' => $type,
+                'priority' => IssuePriority::None,
                 'status' => IssueStatus::Backlog,
                 'branch_name' => $branchName,
             ])->save();

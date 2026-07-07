@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\CreateIssueAction;
+use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\Team;
@@ -61,7 +62,7 @@ it('renders the issue detail page', function () {
         );
 });
 
-it('updates an issue title, type, and description', function () {
+it('updates an issue title, type, priority, and description', function () {
     $team = Team::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
 
@@ -69,6 +70,7 @@ it('updates an issue title, type, and description', function () {
         ->patch("/issues/{$issue->identifier}", [
             'title' => 'Updated title',
             'type' => 'fix',
+            'priority' => 'high',
             'description' => 'Updated description.',
         ])
         ->assertRedirect("/issues/{$issue->identifier}");
@@ -76,6 +78,27 @@ it('updates an issue title, type, and description', function () {
     expect($issue->fresh())
         ->title->toBe('Updated title')
         ->type->toBe(IssueType::Fix)
+        ->priority->toBe(IssuePriority::High)
         ->description->toBe('Updated description.')
         ->branch_name->toBe($issue->branch_name);
+});
+
+it('rejects an invalid priority', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
+
+    $this->actingAs(User::factory()->create())
+        ->patch("/issues/{$issue->identifier}", [
+            'title' => 'Updated title',
+            'type' => 'feature',
+            'priority' => 'super-urgent',
+        ])
+        ->assertSessionHasErrors('priority');
+});
+
+it('defaults a newly created issue to no priority', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+
+    expect($issue->priority)->toBe(IssuePriority::None);
 });
