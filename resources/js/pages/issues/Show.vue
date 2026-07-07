@@ -37,9 +37,18 @@ defineOptions({
                 :title="`${issue.identifier} - ${issue.title}`"
                 :description="`${issue.team.key} - ${issue.team.name}`"
             />
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{{ issue.type }}</Badge>
                 <Badge variant="secondary">{{ issue.status }}</Badge>
+                <a
+                    v-if="issue.githubPrUrl"
+                    :href="issue.githubPrUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-sm text-muted-foreground hover:underline"
+                >
+                    View PR
+                </a>
             </div>
         </div>
 
