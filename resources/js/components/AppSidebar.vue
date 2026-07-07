@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, Ticket } from '@lucide/vue';
+import { BookOpen, FolderGit2, Kanban, LayoutGrid, Ticket } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -15,7 +15,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { index as issuesIndex } from '@/routes/issues';
+import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -28,6 +28,11 @@ const mainNavItems: NavItem[] = [
         title: 'Issues',
         href: issuesIndex(),
         icon: Ticket,
+    },
+    {
+        title: 'Board',
+        href: issuesBoard(),
+        icon: Kanban,
     },
 ];
 
