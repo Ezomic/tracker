@@ -29,4 +29,9 @@ class Team extends Model
     {
         return $this->hasMany(Issue::class);
     }
+
+    public function hasIssues(): bool
+    {
+        return $this->issues()->exists();
+    }
 }
