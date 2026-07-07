@@ -22,6 +22,7 @@ class IssueController extends Controller
     {
         return Inertia::render('issues/Index', [
             'issues' => Issue::query()
+                ->notArchived()
                 ->with('team')
                 ->latest()
                 ->get()
@@ -68,6 +69,7 @@ class IssueController extends Controller
     {
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
+                ->notArchived()
                 ->with('team')
                 ->latest()
                 ->get()
@@ -105,6 +107,7 @@ class IssueController extends Controller
                 'name' => $issue->team->name,
             ],
             'createdAt' => $issue->created_at?->toIso8601String(),
+            'archivedAt' => $issue->archived_at?->toIso8601String(),
         ];
     }
 }

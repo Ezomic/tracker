@@ -1,0 +1,86 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Actions\ArchiveDoneIssuesAction;
+use App\Actions\CreateIssueAction;
+use App\Enums\IssueStatus;
+use App\Enums\IssueType;
+use App\Models\Team;
+use App\Models\User;
+
+it('archives a done issue closed more than 24 hours ago', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+    $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subHours(25)])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(1)
+        ->and($issue->fresh()->archived_at)->not->toBeNull();
+});
+
+it('does not archive a done issue closed less than 24 hours ago', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+    $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subHours(23)])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(0)
+        ->and($issue->fresh()->archived_at)->toBeNull();
+});
+
+it('does not archive issues that are not done', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+    $issue->forceFill(['status' => IssueStatus::InReview])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(0);
+});
+
+it('does not re-archive an already archived issue', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+    $issue->forceFill([
+        'status' => IssueStatus::Done,
+        'closed_at' => now()->subHours(48),
+        'archived_at' => now()->subHours(1),
+    ])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(0);
+});
+
+it('excludes archived issues from the index and board', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $visible = (new CreateIssueAction)->handle($team, 'Visible issue', IssueType::Feature);
+    $archived = (new CreateIssueAction)->handle($team, 'Archived issue', IssueType::Feature);
+    $archived->forceFill(['status' => IssueStatus::Done, 'archived_at' => now()])->save();
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/issues')->assertInertia(fn ($page) => $page
+        ->where('issues.0.identifier', $visible->identifier)
+        ->has('issues', 1)
+    );
+
+    $this->actingAs($user)->get('/issues/board')->assertInertia(fn ($page) => $page
+        ->where('issues.0.identifier', $visible->identifier)
+        ->has('issues', 1)
+    );
+});
+
+it('still shows an archived issue on its own detail page', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Archived issue', IssueType::Feature);
+    $issue->forceFill(['status' => IssueStatus::Done, 'archived_at' => now()])->save();
+
+    $this->actingAs(User::factory()->create())
+        ->get("/issues/{$issue->identifier}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('issue.archivedAt', fn ($value) => $value !== null));
+});
