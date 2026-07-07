@@ -41,6 +41,11 @@ class Issue extends Model
         return $this->belongsTo(Team::class);
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'identifier';
+    }
+
     /**
      * @return array<string, string>
      */
