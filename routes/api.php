@@ -11,8 +11,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/teams', [TeamController::class, 'index'])->middleware('auth:sanctum');
-Route::post('/issues', [IssueController::class, 'store'])->middleware('auth:sanctum');
+Route::get('/teams', [TeamController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 
 Route::post('/webhooks/github', [GithubWebhookController::class, 'handle'])
     ->middleware(VerifyGithubWebhookSignature::class);

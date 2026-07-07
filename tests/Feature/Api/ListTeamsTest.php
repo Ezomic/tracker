@@ -21,3 +21,13 @@ it('lists teams ordered by key', function () {
 it('rejects unauthenticated requests', function () {
     $this->getJson('/api/teams')->assertUnauthorized();
 });
+
+it('rate limits after 60 requests per minute', function () {
+    $user = User::factory()->create();
+
+    for ($i = 0; $i < 60; $i++) {
+        $this->actingAs($user, 'sanctum')->getJson('/api/teams')->assertOk();
+    }
+
+    $this->actingAs($user, 'sanctum')->getJson('/api/teams')->assertStatus(429);
+});
