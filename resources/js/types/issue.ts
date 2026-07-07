@@ -3,6 +3,7 @@ export interface Issue {
     title: string;
     description: string | null;
     type: 'feature' | 'fix';
+    priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     status: 'backlog' | 'in_progress' | 'in_review' | 'done';
     branchName: string;
     githubPrUrl: string | null;

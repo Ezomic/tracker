@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use Database\Factories\IssueFactory;
@@ -23,13 +24,14 @@ use Illuminate\Support\Carbon;
  * @property string $slug
  * @property string|null $description
  * @property IssueType $type
+ * @property IssuePriority $priority
  * @property IssueStatus $status
  * @property string $branch_name
  * @property string|null $github_pr_url
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
  */
-#[Fillable(['title', 'description', 'type'])]
+#[Fillable(['title', 'description', 'type', 'priority'])]
 class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
@@ -64,6 +66,7 @@ class Issue extends Model
     {
         return [
             'type' => IssueType::class,
+            'priority' => IssuePriority::class,
             'status' => IssueStatus::class,
             'closed_at' => 'datetime',
             'archived_at' => 'datetime',

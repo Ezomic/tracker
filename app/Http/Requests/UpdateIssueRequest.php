@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,6 +28,7 @@ class UpdateIssueRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
+            'priority' => ['required', Rule::enum(IssuePriority::class)],
             'description' => ['nullable', 'string'],
         ];
     }
