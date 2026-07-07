@@ -25,11 +25,12 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { index, show } from '@/routes/issues';
-import type { Issue, Team } from '@/types';
+import type { EpicOption, Issue, Team } from '@/types';
 
 defineProps<{
     issues: Issue[];
     teams: Pick<Team, 'id' | 'key' | 'name'>[];
+    epics: EpicOption[];
 }>();
 
 defineOptions({
@@ -95,6 +96,25 @@ defineOptions({
             </div>
 
             <div class="grid gap-2">
+                <Label for="parent_id">Epic (optional)</Label>
+                <Select name="parent_id">
+                    <SelectTrigger id="parent_id" class="w-full">
+                        <SelectValue placeholder="No epic" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem
+                            v-for="epic in epics"
+                            :key="epic.id"
+                            :value="String(epic.id)"
+                        >
+                            {{ epic.identifier }} - {{ epic.title }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError :message="errors.parent_id" />
+            </div>
+
+            <div class="grid gap-2">
                 <Label for="title">Title</Label>
                 <Input
                     id="title"
@@ -146,7 +166,17 @@ defineOptions({
                             {{ issue.identifier }}
                         </Link>
                     </TableCell>
-                    <TableCell>{{ issue.title }}</TableCell>
+                    <TableCell>
+                        {{ issue.title }}
+                        <span
+                            v-if="issue.childrenCount > 0"
+                            class="ml-2 text-xs text-muted-foreground"
+                        >
+                            ({{ issue.childrenCount }} sub-issue{{
+                                issue.childrenCount === 1 ? '' : 's'
+                            }})
+                        </span>
+                    </TableCell>
                     <TableCell>
                         <Badge variant="outline">{{ issue.type }}</Badge>
                     </TableCell>

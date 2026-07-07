@@ -94,7 +94,14 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                     <span class="font-mono text-xs text-muted-foreground">{{
                         issue.identifier
                     }}</span>
-                    <span>{{ issue.title }}</span>
+                    <span
+                        >{{ issue.title }}
+                        <span
+                            v-if="issue.childrenCount > 0"
+                            class="text-xs text-muted-foreground"
+                            >({{ issue.childrenCount }})</span
+                        ></span
+                    >
                     <div class="flex flex-wrap gap-1">
                         <Badge variant="outline" class="w-fit">{{
                             issue.type
