@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\CreateIssueAction;
+use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
+use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
@@ -60,6 +62,29 @@ class IssueController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue updated.')]);
 
         return to_route('issues.show', $issue);
+    }
+
+    public function board(): Response
+    {
+        return Inertia::render('issues/Board', [
+            'issues' => Issue::query()
+                ->with('team')
+                ->latest()
+                ->get()
+                ->map($this->serialize(...)),
+        ]);
+    }
+
+    public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): RedirectResponse
+    {
+        $status = IssueStatus::from($request->validated('status'));
+
+        $issue->forceFill([
+            'status' => $status,
+            'closed_at' => $status === IssueStatus::Done ? now() : null,
+        ])->save();
+
+        return back();
     }
 
     /**
