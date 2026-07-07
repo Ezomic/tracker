@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
+import { Mail } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
+import { create as createLoginCode } from '@/routes/login/code';
 import { request } from '@/routes/password';
 
 defineOptions({
@@ -34,6 +36,15 @@ defineProps<{
         class="mb-4 text-center text-sm font-medium text-green-600"
     >
         {{ status }}
+    </div>
+
+    <div class="grid gap-2">
+        <Button type="button" variant="outline" class="w-full" as-child>
+            <Link :href="createLoginCode()">
+                <Mail class="h-4 w-4" />
+                Log in with a code emailed to you
+            </Link>
+        </Button>
     </div>
 
     <PasskeyVerify />
