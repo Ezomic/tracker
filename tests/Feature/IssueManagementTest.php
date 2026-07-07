@@ -1,0 +1,81 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Actions\CreateIssueAction;
+use App\Enums\IssueType;
+use App\Models\Issue;
+use App\Models\Team;
+use App\Models\User;
+
+it('renders the issues index with existing issues and teams', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+
+    $this->actingAs(User::factory()->create())
+        ->get('/issues')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('issues/Index')
+            ->where('issues.0.identifier', 'THI-1')
+            ->where('teams.0.key', 'THI')
+        );
+});
+
+it('creates an issue from the web form and redirects to its detail page', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+
+    $response = $this->actingAs(User::factory()->create())
+        ->post('/issues', [
+            'team_id' => $team->id,
+            'title' => 'Add quiz question pools',
+            'type' => 'feature',
+            'description' => 'Randomize quiz questions on replay.',
+        ]);
+
+    $response->assertRedirect('/issues/THI-1');
+    expect(Issue::query()->where('identifier', 'THI-1')->exists())->toBeTrue();
+});
+
+it('returns validation errors for an unknown team, blank title, or invalid type', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/issues', [
+        'team_id' => 999,
+        'title' => '',
+        'type' => 'chore',
+    ])->assertSessionHasErrors(['team_id', 'title', 'type']);
+});
+
+it('renders the issue detail page', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+
+    $this->actingAs(User::factory()->create())
+        ->get("/issues/{$issue->identifier}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('issues/Show')
+            ->where('issue.identifier', 'THI-1')
+            ->where('issue.branchName', $issue->branch_name)
+        );
+});
+
+it('updates an issue title, type, and description', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
+
+    $this->actingAs(User::factory()->create())
+        ->patch("/issues/{$issue->identifier}", [
+            'title' => 'Updated title',
+            'type' => 'fix',
+            'description' => 'Updated description.',
+        ])
+        ->assertRedirect("/issues/{$issue->identifier}");
+
+    expect($issue->fresh())
+        ->title->toBe('Updated title')
+        ->type->toBe(IssueType::Fix)
+        ->description->toBe('Updated description.')
+        ->branch_name->toBe($issue->branch_name);
+});
