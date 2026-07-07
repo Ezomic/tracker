@@ -40,6 +40,9 @@ defineOptions({
             <div class="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{{ issue.type }}</Badge>
                 <Badge variant="secondary">{{ issue.status }}</Badge>
+                <Badge v-if="issue.archivedAt" variant="outline"
+                    >Archived</Badge
+                >
                 <a
                     v-if="issue.githubPrUrl"
                     :href="issue.githubPrUrl"
