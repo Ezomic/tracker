@@ -13,11 +13,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int $team_id
+ * @property int|null $parent_id
  * @property int $number
  * @property string $identifier
  * @property string $title
@@ -31,7 +33,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
  */
-#[Fillable(['title', 'description', 'type', 'priority'])]
+#[Fillable(['title', 'description', 'type', 'priority', 'parent_id'])]
 class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
@@ -43,6 +45,22 @@ class Issue extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * @return BelongsTo<Issue, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Issue::class, 'parent_id');
+    }
+
+    /**
+     * @return HasMany<Issue, $this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Issue::class, 'parent_id');
     }
 
     public function getRouteKeyName(): string

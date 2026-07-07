@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 
 class CreateIssueAction
 {
-    public function handle(Team $team, string $title, IssueType $type, ?string $description = null): Issue
+    public function handle(Team $team, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null): Issue
     {
-        return DB::transaction(function () use ($team, $title, $type, $description) {
+        return DB::transaction(function () use ($team, $title, $type, $description, $parent) {
             $number = DB::select(
                 'update teams set next_number = next_number + 1 where id = ? returning next_number',
                 [$team->id]
@@ -34,6 +34,7 @@ class CreateIssueAction
             $issue = new Issue;
             $issue->forceFill([
                 'team_id' => $team->id,
+                'parent_id' => $parent?->id,
                 'number' => $number,
                 'identifier' => $identifier,
                 'title' => $title,

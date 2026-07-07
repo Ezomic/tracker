@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -15,12 +16,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { index } from '@/routes/issues';
-import type { Issue } from '@/types';
+import { index, show } from '@/routes/issues';
+import type { EpicOption, Issue } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     issue: Issue;
+    epics: EpicOption[];
 }>();
+
+const doneChildrenCount = computed(
+    () =>
+        props.issue.children.filter((child) => child.status === 'done').length,
+);
 
 defineOptions({
     layout: {
@@ -38,6 +45,15 @@ defineOptions({
                 :title="`${issue.identifier} - ${issue.title}`"
                 :description="`${issue.team.key} - ${issue.team.name}`"
             />
+            <p v-if="issue.parent" class="text-sm text-muted-foreground">
+                Part of
+                <Link
+                    :href="show({ issue: issue.parent.identifier })"
+                    class="hover:underline"
+                    >{{ issue.parent.identifier }} -
+                    {{ issue.parent.title }}</Link
+                >
+            </p>
             <div class="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{{ issue.type }}</Badge>
                 <PriorityBadge :priority="issue.priority" />
@@ -64,6 +80,33 @@ defineOptions({
             <code class="text-sm text-muted-foreground">{{
                 issue.branchName
             }}</code>
+        </div>
+
+        <div
+            v-if="issue.children.length > 0"
+            class="grid gap-3 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+        >
+            <div class="flex items-center justify-between">
+                <Label>Sub-issues</Label>
+                <span class="text-sm text-muted-foreground"
+                    >{{ doneChildrenCount }} of
+                    {{ issue.children.length }} done</span
+                >
+            </div>
+            <Link
+                v-for="child in issue.children"
+                :key="child.identifier"
+                :href="show({ issue: child.identifier })"
+                class="flex items-center justify-between rounded-lg border border-sidebar-border/70 px-3 py-2 text-sm hover:bg-accent dark:border-sidebar-border"
+            >
+                <span
+                    ><span class="font-mono text-xs text-muted-foreground">{{
+                        child.identifier
+                    }}</span>
+                    {{ child.title }}</span
+                >
+                <Badge variant="secondary">{{ child.status }}</Badge>
+            </Link>
         </div>
 
         <Form
@@ -112,6 +155,34 @@ defineOptions({
                 </Select>
                 <InputError :message="errors.priority" />
             </div>
+
+            <div v-if="issue.children.length === 0" class="grid gap-2">
+                <Label for="parent_id">Epic</Label>
+                <Select
+                    name="parent_id"
+                    :default-value="
+                        issue.parent ? String(issue.parent.id) : undefined
+                    "
+                >
+                    <SelectTrigger id="parent_id" class="w-full">
+                        <SelectValue placeholder="No epic" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem
+                            v-for="epic in epics"
+                            :key="epic.id"
+                            :value="String(epic.id)"
+                        >
+                            {{ epic.identifier }} - {{ epic.title }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError :message="errors.parent_id" />
+            </div>
+            <p v-else class="text-sm text-muted-foreground">
+                This issue has sub-issues, so it can't be assigned to an epic
+                itself.
+            </p>
 
             <div class="grid gap-2">
                 <Label for="description">Description</Label>
