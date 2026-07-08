@@ -7,31 +7,42 @@ namespace App\Http\Controllers;
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\Label;
 use App\Models\Team;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class IssueController extends Controller
 {
-    public function index(): Response
+    public function index(FilterIssuesRequest $request): Response
     {
+        $filters = $request->validated();
+
         return Inertia::render('issues/Index', [
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
                 ->with(['team', 'labels'])
+                ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
+                ->when($filters['team_id'] ?? null, fn (Builder $query, int $teamId) => $query->where('team_id', $teamId))
+                ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
+                ->when($filters['type'] ?? null, fn (Builder $query, string $type) => $query->where('type', $type))
+                ->when($filters['priority'] ?? null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
+                ->when($filters['label_id'] ?? null, fn (Builder $query, int $labelId) => $query->whereHas('labels', fn (Builder $q) => $q->where('labels.id', $labelId)))
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
             'teams' => Team::query()->orderBy('key')->get(['id', 'key', 'name']),
             'epics' => $this->eligibleParents(),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
+            'filters' => $filters,
         ]);
     }
 
