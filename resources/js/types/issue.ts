@@ -24,10 +24,20 @@ export interface Issue {
         title: string;
         status: Issue['status'];
     }[];
+    labels: IssueLabel[];
 }
 
 export interface EpicOption {
     id: number;
     identifier: string;
     title: string;
+}
+
+export type LabelColor =
+    'gray' | 'red' | 'yellow' | 'green' | 'blue' | 'purple';
+
+export interface IssueLabel {
+    id: number;
+    name: string;
+    color: LabelColor;
 }

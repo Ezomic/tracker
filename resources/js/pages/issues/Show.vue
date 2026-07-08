@@ -4,9 +4,11 @@ import { computed } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import LabelBadge from '@/components/LabelBadge.vue';
 import PriorityBadge from '@/components/PriorityBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -17,11 +19,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index, show } from '@/routes/issues';
-import type { EpicOption, Issue } from '@/types';
+import type { EpicOption, Issue, IssueLabel } from '@/types';
 
 const props = defineProps<{
     issue: Issue;
     epics: EpicOption[];
+    labels: IssueLabel[];
 }>();
 
 const doneChildrenCount = computed(
@@ -61,6 +64,12 @@ defineOptions({
                 <Badge v-if="issue.archivedAt" variant="outline"
                     >Archived</Badge
                 >
+                <LabelBadge
+                    v-for="label in issue.labels"
+                    :key="label.id"
+                    :name="label.name"
+                    :color="label.color"
+                />
                 <a
                     v-if="issue.githubPrUrl"
                     :href="issue.githubPrUrl"
@@ -183,6 +192,27 @@ defineOptions({
                 This issue has sub-issues, so it can't be assigned to an epic
                 itself.
             </p>
+
+            <div v-if="labels.length > 0" class="grid gap-2">
+                <Label>Labels</Label>
+                <div class="flex flex-wrap gap-4">
+                    <label
+                        v-for="label in labels"
+                        :key="label.id"
+                        class="flex items-center gap-2 text-sm"
+                    >
+                        <Checkbox
+                            name="labels[]"
+                            :value="label.id"
+                            :default-value="
+                                issue.labels.some((l) => l.id === label.id)
+                            "
+                        />
+                        <LabelBadge :name="label.name" :color="label.color" />
+                    </label>
+                </div>
+                <InputError :message="errors.labels" />
+            </div>
 
             <div class="grid gap-2">
                 <Label for="description">Description</Label>

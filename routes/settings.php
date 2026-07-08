@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\LabelController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\TeamController;
@@ -15,6 +16,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/teams', [TeamController::class, 'index'])->name('teams.index');
     Route::post('settings/teams', [TeamController::class, 'store'])->name('teams.store');
     Route::patch('settings/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+
+    Route::get('settings/labels', [LabelController::class, 'index'])->name('labels.index');
+    Route::post('settings/labels', [LabelController::class, 'store'])->name('labels.store');
+    Route::patch('settings/labels/{label}', [LabelController::class, 'update'])->name('labels.update');
+    Route::delete('settings/labels/{label}', [LabelController::class, 'destroy'])->name('labels.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
