@@ -56,6 +56,8 @@ class UpdateIssueRequest extends FormRequest
                     }
                 },
             ],
+            'labels' => ['array'],
+            'labels.*' => ['integer', 'exists:labels,id'],
         ];
     }
 }

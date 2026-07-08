@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -61,6 +62,14 @@ class Issue extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Issue::class, 'parent_id');
+    }
+
+    /**
+     * @return BelongsToMany<Label, $this>
+     */
+    public function labels(): BelongsToMany
+    {
+        return $this->belongsToMany(Label::class);
     }
 
     public function getRouteKeyName(): string
