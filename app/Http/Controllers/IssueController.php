@@ -11,6 +11,7 @@ use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
+use App\Models\Label;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -24,12 +25,13 @@ class IssueController extends Controller
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
-                ->with('team')
+                ->with(['team', 'labels'])
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
             'teams' => Team::query()->orderBy('key')->get(['id', 'key', 'name']),
             'epics' => $this->eligibleParents(),
+            'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 
@@ -53,17 +55,19 @@ class IssueController extends Controller
 
     public function show(Issue $issue): Response
     {
-        $issue->load(['team', 'parent', 'children' => fn ($query) => $query->orderBy('number')]);
+        $issue->load(['team', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
             'epics' => $this->eligibleParents($issue),
+            'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 
     public function update(UpdateIssueRequest $request, Issue $issue): RedirectResponse
     {
-        $issue->update($request->validated());
+        $issue->update($request->safe()->except('labels'));
+        $issue->labels()->sync($request->validated('labels', []));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue updated.')]);
 
@@ -76,7 +80,7 @@ class IssueController extends Controller
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
-                ->with('team')
+                ->with(['team', 'labels'])
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
@@ -154,6 +158,11 @@ class IssueController extends Controller
                 'identifier' => $child->identifier,
                 'title' => $child->title,
                 'status' => $child->status->value,
+            ])->all() : [],
+            'labels' => $issue->relationLoaded('labels') ? $issue->labels->map(fn (Label $label) => [
+                'id' => $label->id,
+                'name' => $label->name,
+                'color' => $label->color->value,
             ])->all() : [],
         ];
     }

@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { index as indexLabels } from '@/routes/labels';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { index as indexTeams } from '@/routes/teams';
@@ -27,6 +28,10 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Teams',
         href: indexTeams(),
+    },
+    {
+        title: 'Labels',
+        href: indexLabels(),
     },
 ];
 

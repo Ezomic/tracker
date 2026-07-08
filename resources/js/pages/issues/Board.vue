@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
+import LabelBadge from '@/components/LabelBadge.vue';
 import PriorityBadge from '@/components/PriorityBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { board, show, updateStatus } from '@/routes/issues';
@@ -107,6 +108,12 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                             issue.type
                         }}</Badge>
                         <PriorityBadge :priority="issue.priority" />
+                        <LabelBadge
+                            v-for="label in issue.labels"
+                            :key="label.id"
+                            :name="label.name"
+                            :color="label.color"
+                        />
                     </div>
                 </Link>
             </div>

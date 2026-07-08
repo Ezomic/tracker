@@ -3,6 +3,7 @@ import { Form, Head, Link } from '@inertiajs/vue3';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import LabelBadge from '@/components/LabelBadge.vue';
 import PriorityBadge from '@/components/PriorityBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,12 +26,13 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { index, show } from '@/routes/issues';
-import type { EpicOption, Issue, Team } from '@/types';
+import type { EpicOption, Issue, IssueLabel, Team } from '@/types';
 
 defineProps<{
     issues: Issue[];
     teams: Pick<Team, 'id' | 'key' | 'name'>[];
     epics: EpicOption[];
+    labels: IssueLabel[];
 }>();
 
 defineOptions({
@@ -150,11 +152,12 @@ defineOptions({
                     <TableHead>Title</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Priority</TableHead>
+                    <TableHead>Labels</TableHead>
                     <TableHead>Status</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableEmpty v-if="issues.length === 0" :colspan="5">
+                <TableEmpty v-if="issues.length === 0" :colspan="6">
                     No issues yet - create one above.
                 </TableEmpty>
                 <TableRow v-for="issue in issues" :key="issue.identifier">
@@ -182,6 +185,16 @@ defineOptions({
                     </TableCell>
                     <TableCell>
                         <PriorityBadge :priority="issue.priority" />
+                    </TableCell>
+                    <TableCell>
+                        <div class="flex flex-wrap gap-1">
+                            <LabelBadge
+                                v-for="label in issue.labels"
+                                :key="label.id"
+                                :name="label.name"
+                                :color="label.color"
+                            />
+                        </div>
                     </TableCell>
                     <TableCell>
                         <Badge variant="secondary">{{ issue.status }}</Badge>
