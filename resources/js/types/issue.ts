@@ -41,3 +41,12 @@ export interface IssueLabel {
     name: string;
     color: LabelColor;
 }
+
+export interface IssueFilters {
+    search: string | null;
+    team_id: number | null;
+    status: Issue['status'] | null;
+    type: Issue['type'] | null;
+    priority: Issue['priority'] | null;
+    label_id: number | null;
+}
