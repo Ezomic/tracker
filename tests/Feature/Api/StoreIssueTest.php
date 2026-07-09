@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Actions\CreateIssueAction;
+use App\Enums\IssueType;
+use App\Models\Issue;
 use App\Models\Team;
 use App\Models\User;
 
@@ -66,4 +69,50 @@ it('returns 422 for an invalid type', function () {
         'title' => 'Anything',
         'type' => 'chore',
     ])->assertUnprocessable()->assertJsonValidationErrors('type');
+});
+
+it('creates an issue under an epic when a parent identifier is given', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI', 'next_number' => 0]);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+
+    $response = $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
+        'team' => 'THI',
+        'title' => 'Child',
+        'type' => 'feature',
+        'parent' => $epic->identifier,
+    ]);
+
+    $response->assertCreated()->assertJson(['parent' => $epic->identifier]);
+    expect(Issue::query()->where('title', 'Child')->first()->parent_id)->toBe($epic->id);
+});
+
+it('rejects a parent that already sits under another epic', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+    $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
+
+    $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
+        'team' => 'THI',
+        'title' => 'Grandchild',
+        'type' => 'feature',
+        'parent' => $child->identifier,
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent');
+});
+
+it('rejects a parent from a different team', function () {
+    $user = User::factory()->create();
+    $thi = Team::factory()->create(['key' => 'THI']);
+    $billr = Team::factory()->create(['key' => 'BILLR']);
+    $epic = (new CreateIssueAction)->handle($billr, 'Epic', IssueType::Feature);
+
+    $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
+        'team' => 'THI',
+        'title' => 'Child',
+        'type' => 'feature',
+        'parent' => $epic->identifier,
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent');
+
+    expect($thi->fresh())->not->toBeNull();
 });
