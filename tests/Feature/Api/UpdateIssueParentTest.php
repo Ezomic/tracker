@@ -1,0 +1,104 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Actions\CreateIssueAction;
+use App\Enums\IssueType;
+use App\Models\Team;
+use App\Models\User;
+
+it('assigns an existing issue to an epic by identifier', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+    $issue = (new CreateIssueAction)->handle($team, 'Standalone', IssueType::Feature);
+
+    $response = $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'parent' => $epic->identifier,
+    ]);
+
+    $response->assertOk()->assertJson([
+        'identifier' => $issue->identifier,
+        'parent' => $epic->identifier,
+    ]);
+    expect($issue->fresh()->parent_id)->toBe($epic->id);
+});
+
+it('detaches the parent when parent is submitted null', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+    $issue = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
+
+    $response = $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'parent' => null,
+    ]);
+
+    $response->assertOk()->assertJson(['parent' => null]);
+    expect($issue->fresh()->parent_id)->toBeNull();
+});
+
+it('requires the parent field to be present', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature);
+
+    $this->actingAs($user, 'sanctum')
+        ->patchJson("/api/issues/{$issue->identifier}", [])
+        ->assertUnprocessable()->assertJsonValidationErrors('parent');
+});
+
+it('rejects an issue being assigned as its own epic', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature);
+
+    $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'parent' => $issue->identifier,
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent');
+});
+
+it('rejects a parent that already sits under another epic', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+    $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
+    $issue = (new CreateIssueAction)->handle($team, 'Standalone', IssueType::Feature);
+
+    $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'parent' => $child->identifier,
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent');
+});
+
+it('rejects assigning a parent to an issue that already has sub-issues', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['key' => 'THI']);
+    $epicA = (new CreateIssueAction)->handle($team, 'Epic A', IssueType::Feature);
+    $epicB = (new CreateIssueAction)->handle($team, 'Epic B', IssueType::Feature);
+    (new CreateIssueAction)->handle($team, 'Child of A', IssueType::Feature, parent: $epicA);
+
+    $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$epicA->identifier}", [
+        'parent' => $epicB->identifier,
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent');
+});
+
+it('rejects a parent from a different team', function () {
+    $user = User::factory()->create();
+    $thi = Team::factory()->create(['key' => 'THI']);
+    $billr = Team::factory()->create(['key' => 'BILLR']);
+    $issue = (new CreateIssueAction)->handle($thi, 'Issue', IssueType::Feature);
+    $epic = (new CreateIssueAction)->handle($billr, 'Epic', IssueType::Feature);
+
+    $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'parent' => $epic->identifier,
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent');
+});
+
+it('requires authentication', function () {
+    $team = Team::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature);
+
+    $this->patchJson("/api/issues/{$issue->identifier}", [
+        'parent' => null,
+    ])->assertUnauthorized();
+});
