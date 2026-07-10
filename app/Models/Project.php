@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Database\Factories\TeamFactory;
+use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,12 +14,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $key
  * @property string $name
+ * @property string $color
  * @property int $next_number
  */
-#[Fillable(['key', 'name'])]
-class Team extends Model
+#[Fillable(['key', 'name', 'color'])]
+class Project extends Model
 {
-    /** @use HasFactory<TeamFactory> */
+    /** @use HasFactory<ProjectFactory> */
     use HasFactory;
 
     /**

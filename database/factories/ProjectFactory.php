@@ -2,13 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Team>
+ * @extends Factory<Project>
  */
-class TeamFactory extends Factory
+class ProjectFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -20,6 +20,9 @@ class TeamFactory extends Factory
         return [
             'key' => strtoupper($this->faker->unique()->lexify('????')),
             'name' => $this->faker->company(),
+            'color' => $this->faker->randomElement([
+                '#d85a30', '#1d9e75', '#378add', '#ef9f27', '#d4537e', '#7f77dd',
+            ]),
             'next_number' => 0,
         ];
     }

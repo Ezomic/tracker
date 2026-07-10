@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
-use App\Models\Team;
+use App\Models\Project;
 
 beforeEach(function () {
     config(['services.github.webhook_secret' => 'test-secret']);
@@ -22,7 +22,7 @@ function signedPost(string $uri, array $data, string $event)
 }
 
 it('moves an issue to in_review when its PR is opened', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     signedPost('/api/webhooks/github', [
@@ -40,7 +40,7 @@ it('moves an issue to in_review when its PR is opened', function () {
 });
 
 it('moves an issue to done and stamps closed_at when its PR is merged', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     signedPost('/api/webhooks/github', [
@@ -58,7 +58,7 @@ it('moves an issue to done and stamps closed_at when its PR is merged', function
 });
 
 it('does not change status when a PR is closed without merging', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     signedPost('/api/webhooks/github', [
@@ -85,7 +85,7 @@ it('no-ops when the branch name does not match any issue', function () {
 });
 
 it('no-ops on a matched branch belonging to a nonexistent issue number', function () {
-    Team::factory()->create(['key' => 'THI']);
+    Project::factory()->create(['key' => 'THI']);
 
     signedPost('/api/webhooks/github', [
         'action' => 'opened',
@@ -98,7 +98,7 @@ it('no-ops on a matched branch belonging to a nonexistent issue number', functio
 });
 
 it('ignores non-pull_request events like ping', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     signedPost('/api/webhooks/github', [
