@@ -12,9 +12,32 @@ use App\Http\Requests\UpdateIssueParentRequest;
 use App\Models\Issue;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class IssueController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'project' => ['sometimes', 'string', 'exists:projects,key'],
+        ]);
+
+        $query = Issue::query()->notArchived()->with(['project', 'parent']);
+
+        if (isset($validated['project'])) {
+            $query->whereRelation('project', 'key', $validated['project']);
+        }
+
+        $issues = $query->orderBy('project_id')->orderBy('number')->get();
+
+        return response()->json($issues->map(fn (Issue $issue): array => $this->summary($issue))->all());
+    }
+
+    public function show(Issue $issue): JsonResponse
+    {
+        return response()->json($this->detail($issue->load(['project', 'parent'])));
+    }
+
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
     {
         $project = Project::where('key', $request->validated('project'))->firstOrFail();
@@ -56,6 +79,49 @@ class IssueController extends Controller
             'url' => url("/issues/{$issue->identifier}"),
             'branch_name' => $issue->branch_name,
             'parent' => $issue->parent?->identifier,
+        ];
+    }
+
+    /**
+     * Compact shape for list responses.
+     *
+     * @return array<string, string|null>
+     */
+    private function summary(Issue $issue): array
+    {
+        return [
+            'identifier' => $issue->identifier,
+            'title' => $issue->title,
+            'type' => $issue->type->value,
+            'status' => $issue->status->value,
+            'project' => $issue->project->key,
+            'parent' => $issue->parent?->identifier,
+            'url' => url("/issues/{$issue->identifier}"),
+        ];
+    }
+
+    /**
+     * Full shape for single-issue responses.
+     *
+     * @return array<string, string|int|null>
+     */
+    private function detail(Issue $issue): array
+    {
+        return [
+            'identifier' => $issue->identifier,
+            'number' => $issue->number,
+            'title' => $issue->title,
+            'description' => $issue->description,
+            'type' => $issue->type->value,
+            'priority' => $issue->priority->value,
+            'status' => $issue->status->value,
+            'branch_name' => $issue->branch_name,
+            'github_pr_url' => $issue->github_pr_url,
+            'project' => $issue->project->key,
+            'parent' => $issue->parent?->identifier,
+            'url' => url("/issues/{$issue->identifier}"),
+            'created_at' => $issue->created_at?->toIso8601String(),
+            'closed_at' => $issue->closed_at?->toIso8601String(),
         ];
     }
 }
