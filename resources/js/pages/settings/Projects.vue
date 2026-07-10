@@ -2,18 +2,18 @@
 import { Form, Head } from '@inertiajs/vue3';
 import { Check } from '@lucide/vue';
 import { ref } from 'vue';
-import TeamController from '@/actions/App/Http/Controllers/Settings/TeamController';
-import EditTeamDialog from '@/components/EditTeamDialog.vue';
+import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
+import EditProjectDialog from '@/components/EditProjectDialog.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { index } from '@/routes/teams';
+import { index } from '@/routes/projects';
 import type { Team } from '@/types';
 
 defineProps<{
-    teams: Team[];
+    projects: Team[];
 }>();
 
 defineOptions({
@@ -47,7 +47,7 @@ const newColor = ref(palette[0]);
         />
 
         <Form
-            v-bind="TeamController.store.form()"
+            v-bind="ProjectController.store.form()"
             reset-on-success
             class="flex flex-wrap items-end gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
             v-slot="{ errors, processing }"
@@ -106,27 +106,27 @@ const newColor = ref(palette[0]);
             class="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
         >
             <p
-                v-if="teams.length === 0"
+                v-if="projects.length === 0"
                 class="p-8 text-center text-sm text-muted-foreground"
             >
                 No projects yet — add one above.
             </p>
             <div
-                v-for="team in teams"
-                :key="team.id"
+                v-for="project in projects"
+                :key="project.id"
                 class="flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-3 first:border-t-0 dark:border-sidebar-border"
             >
                 <span
                     class="size-3 shrink-0 rounded-full"
-                    :style="{ backgroundColor: team.color }"
+                    :style="{ backgroundColor: project.color }"
                 />
-                <span class="w-24 font-mono text-sm">{{ team.key }}</span>
-                <span class="truncate text-sm">{{ team.name }}</span>
+                <span class="w-24 font-mono text-sm">{{ project.key }}</span>
+                <span class="truncate text-sm">{{ project.name }}</span>
                 <span class="ml-auto text-xs text-muted-foreground">
-                    {{ team.issuesCount }}
-                    {{ team.issuesCount === 1 ? 'issue' : 'issues' }}
+                    {{ project.issuesCount }}
+                    {{ project.issuesCount === 1 ? 'issue' : 'issues' }}
                 </span>
-                <EditTeamDialog :team="team" :palette="palette" />
+                <EditProjectDialog :project="project" :palette="palette" />
             </div>
         </div>
     </div>

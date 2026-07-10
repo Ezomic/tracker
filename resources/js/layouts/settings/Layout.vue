@@ -8,8 +8,8 @@ import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as indexLabels } from '@/routes/labels';
 import { edit as editProfile } from '@/routes/profile';
+import { index as indexProjects } from '@/routes/projects';
 import { edit as editSecurity } from '@/routes/security';
-import { index as indexTeams } from '@/routes/teams';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
@@ -27,7 +27,7 @@ const sidebarNavItems: NavItem[] = [
     },
     {
         title: 'Projects',
-        href: indexTeams(),
+        href: indexProjects(),
     },
     {
         title: 'Labels',
