@@ -34,7 +34,10 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                 v-for="project in projects"
                 :key="project.id"
                 as-child
-                :default-open="isCurrentOrParentUrl(`/${project.key}/tickets`) || isCurrentOrParentUrl(`/${project.key}/board`)"
+                :default-open="
+                    isCurrentOrParentUrl(`/${project.key}/tickets`) ||
+                    isCurrentOrParentUrl(`/${project.key}/board`)
+                "
                 class="group/collapsible"
             >
                 <SidebarMenuItem>
@@ -55,7 +58,9 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                             <SidebarMenuSubItem>
                                 <SidebarMenuSubButton
                                     as-child
-                                    :is-active="isCurrentUrl(`/${project.key}/tickets`)"
+                                    :is-active="
+                                        isCurrentUrl(`/${project.key}/tickets`)
+                                    "
                                 >
                                     <Link :href="`/${project.key}/tickets`">
                                         <Ticket />
@@ -66,7 +71,9 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                             <SidebarMenuSubItem>
                                 <SidebarMenuSubButton
                                     as-child
-                                    :is-active="isCurrentUrl(`/${project.key}/board`)"
+                                    :is-active="
+                                        isCurrentUrl(`/${project.key}/board`)
+                                    "
                                 >
                                     <Link :href="`/${project.key}/board`">
                                         <Kanban />
