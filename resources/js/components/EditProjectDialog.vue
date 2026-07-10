@@ -2,7 +2,7 @@
 import { Form } from '@inertiajs/vue3';
 import { Check } from '@lucide/vue';
 import { ref } from 'vue';
-import TeamController from '@/actions/App/Http/Controllers/Settings/TeamController';
+import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,11 +20,11 @@ import { Label } from '@/components/ui/label';
 import type { Team } from '@/types';
 
 const props = defineProps<{
-    team: Team;
+    project: Team;
     palette: string[];
 }>();
 
-const color = ref(props.team.color);
+const color = ref(props.project.color);
 </script>
 
 <template>
@@ -34,7 +34,7 @@ const color = ref(props.team.color);
         </DialogTrigger>
         <DialogContent>
             <Form
-                v-bind="TeamController.update.form({ team: team.id })"
+                v-bind="ProjectController.update.form({ project: project.id })"
                 :options="{ preserveScroll: true }"
                 class="space-y-6"
                 v-slot="{ errors, processing }"
@@ -43,17 +43,17 @@ const color = ref(props.team.color);
                     <DialogTitle>Edit project</DialogTitle>
                     <DialogDescription>
                         Update the project's name, color{{
-                            team.keyLocked ? '' : ', or key'
+                            project.keyLocked ? '' : ', or key'
                         }}.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="grid gap-2">
-                    <Label :for="`name-${team.id}`">Name</Label>
+                    <Label :for="`name-${project.id}`">Name</Label>
                     <Input
-                        :id="`name-${team.id}`"
+                        :id="`name-${project.id}`"
                         name="name"
-                        :default-value="team.name"
+                        :default-value="project.name"
                         required
                     />
                     <InputError :message="errors.name" />
@@ -81,19 +81,19 @@ const color = ref(props.team.color);
                 </div>
 
                 <div class="grid gap-2">
-                    <Label :for="`key-${team.id}`">Key</Label>
+                    <Label :for="`key-${project.id}`">Key</Label>
                     <Input
-                        :id="`key-${team.id}`"
+                        :id="`key-${project.id}`"
                         name="key"
-                        :default-value="team.key"
-                        :disabled="team.keyLocked"
+                        :default-value="project.key"
+                        :disabled="project.keyLocked"
                         maxlength="10"
                         pattern="[A-Z]{2,10}"
                         class="uppercase"
                     />
                     <InputError :message="errors.key" />
                     <p
-                        v-if="team.keyLocked"
+                        v-if="project.keyLocked"
                         class="text-sm text-muted-foreground"
                     >
                         The key can't change once a project has issues.
