@@ -13,7 +13,7 @@ it('creates an issue and returns identifier, url, and branch_name', function () 
     Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => 'Add per-lesson quiz question pools',
         'type' => 'feature',
         'description' => 'Randomize the quiz question shown on replay.',
@@ -26,26 +26,37 @@ it('creates an issue and returns identifier, url, and branch_name', function () 
     ]);
 });
 
+it('accepts the deprecated team alias for project', function () {
+    $user = User::factory()->create();
+    Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
+
+    $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
+        'team' => 'THI',
+        'title' => 'Created via the legacy team param',
+        'type' => 'feature',
+    ])->assertCreated()->assertJson(['identifier' => 'THI-1']);
+});
+
 it('rejects unauthenticated requests', function () {
     Project::factory()->create(['key' => 'THI']);
 
     $this->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => 'Anything',
         'type' => 'feature',
     ])->assertUnauthorized();
 });
 
-it('returns 422 for an unknown team key rather than auto-creating it', function () {
+it('returns 422 for an unknown project key rather than auto-creating it', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'NOPE',
+        'project' => 'NOPE',
         'title' => 'Anything',
         'type' => 'feature',
     ]);
 
-    $response->assertUnprocessable()->assertJsonValidationErrors('team');
+    $response->assertUnprocessable()->assertJsonValidationErrors('project');
     expect(Project::query()->where('key', 'NOPE')->exists())->toBeFalse();
 });
 
@@ -54,7 +65,7 @@ it('returns 422 for a blank title', function () {
     Project::factory()->create(['key' => 'THI']);
 
     $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => '',
         'type' => 'feature',
     ])->assertUnprocessable()->assertJsonValidationErrors('title');
@@ -65,7 +76,7 @@ it('returns 422 for an invalid type', function () {
     Project::factory()->create(['key' => 'THI']);
 
     $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => 'Anything',
         'type' => 'chore',
     ])->assertUnprocessable()->assertJsonValidationErrors('type');
@@ -77,7 +88,7 @@ it('creates an issue under an epic when a parent identifier is given', function 
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => 'Child',
         'type' => 'feature',
         'parent' => $epic->identifier,
@@ -94,7 +105,7 @@ it('rejects a parent that already sits under another epic', function () {
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
     $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => 'Grandchild',
         'type' => 'feature',
         'parent' => $child->identifier,
@@ -108,7 +119,7 @@ it('rejects a parent from a different team', function () {
     $epic = (new CreateIssueAction)->handle($billr, 'Epic', IssueType::Feature);
 
     $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
-        'team' => 'THI',
+        'project' => 'THI',
         'title' => 'Child',
         'type' => 'feature',
         'parent' => $epic->identifier,
