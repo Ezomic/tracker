@@ -30,6 +30,20 @@ it('creates a team', function () {
     expect(Project::query()->where('key', 'BILLR')->exists())->toBeTrue();
 });
 
+it('creates a project with a color', function () {
+    $this->actingAs(User::factory()->create())
+        ->post('/settings/teams', ['key' => 'SHOP', 'name' => 'Shop', 'color' => '#378add'])
+        ->assertRedirect(route('teams.index'));
+
+    expect(Project::query()->where('key', 'SHOP')->first()->color)->toBe('#378add');
+});
+
+it('rejects an invalid color', function () {
+    $this->actingAs(User::factory()->create())
+        ->post('/settings/teams', ['key' => 'SHOP', 'name' => 'Shop', 'color' => 'blue'])
+        ->assertSessionHasErrors('color');
+});
+
 it('rejects a team key that is not 2-10 uppercase letters', function () {
     $this->actingAs(User::factory()->create())
         ->post('/settings/teams', ['key' => 'thi', 'name' => 'Thijssen Software'])
