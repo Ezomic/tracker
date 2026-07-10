@@ -15,15 +15,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableEmpty,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { destroy, index } from '@/routes/labels';
 import type { IssueLabel, LabelColor } from '@/types';
 
@@ -33,12 +24,7 @@ defineProps<{
 
 defineOptions({
     layout: {
-        breadcrumbs: [
-            {
-                title: 'Labels',
-                href: index(),
-            },
-        ],
+        breadcrumbs: [{ title: 'Labels', href: index() }],
     },
 });
 
@@ -67,13 +53,13 @@ function remove(label: IssueLabel) {
         <Heading
             variant="small"
             title="Labels"
-            description="Labels let you tag issues to group them across teams and epics"
+            description="Labels let you tag issues to group them across projects and epics"
         />
 
         <Form
             v-bind="LabelController.store.form()"
             reset-on-success
-            class="flex items-end gap-4"
+            class="flex flex-wrap items-end gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
@@ -81,7 +67,7 @@ function remove(label: IssueLabel) {
                 <Input
                     id="name"
                     name="name"
-                    class="w-64"
+                    class="w-56"
                     placeholder="bug"
                     required
                 />
@@ -110,37 +96,30 @@ function remove(label: IssueLabel) {
             <Button type="submit" :disabled="processing">Add label</Button>
         </Form>
 
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Label</TableHead>
-                    <TableHead>Issues</TableHead>
-                    <TableHead class="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                <TableEmpty v-if="labels.length === 0" :colspan="3">
-                    No labels yet - add one above.
-                </TableEmpty>
-                <TableRow v-for="label in labels" :key="label.id">
-                    <TableCell>
-                        <LabelBadge :name="label.name" :color="label.color" />
-                    </TableCell>
-                    <TableCell>{{ label.issuesCount }}</TableCell>
-                    <TableCell class="text-right">
-                        <div class="flex justify-end gap-2">
-                            <EditLabelDialog :label="label" />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                @click="remove(label)"
-                            >
-                                Delete
-                            </Button>
-                        </div>
-                    </TableCell>
-                </TableRow>
-            </TableBody>
-        </Table>
+        <div
+            class="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
+        >
+            <p
+                v-if="labels.length === 0"
+                class="p-8 text-center text-sm text-muted-foreground"
+            >
+                No labels yet — add one above.
+            </p>
+            <div
+                v-for="label in labels"
+                :key="label.id"
+                class="flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-3 first:border-t-0 dark:border-sidebar-border"
+            >
+                <LabelBadge :name="label.name" :color="label.color" />
+                <span class="ml-auto text-xs text-muted-foreground">
+                    {{ label.issuesCount }}
+                    {{ label.issuesCount === 1 ? 'issue' : 'issues' }}
+                </span>
+                <EditLabelDialog :label="label" />
+                <Button variant="outline" size="sm" @click="remove(label)">
+                    Delete
+                </Button>
+            </div>
+        </div>
     </div>
 </template>

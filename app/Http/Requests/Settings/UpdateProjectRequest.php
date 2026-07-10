@@ -2,10 +2,11 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Models\Project;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreTeamRequest extends FormRequest
+class UpdateProjectRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +23,15 @@ class StoreTeamRequest extends FormRequest
      */
     public function rules(): array
     {
+        /** @var Project $project */
+        $project = $this->route('project');
+
         return [
-            'key' => ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key'],
             'name' => ['required', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'key' => $project->hasIssues()
+                ? ['prohibited']
+                : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$project->id],
         ];
     }
 }
