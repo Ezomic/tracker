@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateIssueAction;
+use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\UpdateIssueParentRequest;
+use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
@@ -58,6 +60,18 @@ class IssueController extends Controller
         $parent = $this->resolveParent($request->validated('parent'));
 
         $issue->forceFill(['parent_id' => $parent?->id])->save();
+
+        return response()->json($this->payload($issue->fresh()));
+    }
+
+    public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): JsonResponse
+    {
+        $status = IssueStatus::from($request->validated('status'));
+
+        $issue->forceFill([
+            'status' => $status,
+            'closed_at' => $status === IssueStatus::Done ? now() : null,
+        ])->save();
 
         return response()->json($this->payload($issue->fresh()));
     }
