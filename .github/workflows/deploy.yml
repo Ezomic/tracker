@@ -29,5 +29,8 @@ jobs:
             npm ci
             npm run build
             php artisan migrate --force
+            # Rebuild config/route/view cache from the new code. Without this the
+            # old cache persists and the fpm reload below just reloads stale routes.
+            php artisan optimize
             sudo /bin/systemctl reload php8.4-fpm
             sudo /usr/bin/supervisorctl restart tracker-scheduler:*
