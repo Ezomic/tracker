@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, Kanban, LayoutGrid, Ticket } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { Kanban, LayoutGrid, Plus, Ticket } from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
+import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
     Sidebar,
@@ -16,7 +17,10 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
-import type { NavItem } from '@/types';
+import type { NavItem, SidebarProject } from '@/types';
+
+const page = usePage();
+const projects = computed<SidebarProject[]>(() => page.props.projects ?? []);
 
 const mainNavItems: NavItem[] = [
     {
@@ -25,7 +29,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Issues',
+        title: 'All issues',
         href: issuesIndex(),
         icon: Ticket,
     },
@@ -33,19 +37,6 @@ const mainNavItems: NavItem[] = [
         title: 'Board',
         href: issuesBoard(),
         icon: Kanban,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
     },
 ];
 </script>
@@ -61,15 +52,26 @@ const footerNavItems: NavItem[] = [
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        as-child
+                        class="bg-primary font-medium text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                    >
+                        <Link :href="issuesIndex()">
+                            <Plus />
+                            <span>New issue</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
             </SidebarMenu>
         </SidebarHeader>
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavProjects :projects="projects" />
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>

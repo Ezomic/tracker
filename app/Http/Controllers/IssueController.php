@@ -21,15 +21,20 @@ use Inertia\Response;
 
 class IssueController extends Controller
 {
-    public function index(FilterIssuesRequest $request): Response
+    public function index(FilterIssuesRequest $request, ?Project $project = null): Response
     {
         $filters = $request->validated();
+
+        if ($project !== null) {
+            $filters['team_id'] = $project->id;
+        }
 
         return Inertia::render('issues/Index', [
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
                 ->with(['project', 'labels'])
+                ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
                 ->when($filters['team_id'] ?? null, fn (Builder $query, int $teamId) => $query->where('project_id', $teamId))
                 ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
@@ -85,13 +90,14 @@ class IssueController extends Controller
         return to_route('issues.show', $issue);
     }
 
-    public function board(): Response
+    public function board(?Project $project = null): Response
     {
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
                 ->with(['project', 'labels'])
+                ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
