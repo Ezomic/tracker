@@ -6,11 +6,11 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('renders the issues index with existing issues and teams', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -24,7 +24,7 @@ it('renders the issues index with existing issues and teams', function () {
 });
 
 it('creates an issue from the web form and redirects to its detail page', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
 
     $response = $this->actingAs(User::factory()->create())
         ->post('/issues', [
@@ -49,7 +49,7 @@ it('returns validation errors for an unknown team, blank title, or invalid type'
 });
 
 it('renders the issue detail page', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -63,7 +63,7 @@ it('renders the issue detail page', function () {
 });
 
 it('updates an issue title, type, priority, and description', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -84,7 +84,7 @@ it('updates an issue title, type, priority, and description', function () {
 });
 
 it('rejects an invalid priority', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -97,7 +97,7 @@ it('rejects an invalid priority', function () {
 });
 
 it('defaults a newly created issue to no priority', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     expect($issue->priority)->toBe(IssuePriority::None);

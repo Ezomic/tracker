@@ -8,11 +8,11 @@ use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\Label;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 function createFilterableIssue(
-    Team $team,
+    Project $team,
     string $title,
     IssueType $type = IssueType::Feature,
     IssuePriority $priority = IssuePriority::None,
@@ -25,7 +25,7 @@ function createFilterableIssue(
 }
 
 it('filters issues by title search', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     createFilterableIssue($team, 'Fix login redirect bug');
     createFilterableIssue($team, 'Add quiz question pools');
 
@@ -38,8 +38,8 @@ it('filters issues by title search', function () {
 });
 
 it('filters issues by team', function () {
-    $thi = Team::factory()->create(['key' => 'THI']);
-    $billr = Team::factory()->create(['key' => 'BILLR']);
+    $thi = Project::factory()->create(['key' => 'THI']);
+    $billr = Project::factory()->create(['key' => 'BILLR']);
     createFilterableIssue($thi, 'THI issue');
     createFilterableIssue($billr, 'BILLR issue');
 
@@ -52,7 +52,7 @@ it('filters issues by team', function () {
 });
 
 it('filters issues by status', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     createFilterableIssue($team, 'Backlog issue', status: IssueStatus::Backlog);
     createFilterableIssue($team, 'Done issue', status: IssueStatus::Done);
 
@@ -65,7 +65,7 @@ it('filters issues by status', function () {
 });
 
 it('filters issues by type', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     createFilterableIssue($team, 'A feature', type: IssueType::Feature);
     createFilterableIssue($team, 'A fix', type: IssueType::Fix);
 
@@ -78,7 +78,7 @@ it('filters issues by type', function () {
 });
 
 it('filters issues by priority', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     createFilterableIssue($team, 'Urgent issue', priority: IssuePriority::Urgent);
     createFilterableIssue($team, 'No priority issue', priority: IssuePriority::None);
 
@@ -91,7 +91,7 @@ it('filters issues by priority', function () {
 });
 
 it('filters issues by label', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $bug = Label::factory()->create(['name' => 'bug']);
     $labeled = createFilterableIssue($team, 'Labeled issue');
     $labeled->labels()->attach($bug);
@@ -106,7 +106,7 @@ it('filters issues by label', function () {
 });
 
 it('combines multiple filters', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     createFilterableIssue($team, 'Urgent fix', type: IssueType::Fix, priority: IssuePriority::Urgent);
     createFilterableIssue($team, 'Urgent feature', type: IssueType::Feature, priority: IssuePriority::Urgent);
 
@@ -119,7 +119,7 @@ it('combines multiple filters', function () {
 });
 
 it('returns all issues and echoes back empty filters when none are given', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     createFilterableIssue($team, 'An issue');
 
     $this->actingAs(User::factory()->create())

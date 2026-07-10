@@ -6,11 +6,11 @@ use App\Actions\ArchiveDoneIssuesAction;
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('archives a done issue closed more than 24 hours ago', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subHours(25)])->save();
 
@@ -21,7 +21,7 @@ it('archives a done issue closed more than 24 hours ago', function () {
 });
 
 it('does not archive a done issue closed less than 24 hours ago', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subHours(23)])->save();
 
@@ -32,7 +32,7 @@ it('does not archive a done issue closed less than 24 hours ago', function () {
 });
 
 it('does not archive issues that are not done', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::InReview])->save();
 
@@ -42,7 +42,7 @@ it('does not archive issues that are not done', function () {
 });
 
 it('does not re-archive an already archived issue', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill([
         'status' => IssueStatus::Done,
@@ -56,7 +56,7 @@ it('does not re-archive an already archived issue', function () {
 });
 
 it('excludes archived issues from the index and board', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $visible = (new CreateIssueAction)->handle($team, 'Visible issue', IssueType::Feature);
     $archived = (new CreateIssueAction)->handle($team, 'Archived issue', IssueType::Feature);
     $archived->forceFill(['status' => IssueStatus::Done, 'archived_at' => now()])->save();
@@ -75,7 +75,7 @@ it('excludes archived issues from the index and board', function () {
 });
 
 it('still shows an archived issue on its own detail page', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Archived issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'archived_at' => now()])->save();
 

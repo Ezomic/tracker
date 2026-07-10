@@ -19,7 +19,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $team_id
+ * @property int $project_id
  * @property int|null $parent_id
  * @property int $number
  * @property string $identifier
@@ -41,11 +41,11 @@ class Issue extends Model
     use HasFactory;
 
     /**
-     * @return BelongsTo<Team, $this>
+     * @return BelongsTo<Project, $this>
      */
-    public function team(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(Project::class);
     }
 
     /**

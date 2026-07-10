@@ -8,7 +8,7 @@ use App\Actions\ImportIssuesFromCsvAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 
 function writeTempCsv(array $rows): string
 {
@@ -35,7 +35,7 @@ it('imports issues and creates a new team with next_number seeded from the max i
 
     expect($result)->toMatchArray(['imported' => 2, 'skipped' => 0, 'errors' => []]);
 
-    $team = Team::query()->where('key', 'TRACK')->first();
+    $team = Project::query()->where('key', 'TRACK')->first();
     expect($team)->not->toBeNull()
         ->and($team->name)->toBe('TRACK')
         ->and($team->next_number)->toBe(2);
@@ -98,7 +98,7 @@ it('skips a row with an invalid type or status without failing the whole import'
 });
 
 it('exports issues to a CSV that can be re-imported into a fresh set of tables', function () {
-    $team = Team::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
     (new CreateIssueAction)->handle($team, 'Exported issue', IssueType::Feature, 'a description');
 
     $exportPath = sys_get_temp_dir().'/tracker-export-test-'.uniqid().'.csv';
@@ -107,7 +107,7 @@ it('exports issues to a CSV that can be re-imported into a fresh set of tables',
     expect($count)->toBe(1);
 
     Issue::query()->delete();
-    Team::query()->delete();
+    Project::query()->delete();
 
     $result = (new ImportIssuesFromCsvAction)->handle($exportPath);
     expect($result['imported'])->toBe(1);

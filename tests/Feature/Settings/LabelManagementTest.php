@@ -6,12 +6,12 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
 use App\Enums\LabelColor;
 use App\Models\Label;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('renders the labels settings page with issue counts', function () {
     $label = Label::factory()->create(['name' => 'bug', 'color' => 'red']);
-    $team = Team::factory()->create();
+    $team = Project::factory()->create();
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->labels()->attach($label);
 

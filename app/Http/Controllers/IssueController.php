@@ -13,7 +13,7 @@ use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\Label;
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -29,9 +29,9 @@ class IssueController extends Controller
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
-                ->with(['team', 'labels'])
+                ->with(['project', 'labels'])
                 ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
-                ->when($filters['team_id'] ?? null, fn (Builder $query, int $teamId) => $query->where('team_id', $teamId))
+                ->when($filters['team_id'] ?? null, fn (Builder $query, int $teamId) => $query->where('project_id', $teamId))
                 ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
                 ->when($filters['type'] ?? null, fn (Builder $query, string $type) => $query->where('type', $type))
                 ->when($filters['priority'] ?? null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
@@ -39,7 +39,7 @@ class IssueController extends Controller
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
-            'teams' => Team::query()->orderBy('key')->get(['id', 'key', 'name']),
+            'teams' => Project::query()->orderBy('key')->get(['id', 'key', 'name', 'color']),
             'epics' => $this->eligibleParents(),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => $filters,
@@ -48,11 +48,11 @@ class IssueController extends Controller
 
     public function store(StoreIssueWebRequest $request, CreateIssueAction $action): RedirectResponse
     {
-        $team = Team::where('id', $request->validated('team_id'))->firstOrFail();
+        $project = Project::where('id', $request->validated('team_id'))->firstOrFail();
         $parent = $this->findParent($request->validated('parent_id'));
 
         $issue = $action->handle(
-            team: $team,
+            project: $project,
             title: $request->validated('title'),
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description'),
@@ -66,7 +66,7 @@ class IssueController extends Controller
 
     public function show(Issue $issue): Response
     {
-        $issue->load(['team', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
+        $issue->load(['project', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
@@ -91,7 +91,7 @@ class IssueController extends Controller
             'issues' => Issue::query()
                 ->notArchived()
                 ->withCount('children')
-                ->with(['team', 'labels'])
+                ->with(['project', 'labels'])
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
@@ -153,8 +153,8 @@ class IssueController extends Controller
             'branchName' => $issue->branch_name,
             'githubPrUrl' => $issue->github_pr_url,
             'team' => [
-                'key' => $issue->team->key,
-                'name' => $issue->team->name,
+                'key' => $issue->project->key,
+                'name' => $issue->project->name,
             ],
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),

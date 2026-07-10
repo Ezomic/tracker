@@ -6,11 +6,11 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('creates an issue assigned to an epic', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Big feature', IssueType::Feature);
     $user = User::factory()->create();
 
@@ -26,7 +26,7 @@ it('creates an issue assigned to an epic', function () {
 });
 
 it('rejects creating an issue under a parent that already has a parent itself', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
@@ -39,7 +39,7 @@ it('rejects creating an issue under a parent that already has a parent itself', 
 });
 
 it('assigns an existing issue to an epic via update', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $issue = (new CreateIssueAction)->handle($team, 'Standalone issue', IssueType::Feature);
 
@@ -54,7 +54,7 @@ it('assigns an existing issue to an epic via update', function () {
 });
 
 it('removes an epic assignment when parent_id is submitted empty', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $issue = (new CreateIssueAction)->handle($team, 'Child issue', IssueType::Feature, parent: $epic);
 
@@ -69,7 +69,7 @@ it('removes an epic assignment when parent_id is submitted empty', function () {
 });
 
 it('rejects an issue being assigned as its own epic', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())->patch("/issues/{$issue->identifier}", [
@@ -81,7 +81,7 @@ it('rejects an issue being assigned as its own epic', function () {
 });
 
 it('rejects assigning a parent to an issue that already has sub-issues', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epicA = (new CreateIssueAction)->handle($team, 'Epic A', IssueType::Feature);
     $epicB = (new CreateIssueAction)->handle($team, 'Epic B', IssueType::Feature);
     (new CreateIssueAction)->handle($team, 'Child of A', IssueType::Feature, parent: $epicA);
@@ -95,7 +95,7 @@ it('rejects assigning a parent to an issue that already has sub-issues', functio
 });
 
 it('shows sub-issues and progress on the epic detail page', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $done = (new CreateIssueAction)->handle($team, 'Done child', IssueType::Feature, parent: $epic);
     $done->forceFill(['status' => IssueStatus::Done])->save();
@@ -110,7 +110,7 @@ it('shows sub-issues and progress on the epic detail page', function () {
 });
 
 it('shows the parent link on a child issue detail page', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
@@ -122,7 +122,7 @@ it('shows the parent link on a child issue detail page', function () {
 });
 
 it('only offers top-level issues as eligible epics', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 

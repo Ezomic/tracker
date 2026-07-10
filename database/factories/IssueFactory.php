@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,7 +25,7 @@ class IssueFactory extends Factory
         $number = $this->faker->unique()->numberBetween(1, 100000);
 
         return [
-            'team_id' => Team::factory(),
+            'project_id' => Project::factory(),
             'number' => $number,
             'identifier' => "TEST-{$number}",
             'title' => $title,

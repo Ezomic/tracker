@@ -8,21 +8,21 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CreateIssueAction
 {
-    public function handle(Team $team, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null): Issue
+    public function handle(Project $project, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null): Issue
     {
-        return DB::transaction(function () use ($team, $title, $type, $description, $parent) {
+        return DB::transaction(function () use ($project, $title, $type, $description, $parent) {
             $number = DB::select(
-                'update teams set next_number = next_number + 1 where id = ? returning next_number',
-                [$team->id]
+                'update projects set next_number = next_number + 1 where id = ? returning next_number',
+                [$project->id]
             )[0]->next_number;
 
-            $identifier = "{$team->key}-{$number}";
+            $identifier = "{$project->key}-{$number}";
             $slug = (string) Str::of($title)->slug()->limit(50, '');
             $branchName = sprintf(
                 '%s/%s-%s',
@@ -33,7 +33,7 @@ class CreateIssueAction
 
             $issue = new Issue;
             $issue->forceFill([
-                'team_id' => $team->id,
+                'project_id' => $project->id,
                 'parent_id' => $parent?->id,
                 'number' => $number,
                 'identifier' => $identifier,

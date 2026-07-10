@@ -36,7 +36,7 @@ class StoreIssueRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'team' => ['required', 'string', 'exists:teams,key'],
+            'team' => ['required', 'string', 'exists:projects,key'],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
@@ -47,7 +47,7 @@ class StoreIssueRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $parent = Issue::query()->where('identifier', $value)->first();
 
-                    if ($parent && strcasecmp($parent->team->key, (string) $this->input('team')) !== 0) {
+                    if ($parent && strcasecmp($parent->project->key, (string) $this->input('team')) !== 0) {
                         $fail('The parent issue must belong to the same team.');
                     }
                 },
