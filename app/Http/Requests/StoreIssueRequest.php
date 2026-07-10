@@ -23,6 +23,11 @@ class StoreIssueRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        // `team` is the deprecated alias for `project`; accept it when `project` is absent.
+        if (blank($this->input('project')) && filled($this->input('team'))) {
+            $this->merge(['project' => $this->input('team')]);
+        }
+
         if ($this->input('parent') === '') {
             $this->merge(['parent' => null]);
         }
@@ -36,7 +41,7 @@ class StoreIssueRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'team' => ['required', 'string', 'exists:projects,key'],
+            'project' => ['required', 'string', 'exists:projects,key'],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
@@ -47,8 +52,8 @@ class StoreIssueRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $parent = Issue::query()->where('identifier', $value)->first();
 
-                    if ($parent && strcasecmp($parent->project->key, (string) $this->input('team')) !== 0) {
-                        $fail('The parent issue must belong to the same team.');
+                    if ($parent && strcasecmp($parent->project->key, (string) $this->input('project')) !== 0) {
+                        $fail('The parent issue must belong to the same project.');
                     }
                 },
             ],

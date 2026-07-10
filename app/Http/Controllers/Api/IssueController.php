@@ -17,7 +17,7 @@ class IssueController extends Controller
 {
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
     {
-        $project = Project::where('key', $request->validated('team'))->firstOrFail();
+        $project = Project::where('key', $request->validated('project'))->firstOrFail();
 
         $issue = $action->handle(
             project: $project,
