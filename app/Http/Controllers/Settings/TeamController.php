@@ -24,6 +24,7 @@ class TeamController extends Controller
                     'id' => $team->id,
                     'key' => $team->key,
                     'name' => $team->name,
+                    'color' => $team->color,
                     'issuesCount' => $team->issues_count,
                     'keyLocked' => $team->issues_count > 0,
                 ]),

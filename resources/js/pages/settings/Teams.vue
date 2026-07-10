@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { Check } from '@lucide/vue';
+import { ref } from 'vue';
 import TeamController from '@/actions/App/Http/Controllers/Settings/TeamController';
 import EditTeamDialog from '@/components/EditTeamDialog.vue';
 import Heading from '@/components/Heading.vue';
@@ -7,15 +9,6 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableEmpty,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { index } from '@/routes/teams';
 import type { Team } from '@/types';
 
@@ -25,32 +18,38 @@ defineProps<{
 
 defineOptions({
     layout: {
-        breadcrumbs: [
-            {
-                title: 'Teams',
-                href: index(),
-            },
-        ],
+        breadcrumbs: [{ title: 'Projects', href: index() }],
     },
 });
+
+const palette = [
+    '#d85a30',
+    '#1d9e75',
+    '#378add',
+    '#ef9f27',
+    '#d4537e',
+    '#7f77dd',
+];
+
+const newColor = ref(palette[0]);
 </script>
 
 <template>
-    <Head title="Teams" />
+    <Head title="Projects" />
 
-    <h1 class="sr-only">Teams</h1>
+    <h1 class="sr-only">Projects</h1>
 
     <div class="flex flex-col space-y-6">
         <Heading
             variant="small"
-            title="Teams"
-            description="Teams give issues their prefix (e.g. THI-274) and independent numbering"
+            title="Projects"
+            description="Projects give issues their prefix (e.g. THI-274), color, and independent numbering"
         />
 
         <Form
             v-bind="TeamController.store.form()"
             reset-on-success
-            class="flex items-end gap-4"
+            class="flex flex-wrap items-end gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
@@ -60,7 +59,7 @@ defineOptions({
                     name="key"
                     maxlength="10"
                     pattern="[A-Z]{2,10}"
-                    class="w-32 uppercase"
+                    class="w-28 uppercase"
                     placeholder="THI"
                     required
                 />
@@ -72,38 +71,63 @@ defineOptions({
                 <Input
                     id="name"
                     name="name"
-                    class="w-64"
+                    class="w-56"
                     placeholder="Thijssen Software"
                     required
                 />
                 <InputError :message="errors.name" />
             </div>
 
-            <Button type="submit" :disabled="processing">Add team</Button>
+            <div class="grid gap-2">
+                <Label>Color</Label>
+                <input type="hidden" name="color" :value="newColor" />
+                <div class="flex h-9 items-center gap-1.5">
+                    <button
+                        v-for="color in palette"
+                        :key="color"
+                        type="button"
+                        class="flex size-6 items-center justify-center rounded-full"
+                        :style="{ backgroundColor: color }"
+                        :aria-label="`Use color ${color}`"
+                        @click="newColor = color"
+                    >
+                        <Check
+                            v-if="newColor === color"
+                            class="size-3.5 text-white"
+                        />
+                    </button>
+                </div>
+            </div>
+
+            <Button type="submit" :disabled="processing">Add project</Button>
         </Form>
 
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Key</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Issues</TableHead>
-                    <TableHead class="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                <TableEmpty v-if="teams.length === 0" :colspan="4">
-                    No teams yet - add one above.
-                </TableEmpty>
-                <TableRow v-for="team in teams" :key="team.id">
-                    <TableCell class="font-mono">{{ team.key }}</TableCell>
-                    <TableCell>{{ team.name }}</TableCell>
-                    <TableCell>{{ team.issuesCount }}</TableCell>
-                    <TableCell class="text-right">
-                        <EditTeamDialog :team="team" />
-                    </TableCell>
-                </TableRow>
-            </TableBody>
-        </Table>
+        <div
+            class="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
+        >
+            <p
+                v-if="teams.length === 0"
+                class="p-8 text-center text-sm text-muted-foreground"
+            >
+                No projects yet — add one above.
+            </p>
+            <div
+                v-for="team in teams"
+                :key="team.id"
+                class="flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-3 first:border-t-0 dark:border-sidebar-border"
+            >
+                <span
+                    class="size-3 shrink-0 rounded-full"
+                    :style="{ backgroundColor: team.color }"
+                />
+                <span class="w-24 font-mono text-sm">{{ team.key }}</span>
+                <span class="truncate text-sm">{{ team.name }}</span>
+                <span class="ml-auto text-xs text-muted-foreground">
+                    {{ team.issuesCount }}
+                    {{ team.issuesCount === 1 ? 'issue' : 'issues' }}
+                </span>
+                <EditTeamDialog :team="team" :palette="palette" />
+            </div>
+        </div>
     </div>
 </template>

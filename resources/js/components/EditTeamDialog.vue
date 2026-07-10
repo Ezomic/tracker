@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
+import { Check } from '@lucide/vue';
+import { ref } from 'vue';
 import TeamController from '@/actions/App/Http/Controllers/Settings/TeamController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -17,9 +19,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Team } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     team: Team;
+    palette: string[];
 }>();
+
+const color = ref(props.team.color);
 </script>
 
 <template>
@@ -35,10 +40,10 @@ defineProps<{
                 v-slot="{ errors, processing }"
             >
                 <DialogHeader>
-                    <DialogTitle>Edit team</DialogTitle>
+                    <DialogTitle>Edit project</DialogTitle>
                     <DialogDescription>
-                        Update the team's name{{
-                            team.keyLocked ? '' : ' or key'
+                        Update the project's name, color{{
+                            team.keyLocked ? '' : ', or key'
                         }}.
                     </DialogDescription>
                 </DialogHeader>
@@ -52,6 +57,27 @@ defineProps<{
                         required
                     />
                     <InputError :message="errors.name" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label>Color</Label>
+                    <input type="hidden" name="color" :value="color" />
+                    <div class="flex items-center gap-1.5">
+                        <button
+                            v-for="swatch in palette"
+                            :key="swatch"
+                            type="button"
+                            class="flex size-6 items-center justify-center rounded-full"
+                            :style="{ backgroundColor: swatch }"
+                            :aria-label="`Use color ${swatch}`"
+                            @click="color = swatch"
+                        >
+                            <Check
+                                v-if="color === swatch"
+                                class="size-3.5 text-white"
+                            />
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid gap-2">
@@ -70,7 +96,7 @@ defineProps<{
                         v-if="team.keyLocked"
                         class="text-sm text-muted-foreground"
                     >
-                        The key can't change once a team has issues.
+                        The key can't change once a project has issues.
                     </p>
                 </div>
 

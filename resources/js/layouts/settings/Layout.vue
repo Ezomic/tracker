@@ -26,7 +26,7 @@ const sidebarNavItems: NavItem[] = [
         href: editAppearance(),
     },
     {
-        title: 'Teams',
+        title: 'Projects',
         href: indexTeams(),
     },
     {
