@@ -28,6 +28,7 @@ class UpdateTeamRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
+            'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'key' => $team->hasIssues()
                 ? ['prohibited']
                 : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$team->id],
