@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Kanban, LayoutGrid, Plus, Ticket } from '@lucide/vue';
+import { Kanban, LayoutGrid, Plus, Search, Ticket } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -15,10 +15,12 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
 import type { NavItem, SidebarProject } from '@/types';
 
+const { show: showCommandPalette } = useCommandPalette();
 const page = usePage();
 const projects = computed<SidebarProject[]>(() => page.props.projects ?? []);
 
@@ -61,6 +63,20 @@ const mainNavItems: NavItem[] = [
                             <Plus />
                             <span>New issue</span>
                         </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        class="text-muted-foreground"
+                        @click="showCommandPalette()"
+                    >
+                        <Search />
+                        <span>Search</span>
+                        <kbd
+                            class="ml-auto text-xs tracking-widest text-muted-foreground group-data-[collapsible=icon]:hidden"
+                        >
+                            ⌘K
+                        </kbd>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
