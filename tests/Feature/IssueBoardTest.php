@@ -5,11 +5,11 @@ declare(strict_types=1);
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('renders the board with all issues regardless of status', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::InProgress])->save();
 
@@ -24,7 +24,7 @@ it('renders the board with all issues regardless of status', function () {
 });
 
 it('updates an issue status via drag and drop', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -35,7 +35,7 @@ it('updates an issue status via drag and drop', function () {
 });
 
 it('sets closed_at when moved to done and clears it when moved away', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $user = User::factory()->create();
 
@@ -47,7 +47,7 @@ it('sets closed_at when moved to done and clears it when moved away', function (
 });
 
 it('rejects an invalid status', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())

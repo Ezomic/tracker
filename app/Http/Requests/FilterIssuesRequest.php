@@ -40,7 +40,7 @@ class FilterIssuesRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:255'],
-            'team_id' => ['nullable', 'integer', 'exists:teams,id'],
+            'team_id' => ['nullable', 'integer', 'exists:projects,id'],
             'status' => ['nullable', Rule::enum(IssueStatus::class)],
             'type' => ['nullable', Rule::enum(IssueType::class)],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],

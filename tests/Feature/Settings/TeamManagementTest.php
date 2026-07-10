@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('renders the teams settings page with issue counts', function () {
-    $team = Team::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -27,7 +27,7 @@ it('creates a team', function () {
         ->post('/settings/teams', ['key' => 'BILLR', 'name' => 'Billr'])
         ->assertRedirect(route('teams.index'));
 
-    expect(Team::query()->where('key', 'BILLR')->exists())->toBeTrue();
+    expect(Project::query()->where('key', 'BILLR')->exists())->toBeTrue();
 });
 
 it('rejects a team key that is not 2-10 uppercase letters', function () {
@@ -37,7 +37,7 @@ it('rejects a team key that is not 2-10 uppercase letters', function () {
 });
 
 it('rejects a duplicate team key', function () {
-    Team::factory()->create(['key' => 'THI']);
+    Project::factory()->create(['key' => 'THI']);
 
     $this->actingAs(User::factory()->create())
         ->post('/settings/teams', ['key' => 'THI', 'name' => 'Duplicate'])
@@ -45,7 +45,7 @@ it('rejects a duplicate team key', function () {
 });
 
 it('allows renaming a team with no issues, including its key', function () {
-    $team = Team::factory()->create(['key' => 'OLD', 'name' => 'Old name']);
+    $team = Project::factory()->create(['key' => 'OLD', 'name' => 'Old name']);
 
     $this->actingAs(User::factory()->create())
         ->patch("/settings/teams/{$team->id}", ['key' => 'NEW', 'name' => 'New name'])
@@ -57,7 +57,7 @@ it('allows renaming a team with no issues, including its key', function () {
 });
 
 it('prohibits changing the key once a team has issues', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -68,7 +68,7 @@ it('prohibits changing the key once a team has issues', function () {
 });
 
 it('still allows renaming a locked team as long as the key is omitted', function () {
-    $team = Team::factory()->create(['key' => 'THI', 'name' => 'Old name']);
+    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Old name']);
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())

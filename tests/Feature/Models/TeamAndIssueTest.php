@@ -5,14 +5,14 @@ declare(strict_types=1);
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Database\QueryException;
 
 it('relates issues to their team', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = Issue::factory()->for($team)->create();
 
-    expect($issue->team->is($team))->toBeTrue()
+    expect($issue->project->is($team))->toBeTrue()
         ->and($team->issues->first()->is($issue))->toBeTrue();
 });
 
@@ -33,7 +33,7 @@ it('enforces a unique identifier', function () {
 })->throws(QueryException::class);
 
 it('enforces a unique number per team', function () {
-    $team = Team::factory()->create();
+    $team = Project::factory()->create();
 
     Issue::factory()->for($team)->create(['number' => 1]);
     Issue::factory()->for($team)->create(['number' => 1]);
