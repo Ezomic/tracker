@@ -16,6 +16,7 @@ Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/issues/{issue}', [IssueController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])->middleware(['auth:sanctum', 'throttle:60,1']);
 
 Route::post('/webhooks/github', [GithubWebhookController::class, 'handle'])
     ->middleware(VerifyGithubWebhookSignature::class);
