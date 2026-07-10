@@ -5,11 +5,11 @@ declare(strict_types=1);
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
 use App\Models\Label;
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('attaches labels to an issue on update', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $bug = Label::factory()->create(['name' => 'bug']);
     $urgent = Label::factory()->create(['name' => 'urgent']);
@@ -28,7 +28,7 @@ it('attaches labels to an issue on update', function () {
 });
 
 it('removes labels from an issue when omitted on update', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->labels()->attach(Label::factory()->create());
 
@@ -44,7 +44,7 @@ it('removes labels from an issue when omitted on update', function () {
 });
 
 it('rejects an unknown label id', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(User::factory()->create())
@@ -58,7 +58,7 @@ it('rejects an unknown label id', function () {
 });
 
 it('serializes labels on the issue list, board, and detail pages', function () {
-    $team = Team::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->labels()->attach(Label::factory()->create(['name' => 'bug', 'color' => 'red']));
 

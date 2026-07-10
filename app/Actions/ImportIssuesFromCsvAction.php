@@ -7,7 +7,7 @@ namespace App\Actions;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 use Throwable;
@@ -56,7 +56,7 @@ class ImportIssuesFromCsvAction
             }
 
             try {
-                $team = Team::query()->firstOrCreate(
+                $team = Project::query()->firstOrCreate(
                     ['key' => $data['team']],
                     ['name' => $data['team']],
                 );
@@ -66,7 +66,7 @@ class ImportIssuesFromCsvAction
                 $issue = new Issue;
                 $issue->timestamps = false;
                 $issue->forceFill([
-                    'team_id' => $team->id,
+                    'project_id' => $team->id,
                     'number' => $number,
                     'identifier' => $data['identifier'],
                     'title' => $data['title'],
@@ -92,7 +92,7 @@ class ImportIssuesFromCsvAction
         fclose($handle);
 
         foreach ($teamNextNumbers as $teamId => $maxNumber) {
-            Team::query()->where('id', $teamId)->update(['next_number' => $maxNumber]);
+            Project::query()->where('id', $teamId)->update(['next_number' => $maxNumber]);
         }
 
         return ['imported' => $imported, 'skipped' => $skipped, 'errors' => $errors];

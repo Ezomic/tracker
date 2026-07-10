@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -19,10 +19,10 @@ class SeedTeamCommand extends Command
         $name = (string) $this->argument('name');
         $requestedNumber = (int) $this->argument('next_number');
 
-        $team = Team::query()->where('key', $key)->first();
+        $team = Project::query()->where('key', $key)->first();
 
         if ($team === null) {
-            (new Team)->forceFill([
+            (new Project)->forceFill([
                 'key' => $key,
                 'name' => $name,
                 'next_number' => $requestedNumber,

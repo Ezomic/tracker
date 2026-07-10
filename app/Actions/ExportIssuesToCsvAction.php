@@ -26,14 +26,14 @@ class ExportIssuesToCsvAction
         $count = 0;
 
         Issue::query()
-            ->with('team')
-            ->orderBy('team_id')
+            ->with('project')
+            ->orderBy('project_id')
             ->orderBy('number')
             ->chunk(200, function ($issues) use ($handle, &$count) {
                 foreach ($issues as $issue) {
                     fputcsv($handle, [
                         $issue->identifier,
-                        $issue->team->key,
+                        $issue->project->key,
                         $issue->number,
                         $issue->title,
                         $issue->type->value,

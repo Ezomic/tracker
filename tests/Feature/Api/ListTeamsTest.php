@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use App\Models\Team;
+use App\Models\Project;
 use App\Models\User;
 
 it('lists teams ordered by key', function () {
     $user = User::factory()->create();
-    Team::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
-    Team::factory()->create(['key' => 'BILLR', 'name' => 'Billr']);
+    Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    Project::factory()->create(['key' => 'BILLR', 'name' => 'Billr']);
 
     $response = $this->actingAs($user, 'sanctum')->getJson('/api/teams');
 

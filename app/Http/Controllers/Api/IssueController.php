@@ -10,17 +10,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\UpdateIssueParentRequest;
 use App\Models\Issue;
-use App\Models\Team;
+use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 
 class IssueController extends Controller
 {
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
     {
-        $team = Team::where('key', $request->validated('team'))->firstOrFail();
+        $project = Project::where('key', $request->validated('team'))->firstOrFail();
 
         $issue = $action->handle(
-            team: $team,
+            project: $project,
             title: $request->validated('title'),
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description'),

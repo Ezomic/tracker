@@ -23,7 +23,7 @@ class StoreTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'key' => ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:teams,key'],
+            'key' => ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key'],
             'name' => ['required', 'string', 'max:255'],
         ];
     }

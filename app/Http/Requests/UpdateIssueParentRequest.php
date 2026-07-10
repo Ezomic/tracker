@@ -54,7 +54,7 @@ class UpdateIssueParentRequest extends FormRequest
                         $fail('An issue cannot be its own epic.');
                     }
 
-                    if ($parent->team_id !== $issue->team_id) {
+                    if ($parent->project_id !== $issue->project_id) {
                         $fail('The parent issue must belong to the same team.');
                     }
 
