@@ -30,6 +30,12 @@ jobs:
             npm ci
             npm run build
             php artisan migrate --force
+            chmod 664 database/database.sqlite database/database.sqlite-wal database/database.sqlite-shm 2>/dev/null || true
+            chgrp www-data database/database.sqlite database/database.sqlite-wal database/database.sqlite-shm 2>/dev/null || true
+            # setgid on database/: the scheduler runs as deploy, not www-data, so a
+            # WAL/SHM file it recreates would land group=deploy and be unwritable by
+            # PHP-FPM (www-data). This is the THI-298 failure mode from zero/mail-app.
+            chmod g+s database
             # Rebuild config/route/view cache from the new code. Without this the
             # old cache persists and the fpm reload below just reloads stale routes.
             php artisan optimize
