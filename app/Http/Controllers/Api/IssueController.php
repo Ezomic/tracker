@@ -76,6 +76,19 @@ class IssueController extends Controller
         return response()->json($this->payload($issue->fresh()));
     }
 
+    public function destroy(Issue $issue): JsonResponse
+    {
+        if ($issue->archived_at === null) {
+            $issue->forceFill(['archived_at' => now()])->save();
+        }
+
+        return response()->json([
+            'identifier' => $issue->identifier,
+            'url' => url("/issues/{$issue->identifier}"),
+            'archived_at' => $issue->archived_at?->toIso8601String(),
+        ]);
+    }
+
     private function resolveParent(?string $identifier): ?Issue
     {
         return $identifier !== null
