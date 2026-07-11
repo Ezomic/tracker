@@ -23,6 +23,7 @@ jobs:
           script: |
             set -e
             cd /home/deploy/tracker
+            php artisan down --retry=15
             git fetch origin
             git reset --hard origin/main
             composer install --no-dev --optimize-autoloader --no-interaction
@@ -33,4 +34,5 @@ jobs:
             # old cache persists and the fpm reload below just reloads stale routes.
             php artisan optimize
             sudo /bin/systemctl reload php8.4-fpm
+            php artisan up
             sudo /usr/bin/supervisorctl restart tracker-scheduler:*
