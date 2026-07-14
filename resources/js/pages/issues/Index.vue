@@ -5,6 +5,7 @@ import { refDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import InputError from '@/components/InputError.vue';
+import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -153,11 +154,14 @@ const createOpen = ref(false);
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-baseline gap-2">
-                <h1 class="text-lg font-medium">{{ heading }}</h1>
-                <span class="text-sm text-muted-foreground">
-                    {{ issues.length }}
-                </span>
+            <div class="flex items-center gap-3">
+                <div class="flex items-baseline gap-2">
+                    <h1 class="text-lg font-medium">{{ heading }}</h1>
+                    <span class="text-sm text-muted-foreground">
+                        {{ issues.length }}
+                    </span>
+                </div>
+                <IssueViewToggle active="list" :project-key="scopedProject?.key" />
             </div>
 
             <div class="flex items-center gap-2">

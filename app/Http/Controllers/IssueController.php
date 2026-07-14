@@ -101,6 +101,10 @@ class IssueController extends Controller
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
+            'project' => $project === null ? null : [
+                'key' => $project->key,
+                'name' => $project->name,
+            ],
         ]);
     }
 
