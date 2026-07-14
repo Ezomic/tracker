@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { board, show, updateStatus } from '@/routes/issues';
@@ -8,7 +9,12 @@ import type { Issue } from '@/types';
 
 const props = defineProps<{
     issues: Issue[];
+    project?: { key: string; name: string } | null;
 }>();
+
+const heading = computed(() =>
+    props.project ? `${props.project.key} · Board` : 'Board',
+);
 
 defineOptions({
     layout: {
@@ -78,7 +84,10 @@ function onDrop(event: DragEvent, status: Issue['status']) {
     <Head title="Board" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
-        <h1 class="text-lg font-medium">Board</h1>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h1 class="text-lg font-medium">{{ heading }}</h1>
+            <IssueViewToggle active="board" :project-key="project?.key" />
+        </div>
 
         <div
             class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
