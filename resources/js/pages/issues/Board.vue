@@ -84,7 +84,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
     <Head title="Board" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3">
             <h1 class="text-lg font-medium">{{ heading }}</h1>
             <IssueViewToggle active="board" :project-key="project?.key" />
         </div>
