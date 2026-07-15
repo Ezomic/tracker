@@ -6,6 +6,8 @@ export interface Issue {
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     status: 'backlog' | 'in_progress' | 'in_review' | 'done';
     branchName: string;
+    branchUrl: string | null;
+    commitsUrl: string | null;
     githubPrUrl: string | null;
     team: {
         key: string;

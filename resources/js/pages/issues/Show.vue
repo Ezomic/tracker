@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { GitPullRequest } from '@lucide/vue';
+import { GitBranch, GitCommit, GitPullRequest } from '@lucide/vue';
 import { computed } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import InputError from '@/components/InputError.vue';
@@ -241,25 +241,52 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     <InputError :message="errors.labels" />
                 </div>
 
-                <div class="grid gap-1.5">
-                    <Label class="text-xs text-muted-foreground">Branch</Label>
+                <div class="grid gap-2">
+                    <Label class="text-xs text-muted-foreground">
+                        Development
+                    </Label>
+
+                    <a
+                        v-if="issue.branchUrl"
+                        :href="issue.branchUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                        <GitBranch class="size-4 shrink-0" />
+                        <span class="truncate font-mono text-xs">
+                            {{ issue.branchName }}
+                        </span>
+                    </a>
                     <code
+                        v-else
                         class="truncate rounded-md bg-muted px-2 py-1.5 font-mono text-xs text-muted-foreground"
                     >
                         {{ issue.branchName }}
                     </code>
-                </div>
 
-                <a
-                    v-if="issue.githubPrUrl"
-                    :href="issue.githubPrUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-                >
-                    <GitPullRequest class="size-4" />
-                    View pull request
-                </a>
+                    <a
+                        v-if="issue.commitsUrl"
+                        :href="issue.commitsUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                        <GitCommit class="size-4 shrink-0" />
+                        Commits
+                    </a>
+
+                    <a
+                        v-if="issue.githubPrUrl"
+                        :href="issue.githubPrUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                        <GitPullRequest class="size-4 shrink-0" />
+                        Pull request
+                    </a>
+                </div>
             </aside>
         </div>
     </Form>

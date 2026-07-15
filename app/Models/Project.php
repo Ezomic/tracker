@@ -15,9 +15,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $key
  * @property string $name
  * @property string $color
+ * @property string|null $github_repo
  * @property int $next_number
  */
-#[Fillable(['key', 'name', 'color'])]
+#[Fillable(['key', 'name', 'color', 'github_repo'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
