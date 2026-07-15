@@ -15,7 +15,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // The app is passwordless: turn off Fortify's password-confirmation gate
+        // on the passkey routes. The EnsureEmailConfirmed middleware re-gates
+        // them with an email-code re-auth instead.
+        config(['fortify-options.passkeys.confirmPassword' => false]);
     }
 
     /**

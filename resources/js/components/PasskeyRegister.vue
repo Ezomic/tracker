@@ -1,14 +1,30 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import { usePasskeyRegister } from '@laravel/passkeys/vue';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { confirm } from '@/routes/security';
+
+const props = defineProps<{
+    needsConfirmation?: boolean;
+}>();
 
 const emit = defineEmits<{
     success: [];
 }>();
+
+const startAdd = () => {
+    if (props.needsConfirmation) {
+        router.visit(confirm().url);
+
+        return;
+    }
+
+    showForm.value = true;
+};
 
 const getDefaultPasskeyName = () => {
     const ua = navigator.userAgent;
@@ -64,7 +80,7 @@ const handleCancel = () => {
         Passkeys are not supported in this browser.
     </div>
 
-    <Button v-else-if="!showForm" variant="outline" @click="showForm = true">
+    <Button v-else-if="!showForm" variant="outline" @click="startAdd">
         Add passkey
     </Button>
 

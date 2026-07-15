@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\CodeVerification;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\StoreLoginCodeRequest;
 use App\Http\Requests\Auth\VerifyLoginCodeRequest;
 use App\Mail\LoginCodeMail;
 use App\Models\User;
+use App\Services\OneTimeCodeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -21,7 +21,7 @@ use Inertia\Response;
 
 class EmailLoginCodeController extends Controller
 {
-    private const MAX_ATTEMPTS = 5;
+    public function __construct(private readonly OneTimeCodeService $codes) {}
 
     public function create(): Response
     {
@@ -33,12 +33,7 @@ class EmailLoginCodeController extends Controller
         $email = Str::lower($request->validated('email'));
 
         if (User::query()->where('email', $email)->exists()) {
-            $code = (string) random_int(100000, 999999);
-
-            Cache::put($this->cacheKey($email), [
-                'hash' => Hash::make($code),
-                'attempts' => 0,
-            ], now()->addMinutes(10));
+            $code = $this->codes->issue($this->cacheKey($email));
 
             Mail::to($email)->send(new LoginCodeMail($code));
         }
@@ -67,26 +62,18 @@ class EmailLoginCodeController extends Controller
             return to_route('login.code.create');
         }
 
-        $entry = Cache::get($this->cacheKey($email));
+        $result = $this->codes->verify($this->cacheKey($email), $request->validated('code'));
 
-        if ($entry === null || $entry['attempts'] >= self::MAX_ATTEMPTS) {
-            Cache::forget($this->cacheKey($email));
-
+        if ($result === CodeVerification::Expired) {
             return back()->withErrors(['code' => 'This code has expired. Request a new one.']);
         }
 
-        if (! Hash::check($request->validated('code'), $entry['hash'])) {
-            Cache::put($this->cacheKey($email), [
-                ...$entry,
-                'attempts' => $entry['attempts'] + 1,
-            ], now()->addMinutes(10));
-
+        if ($result === CodeVerification::Incorrect) {
             return back()->withErrors(['code' => 'That code is incorrect.']);
         }
 
         $user = User::query()->where('email', $email)->firstOrFail();
 
-        Cache::forget($this->cacheKey($email));
         $request->session()->forget('login-code-email');
 
         Auth::login($user);

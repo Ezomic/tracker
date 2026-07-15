@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\EmailConfirmationController;
 use App\Http\Controllers\Settings\LabelController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\ProjectController;
@@ -26,6 +27,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
+
+    Route::get('settings/security/confirm', [EmailConfirmationController::class, 'create'])
+        ->middleware('throttle:6,1')
+        ->name('security.confirm');
+    Route::post('settings/security/confirm', [EmailConfirmationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('security.confirm.store');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });
