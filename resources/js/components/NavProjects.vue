@@ -4,6 +4,7 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -39,6 +40,12 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                         <span class="truncate">{{ project.key }}</span>
                     </Link>
                 </SidebarMenuButton>
+                <SidebarMenuBadge
+                    :title="`${project.openCount} open · ${project.totalCount} total`"
+                    class="text-muted-foreground tabular-nums"
+                >
+                    {{ project.openCount }}/{{ project.totalCount }}
+                </SidebarMenuBadge>
             </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>

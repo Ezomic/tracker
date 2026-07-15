@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\IssueStatus;
 use App\Models\Project;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -43,7 +45,24 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'projects' => fn () => $request->user()
-                ? Project::query()->orderBy('key')->get(['id', 'key', 'name', 'color'])
+                ? Project::query()
+                    ->select(['id', 'key', 'name', 'color'])
+                    ->withCount([
+                        'issues as total_count' => fn (Builder $query) => $query->whereNull('archived_at'),
+                        'issues as open_count' => fn (Builder $query) => $query
+                            ->whereNull('archived_at')
+                            ->where('status', '!=', IssueStatus::Done->value),
+                    ])
+                    ->orderBy('key')
+                    ->get()
+                    ->map(fn (Project $project) => [
+                        'id' => $project->id,
+                        'key' => $project->key,
+                        'name' => $project->name,
+                        'color' => $project->color,
+                        'openCount' => (int) $project->getAttribute('open_count'),
+                        'totalCount' => (int) $project->getAttribute('total_count'),
+                    ])
                 : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

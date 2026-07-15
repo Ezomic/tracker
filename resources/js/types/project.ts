@@ -3,4 +3,6 @@ export interface SidebarProject {
     key: string;
     name: string;
     color: string;
+    openCount: number;
+    totalCount: number;
 }
