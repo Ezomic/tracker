@@ -24,11 +24,21 @@ defineOptions({
 
 const palette = [
     '#d85a30',
-    '#1d9e75',
-    '#378add',
+    '#e2413f',
+    '#ca8a04',
     '#ef9f27',
-    '#d4537e',
+    '#84a017',
+    '#639922',
+    '#1d9e75',
+    '#0e9aa7',
+    '#378add',
+    '#4f5bd5',
     '#7f77dd',
+    '#9b51e0',
+    '#c14bc4',
+    '#d4537e',
+    '#a1663a',
+    '#6b7280',
 ];
 
 const newColor = ref(palette[0]);
@@ -81,7 +91,7 @@ const newColor = ref(palette[0]);
             <div class="grid gap-2">
                 <Label>Color</Label>
                 <input type="hidden" name="color" :value="newColor" />
-                <div class="flex h-9 items-center gap-1.5">
+                <div class="flex flex-wrap items-center gap-1.5">
                     <button
                         v-for="color in palette"
                         :key="color"
