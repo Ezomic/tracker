@@ -62,7 +62,7 @@ const color = ref(props.project.color);
                 <div class="grid gap-2">
                     <Label>Color</Label>
                     <input type="hidden" name="color" :value="color" />
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
                         <button
                             v-for="swatch in palette"
                             :key="swatch"
