@@ -26,6 +26,8 @@ class StoreProjectRequest extends FormRequest
             'key' => ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key'],
             'name' => ['required', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'github_repo' => ['nullable', 'string', 'max:255'],
+            'production_url' => ['nullable', 'url', 'max:255'],
         ];
     }
 }

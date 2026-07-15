@@ -89,6 +89,29 @@ const newColor = ref(palette[0]);
             </div>
 
             <div class="grid gap-2">
+                <Label for="github_repo">GitHub repo</Label>
+                <Input
+                    id="github_repo"
+                    name="github_repo"
+                    class="w-56"
+                    placeholder="owner/repo"
+                />
+                <InputError :message="errors.github_repo" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="production_url">Production URL</Label>
+                <Input
+                    id="production_url"
+                    name="production_url"
+                    type="url"
+                    class="w-64"
+                    placeholder="https://example.com"
+                />
+                <InputError :message="errors.production_url" />
+            </div>
+
+            <div class="grid gap-2">
                 <Label>Color</Label>
                 <input type="hidden" name="color" :value="newColor" />
                 <div class="flex flex-wrap items-center gap-1.5">
@@ -131,8 +154,9 @@ const newColor = ref(palette[0]);
                     :style="{ backgroundColor: project.color }"
                 />
                 <span class="w-24 font-mono text-sm">{{ project.key }}</span>
-                <span class="truncate text-sm">{{ project.name }}</span>
-                <span class="ml-auto text-xs text-muted-foreground">
+                <span class="flex-1 truncate text-sm">{{ project.name }}</span>
+                <ProjectLinks :links="project.links" />
+                <span class="text-xs text-muted-foreground">
                     {{ project.issuesCount }}
                     {{ project.issuesCount === 1 ? 'issue' : 'issues' }}
                 </span>

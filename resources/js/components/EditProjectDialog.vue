@@ -60,6 +60,33 @@ const color = ref(props.project.color);
                 </div>
 
                 <div class="grid gap-2">
+                    <Label :for="`github_repo-${project.id}`"
+                        >GitHub repo</Label
+                    >
+                    <Input
+                        :id="`github_repo-${project.id}`"
+                        name="github_repo"
+                        :default-value="project.githubRepo ?? ''"
+                        placeholder="owner/repo"
+                    />
+                    <InputError :message="errors.github_repo" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label :for="`production_url-${project.id}`">
+                        Production URL
+                    </Label>
+                    <Input
+                        :id="`production_url-${project.id}`"
+                        name="production_url"
+                        type="url"
+                        :default-value="project.productionUrl ?? ''"
+                        placeholder="https://example.com"
+                    />
+                    <InputError :message="errors.production_url" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label>Color</Label>
                     <input type="hidden" name="color" :value="color" />
                     <div class="flex flex-wrap items-center gap-1.5">

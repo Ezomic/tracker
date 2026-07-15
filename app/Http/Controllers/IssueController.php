@@ -44,7 +44,16 @@ class IssueController extends Controller
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
-            'teams' => Project::query()->orderBy('key')->get(['id', 'key', 'name', 'color']),
+            'teams' => Project::query()
+                ->orderBy('key')
+                ->get()
+                ->map(fn (Project $team) => [
+                    'id' => $team->id,
+                    'key' => $team->key,
+                    'name' => $team->name,
+                    'color' => $team->color,
+                    'links' => $team->links(),
+                ]),
             'epics' => $this->eligibleParents(),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => $filters,
@@ -104,6 +113,7 @@ class IssueController extends Controller
             'project' => $project === null ? null : [
                 'key' => $project->key,
                 'name' => $project->name,
+                'links' => $project->links(),
             ],
         ]);
     }
