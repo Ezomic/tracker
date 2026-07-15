@@ -7,6 +7,7 @@ import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import InputError from '@/components/InputError.vue';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,7 +38,7 @@ import type {
 
 const props = defineProps<{
     issues: Issue[];
-    teams: Pick<Team, 'id' | 'key' | 'name'>[];
+    teams: Pick<Team, 'id' | 'key' | 'name' | 'links'>[];
     epics: EpicOption[];
     labels: IssueLabel[];
     filters: IssueFilters;
@@ -164,6 +165,10 @@ const createOpen = ref(false);
                 <IssueViewToggle
                     active="list"
                     :project-key="scopedProject?.key"
+                />
+                <ProjectLinks
+                    v-if="scopedProject"
+                    :links="scopedProject.links"
                 />
             </div>
 

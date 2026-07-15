@@ -3,13 +3,14 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Badge } from '@/components/ui/badge';
 import { board, show, updateStatus } from '@/routes/issues';
-import type { Issue } from '@/types';
+import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
 
 const props = defineProps<{
     issues: Issue[];
-    project?: { key: string; name: string } | null;
+    project?: { key: string; name: string; links: ProjectLinksType } | null;
 }>();
 
 const heading = computed(() =>
@@ -87,6 +88,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
         <div class="flex flex-wrap items-center gap-3">
             <h1 class="text-lg font-medium">{{ heading }}</h1>
             <IssueViewToggle active="board" :project-key="project?.key" />
+            <ProjectLinks v-if="project" :links="project.links" />
         </div>
 
         <div
