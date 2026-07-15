@@ -148,11 +148,31 @@ class IssueController extends Controller
             ->all();
     }
 
+    private function githubRepoBase(Issue $issue): ?string
+    {
+        if ($issue->github_pr_url !== null
+            && preg_match('#^(https?://github\.com/[^/]+/[^/]+)/pull/#', $issue->github_pr_url, $matches)) {
+            return $matches[1];
+        }
+
+        $repo = $issue->project->github_repo;
+
+        if ($repo === null || $repo === '') {
+            return null;
+        }
+
+        return str_starts_with($repo, 'http')
+            ? rtrim($repo, '/')
+            : 'https://github.com/'.trim($repo, '/');
+    }
+
     /**
      * @return array<string, mixed>
      */
     private function serialize(Issue $issue): array
     {
+        $repoBase = $this->githubRepoBase($issue);
+
         return [
             'identifier' => $issue->identifier,
             'title' => $issue->title,
@@ -161,6 +181,8 @@ class IssueController extends Controller
             'priority' => $issue->priority->value,
             'status' => $issue->status->value,
             'branchName' => $issue->branch_name,
+            'branchUrl' => $repoBase !== null ? $repoBase.'/tree/'.$issue->branch_name : null,
+            'commitsUrl' => $repoBase !== null ? $repoBase.'/commits/'.$issue->branch_name : null,
             'githubPrUrl' => $issue->github_pr_url,
             'team' => [
                 'key' => $issue->project->key,
