@@ -17,15 +17,21 @@ defineProps<{
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
 
-function countsLabel(counts: SidebarProjectCounts): string {
-    return `${counts.backlog}/${counts.in_progress}/${counts.in_review}/${counts.done}`;
-}
+const statuses: {
+    key: keyof SidebarProjectCounts;
+    label: string;
+    dot: string;
+}[] = [
+    { key: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
+    { key: 'in_progress', label: 'In progress', dot: 'bg-primary' },
+    { key: 'in_review', label: 'In review', dot: 'bg-sky-500' },
+    { key: 'done', label: 'Done', dot: 'bg-emerald-500' },
+];
 
 function countsTitle(counts: SidebarProjectCounts): string {
-    return (
-        `${counts.backlog} backlog · ${counts.in_progress} in progress · ` +
-        `${counts.in_review} in review · ${counts.done} done`
-    );
+    return statuses
+        .map((status) => `${counts[status.key]} ${status.label.toLowerCase()}`)
+        .join(' · ');
 }
 </script>
 
@@ -50,9 +56,20 @@ function countsTitle(counts: SidebarProjectCounts): string {
                         <span class="truncate">{{ project.name }}</span>
                         <span
                             :title="countsTitle(project.counts)"
-                            class="ml-auto font-mono text-xs text-muted-foreground tabular-nums group-data-[collapsible=icon]:hidden"
+                            class="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums group-data-[collapsible=icon]:hidden"
                         >
-                            {{ countsLabel(project.counts) }}
+                            <span
+                                v-for="status in statuses"
+                                v-show="project.counts[status.key] > 0"
+                                :key="status.key"
+                                class="flex items-center gap-1"
+                            >
+                                <span
+                                    class="size-1.5 rounded-full"
+                                    :class="status.dot"
+                                />
+                                {{ project.counts[status.key] }}
+                            </span>
                         </span>
                     </Link>
                 </SidebarMenuButton>
