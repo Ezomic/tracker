@@ -3,6 +3,7 @@ export interface DashboardStats {
     in_progress: number;
     in_review: number;
     done: number;
+    archived: number;
 }
 
 export interface StatusBreakdown {

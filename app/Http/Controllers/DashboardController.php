@@ -23,6 +23,7 @@ class DashboardController extends Controller
                 'in_progress' => $counts['in_progress'],
                 'in_review' => $counts['in_review'],
                 'done' => $counts['done'],
+                'archived' => Issue::query()->whereNotNull('archived_at')->count(),
             ],
             'statusBreakdown' => $counts,
             'activeByProject' => $this->activeByProject(),
