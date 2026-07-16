@@ -27,6 +27,7 @@ class ProjectController extends Controller
                     'color' => $project->color,
                     'githubRepos' => $project->github_repos ?? [],
                     'productionUrl' => $project->production_url,
+                    'archiveAfterDays' => $project->archive_after_days,
                     'links' => $project->links(),
                     'issuesCount' => $project->issues_count,
                     'keyLocked' => $project->issues_count > 0,

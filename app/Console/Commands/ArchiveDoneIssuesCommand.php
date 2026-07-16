@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('issues:archive-done')]
-#[Description('Archive issues that have been done for at least 24 hours')]
+#[Description("Archive done issues past each project's auto-archive duration")]
 class ArchiveDoneIssuesCommand extends Command
 {
     public function handle(ArchiveDoneIssuesAction $action): int

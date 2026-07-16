@@ -16,7 +16,18 @@ export interface Team {
     color: string;
     githubRepos: string[];
     productionUrl: string | null;
+    archiveAfterDays: number | null;
     links: ProjectLinks;
     issuesCount: number;
     keyLocked: boolean;
+}
+
+export interface ProjectListItem {
+    id: number;
+    key: string;
+    name: string;
+    color: string;
+    isFavorite: boolean;
+    openCount: number;
+    links: ProjectLinks;
 }

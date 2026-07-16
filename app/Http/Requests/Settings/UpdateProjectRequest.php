@@ -32,6 +32,7 @@ class UpdateProjectRequest extends FormRequest
             'github_repos' => ['nullable', 'array'],
             'github_repos.*' => ['string', 'max:255'],
             'production_url' => ['nullable', 'url', 'max:255'],
+            'archive_after_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
             'key' => $project->hasIssues()
                 ? ['prohibited']
                 : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$project->id],
