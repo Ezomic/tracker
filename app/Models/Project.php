@@ -15,11 +15,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $key
  * @property string $name
  * @property string $color
+ * @property bool $is_favorite
+ * @property int|null $archive_after_days
  * @property list<string>|null $github_repos
  * @property string|null $production_url
  * @property int $next_number
  */
-#[Fillable(['key', 'name', 'color', 'github_repos', 'production_url'])]
+#[Fillable(['key', 'name', 'color', 'github_repos', 'production_url', 'is_favorite', 'archive_after_days'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -109,6 +111,7 @@ class Project extends Model
     {
         return [
             'github_repos' => 'array',
+            'is_favorite' => 'boolean',
         ];
     }
 }

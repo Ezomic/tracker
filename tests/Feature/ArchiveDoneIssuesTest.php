@@ -84,3 +84,28 @@ it('still shows an archived issue on its own detail page', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('issue.archivedAt', fn ($value) => $value !== null));
 });
+
+it("honours a project's custom archive duration", function () {
+    $team = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 7]);
+    $recent = (new CreateIssueAction)->handle($team, 'Recent', IssueType::Feature);
+    $recent->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(5)])->save();
+    $old = (new CreateIssueAction)->handle($team, 'Old', IssueType::Feature);
+    $old->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(8)])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(1)
+        ->and($recent->fresh()->archived_at)->toBeNull()
+        ->and($old->fresh()->archived_at)->not->toBeNull();
+});
+
+it('never archives issues of a project with a null archive duration', function () {
+    $team = Project::factory()->create(['key' => 'THI', 'archive_after_days' => null]);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
+    $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(100)])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(0)
+        ->and($issue->fresh()->archived_at)->toBeNull();
+});

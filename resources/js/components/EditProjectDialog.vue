@@ -2,6 +2,7 @@
 import { Form } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
+import ArchiveDurationSelect from '@/components/ArchiveDurationSelect.vue';
 import ColorSwatches from '@/components/ColorSwatches.vue';
 import InputError from '@/components/InputError.vue';
 import RepoInputs from '@/components/RepoInputs.vue';
@@ -82,6 +83,15 @@ const color = ref(props.project.color);
                         placeholder="https://example.com"
                     />
                     <InputError :message="errors.production_url" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label>Auto-archive done issues</Label>
+                    <ArchiveDurationSelect
+                        :key="project.id"
+                        :model-value="project.archiveAfterDays"
+                    />
+                    <InputError :message="errors.archive_after_days" />
                 </div>
 
                 <div class="grid gap-2">
