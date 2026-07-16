@@ -10,7 +10,8 @@ use App\Models\User;
 
 it('creates an issue and returns identifier, url, and branch_name', function () {
     $user = User::factory()->create();
-    Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
+    $project = Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
+    joinProjects($user, $project);
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
         'project' => 'THI',
@@ -28,7 +29,8 @@ it('creates an issue and returns identifier, url, and branch_name', function () 
 
 it('accepts the deprecated team alias for project', function () {
     $user = User::factory()->create();
-    Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
+    $project = Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
+    joinProjects($user, $project);
 
     $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
         'team' => 'THI',
@@ -85,6 +87,7 @@ it('returns 422 for an invalid type', function () {
 it('creates an issue under an epic when a parent identifier is given', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
+    joinProjects($user, $team);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/issues', [
@@ -101,6 +104,7 @@ it('creates an issue under an epic when a parent identifier is given', function 
 it('rejects a parent that already sits under another epic', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
@@ -116,6 +120,7 @@ it('rejects a parent from a different team', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
     $billr = Project::factory()->create(['key' => 'BILLR']);
+    joinProjects($user, [$thi, $billr]);
     $epic = (new CreateIssueAction)->handle($billr, 'Epic', IssueType::Feature);
 
     $this->actingAs($user, 'sanctum')->postJson('/api/issues', [

@@ -7,12 +7,11 @@ use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\Project;
-use App\Models\User;
 
 it('creates an issue assigned to an epic', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $epic = (new CreateIssueAction)->handle($team, 'Big feature', IssueType::Feature);
-    $user = User::factory()->create();
+    $user = member($team);
 
     $this->actingAs($user)->post('/issues', [
         'project_id' => $team->id,
@@ -30,7 +29,7 @@ it('rejects creating an issue under a parent that already has a parent itself', 
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
-    $this->actingAs(User::factory()->create())->post('/issues', [
+    $this->actingAs(member($team))->post('/issues', [
         'project_id' => $team->id,
         'title' => 'Grandchild',
         'type' => 'feature',
@@ -43,7 +42,7 @@ it('assigns an existing issue to an epic via update', function () {
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $issue = (new CreateIssueAction)->handle($team, 'Standalone issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())->patch("/issues/{$issue->identifier}", [
+    $this->actingAs(member($team))->patch("/issues/{$issue->identifier}", [
         'title' => $issue->title,
         'type' => 'feature',
         'priority' => 'none',
@@ -58,7 +57,7 @@ it('removes an epic assignment when parent_id is submitted empty', function () {
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $issue = (new CreateIssueAction)->handle($team, 'Child issue', IssueType::Feature, parent: $epic);
 
-    $this->actingAs(User::factory()->create())->patch("/issues/{$issue->identifier}", [
+    $this->actingAs(member($team))->patch("/issues/{$issue->identifier}", [
         'title' => $issue->title,
         'type' => 'feature',
         'priority' => 'none',
@@ -72,7 +71,7 @@ it('rejects an issue being assigned as its own epic', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())->patch("/issues/{$issue->identifier}", [
+    $this->actingAs(member($team))->patch("/issues/{$issue->identifier}", [
         'title' => $issue->title,
         'type' => 'feature',
         'priority' => 'none',
@@ -86,7 +85,7 @@ it('rejects assigning a parent to an issue that already has sub-issues', functio
     $epicB = (new CreateIssueAction)->handle($team, 'Epic B', IssueType::Feature);
     (new CreateIssueAction)->handle($team, 'Child of A', IssueType::Feature, parent: $epicA);
 
-    $this->actingAs(User::factory()->create())->patch("/issues/{$epicA->identifier}", [
+    $this->actingAs(member($team))->patch("/issues/{$epicA->identifier}", [
         'title' => $epicA->title,
         'type' => 'feature',
         'priority' => 'none',
@@ -101,7 +100,7 @@ it('shows sub-issues and progress on the epic detail page', function () {
     $done->forceFill(['status' => IssueStatus::Done])->save();
     (new CreateIssueAction)->handle($team, 'Backlog child', IssueType::Feature, parent: $epic);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get("/issues/{$epic->identifier}")
         ->assertInertia(fn ($page) => $page
             ->where('issue.childrenCount', 2)
@@ -114,7 +113,7 @@ it('shows the parent link on a child issue detail page', function () {
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get("/issues/{$child->identifier}")
         ->assertInertia(fn ($page) => $page
             ->where('issue.parent.identifier', $epic->identifier)
@@ -126,7 +125,7 @@ it('only offers top-level issues as eligible epics', function () {
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
             ->has('epics', 1)

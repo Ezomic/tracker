@@ -13,7 +13,7 @@ it('scopes the tickets view to the project in the url', function () {
     (new CreateIssueAction)->handle($thi, 'THI issue', IssueType::Feature);
     (new CreateIssueAction)->handle($billr, 'BILLR issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member([$thi, $billr]))
         ->get('/THI/tickets')
         ->assertInertia(fn ($page) => $page
             ->component('issues/Index')
@@ -29,7 +29,7 @@ it('scopes the board view to the project in the url', function () {
     (new CreateIssueAction)->handle($thi, 'THI issue', IssueType::Feature);
     (new CreateIssueAction)->handle($billr, 'BILLR issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member([$thi, $billr]))
         ->get('/THI/board')
         ->assertInertia(fn ($page) => $page
             ->component('issues/Board')
@@ -45,9 +45,9 @@ it('returns 404 for an unknown project key', function () {
 });
 
 it('shares projects to authenticated pages', function () {
-    Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
+    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($thi))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
             ->has('sidebarProjects', 1)

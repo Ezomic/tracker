@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\ProjectRole;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +47,26 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create a user who is a member of the given projects (Owner by default).
+ */
+function member(Project|array $projects, ProjectRole $role = ProjectRole::Owner): User
 {
-    // ..
+    return joinProjects(User::factory()->create(), $projects, $role);
+}
+
+/**
+ * Attach an existing user to the given project(s) with the given role.
+ *
+ * @param  Project|array<int, Project>  $projects
+ */
+function joinProjects(User $user, Project|array $projects, ProjectRole $role = ProjectRole::Owner): User
+{
+    foreach (is_array($projects) ? $projects : [$projects] as $project) {
+        $project->members()->syncWithoutDetaching([
+            $user->id => ['role' => $role->value, 'is_favorite' => true],
+        ]);
+    }
+
+    return $user;
 }

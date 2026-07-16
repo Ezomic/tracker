@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Enums\ProjectRole;
 use App\Models\Project;
 use App\Models\User;
 
-it('lists every project on the browse page with favorite state', function () {
-    Project::factory()->create(['key' => 'THI', 'is_favorite' => true]);
-    Project::factory()->create(['key' => 'CMS', 'is_favorite' => false]);
+it('lists the projects the user belongs to with favorite state', function () {
+    $user = User::factory()->create();
+    $thi = Project::factory()->create(['key' => 'THI']);
+    $cms = Project::factory()->create(['key' => 'CMS']);
+    $thi->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => true]);
+    $cms->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => false]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs($user)
         ->get('/projects')
         ->assertInertia(fn ($page) => $page
             ->component('projects/Index')
@@ -21,26 +25,37 @@ it('lists every project on the browse page with favorite state', function () {
         );
 });
 
-it('toggles a project favorite', function () {
-    $project = Project::factory()->create(['key' => 'THI', 'is_favorite' => true]);
+it('does not list projects the user is not a member of', function () {
+    $user = User::factory()->create();
+    Project::factory()->create(['key' => 'THI']);
 
-    $this->actingAs(User::factory()->create())
-        ->patch('/projects/THI/favorite')
-        ->assertRedirect();
+    $this->actingAs($user)
+        ->get('/projects')
+        ->assertInertia(fn ($page) => $page->has('projects', 0));
+});
 
-    expect($project->fresh()->is_favorite)->toBeFalse();
+it('toggles a project favorite for the current user', function () {
+    $user = User::factory()->create();
+    $project = Project::factory()->create(['key' => 'THI']);
+    $project->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => true]);
 
-    $this->actingAs(User::factory()->create())
-        ->patch('/projects/THI/favorite');
+    $favorite = fn () => (bool) $user->projects()->find($project->id)->getAttribute('pivot')->getAttribute('is_favorite');
 
-    expect($project->fresh()->is_favorite)->toBeTrue();
+    $this->actingAs($user)->patch('/projects/THI/favorite')->assertRedirect();
+    expect($favorite())->toBeFalse();
+
+    $this->actingAs($user)->patch('/projects/THI/favorite');
+    expect($favorite())->toBeTrue();
 });
 
 it('only shares favorited projects to the sidebar', function () {
-    Project::factory()->create(['key' => 'THI', 'is_favorite' => true]);
-    Project::factory()->create(['key' => 'CMS', 'is_favorite' => false]);
+    $user = User::factory()->create();
+    $thi = Project::factory()->create(['key' => 'THI']);
+    $cms = Project::factory()->create(['key' => 'CMS']);
+    $thi->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => true]);
+    $cms->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => false]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs($user)
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
             ->has('sidebarProjects', 1)

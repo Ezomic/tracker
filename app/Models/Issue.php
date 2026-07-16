@@ -87,6 +87,17 @@ class Issue extends Model
     }
 
     /**
+     * Limit to issues in projects the given user is a member of.
+     *
+     * @param  Builder<Issue>  $query
+     * @return Builder<Issue>
+     */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $query->whereHas('project.members', fn (Builder $members) => $members->whereKey($user->id));
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

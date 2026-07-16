@@ -6,14 +6,13 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Project;
-use App\Models\User;
 
 it('renders the board with all issues regardless of status', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::InProgress])->save();
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get('/issues/board')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -27,7 +26,7 @@ it('updates an issue status via drag and drop', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}/status", ['status' => 'in_review'])
         ->assertRedirect();
 
@@ -37,7 +36,7 @@ it('updates an issue status via drag and drop', function () {
 it('sets closed_at when moved to done and clears it when moved away', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
-    $user = User::factory()->create();
+    $user = member($team);
 
     $this->actingAs($user)->patch("/issues/{$issue->identifier}/status", ['status' => 'done']);
     expect($issue->fresh()->closed_at)->not->toBeNull();
@@ -50,7 +49,7 @@ it('rejects an invalid status', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}/status", ['status' => 'archived'])
         ->assertSessionHasErrors('status');
 });
