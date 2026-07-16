@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import { KeyRound, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -11,10 +12,12 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { confirm } from '@/routes/security';
 import type { Passkey } from '@/types/auth';
 
 const props = defineProps<{
     passkey: Passkey;
+    needsConfirmation?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -59,7 +62,18 @@ const handleDelete = () => {
             </div>
         </div>
 
-        <Dialog>
+        <Button
+            v-if="needsConfirmation"
+            variant="ghost"
+            size="sm"
+            class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            @click="router.visit(confirm().url)"
+        >
+            <Trash2 class="h-4 w-4" />
+            <span class="sr-only">Remove</span>
+        </Button>
+
+        <Dialog v-else>
             <DialogTrigger as-child>
                 <Button
                     variant="ghost"

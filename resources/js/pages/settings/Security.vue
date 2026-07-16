@@ -26,5 +26,6 @@ defineOptions({
     <ManagePasskeys
         :canManagePasskeys="props.canManagePasskeys"
         :passkeys="props.passkeys"
+        :needs-email-confirmation="props.needsEmailConfirmation"
     />
 </template>

@@ -10,11 +10,13 @@ import type { Passkey } from '@/types/auth';
 export type Props = {
     canManagePasskeys?: boolean;
     passkeys?: Passkey[];
+    needsEmailConfirmation?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
     canManagePasskeys: false,
     passkeys: () => [],
+    needsEmailConfirmation: false,
 });
 
 const handleDelete = (id: number, onError: () => void) => {
@@ -43,6 +45,7 @@ const handleRegisterSuccess = () => {
                     v-for="passkey in passkeys"
                     :key="passkey.id"
                     :passkey="passkey"
+                    :needs-confirmation="needsEmailConfirmation"
                     @remove="handleDelete"
                 />
             </template>
@@ -60,6 +63,9 @@ const handleRegisterSuccess = () => {
             </div>
         </div>
 
-        <PasskeyRegister @success="handleRegisterSuccess" />
+        <PasskeyRegister
+            :needs-confirmation="needsEmailConfirmation"
+            @success="handleRegisterSuccess"
+        />
     </div>
 </template>
