@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { Check } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
+import ColorSwatches from '@/components/ColorSwatches.vue';
 import EditProjectDialog from '@/components/EditProjectDialog.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index } from '@/routes/projects';
 import type { Team } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     projects: Team[];
 }>();
+
+const usedColors = computed(() =>
+    props.projects.map((project) => project.color),
+);
 
 defineOptions({
     layout: {
@@ -114,22 +119,11 @@ const newColor = ref(palette[0]);
             <div class="grid gap-2">
                 <Label>Color</Label>
                 <input type="hidden" name="color" :value="newColor" />
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button
-                        v-for="color in palette"
-                        :key="color"
-                        type="button"
-                        class="flex size-6 items-center justify-center rounded-full"
-                        :style="{ backgroundColor: color }"
-                        :aria-label="`Use color ${color}`"
-                        @click="newColor = color"
-                    >
-                        <Check
-                            v-if="newColor === color"
-                            class="size-3.5 text-white"
-                        />
-                    </button>
-                </div>
+                <ColorSwatches
+                    v-model="newColor"
+                    :palette="palette"
+                    :used="usedColors"
+                />
             </div>
 
             <Button type="submit" :disabled="processing">Add project</Button>
@@ -160,7 +154,15 @@ const newColor = ref(palette[0]);
                     {{ project.issuesCount }}
                     {{ project.issuesCount === 1 ? 'issue' : 'issues' }}
                 </span>
-                <EditProjectDialog :project="project" :palette="palette" />
+                <EditProjectDialog
+                    :project="project"
+                    :palette="palette"
+                    :used-colors="
+                        projects
+                            .filter((other) => other.id !== project.id)
+                            .map((other) => other.color)
+                    "
+                />
             </div>
         </div>
     </div>

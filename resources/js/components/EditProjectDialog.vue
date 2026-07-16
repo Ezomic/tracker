@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
-import { Check } from '@lucide/vue';
 import { ref } from 'vue';
 import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
+import ColorSwatches from '@/components/ColorSwatches.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ import type { Team } from '@/types';
 const props = defineProps<{
     project: Team;
     palette: string[];
+    usedColors?: string[];
 }>();
 
 const color = ref(props.project.color);
@@ -89,22 +90,12 @@ const color = ref(props.project.color);
                 <div class="grid gap-2">
                     <Label>Color</Label>
                     <input type="hidden" name="color" :value="color" />
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <button
-                            v-for="swatch in palette"
-                            :key="swatch"
-                            type="button"
-                            class="flex size-6 items-center justify-center rounded-full"
-                            :style="{ backgroundColor: swatch }"
-                            :aria-label="`Use color ${swatch}`"
-                            @click="color = swatch"
-                        >
-                            <Check
-                                v-if="color === swatch"
-                                class="size-3.5 text-white"
-                            />
-                        </button>
-                    </div>
+                    <ColorSwatches
+                        v-model="color"
+                        :palette="palette"
+                        :used="usedColors"
+                        :current="project.color"
+                    />
                 </div>
 
                 <div class="grid gap-2">
