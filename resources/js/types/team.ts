@@ -1,7 +1,12 @@
+export interface ProjectRepoLink {
+    name: string;
+    url: string;
+}
+
 export interface ProjectLinks {
     docs: string | null;
-    readme: string | null;
     production: string | null;
+    repos: ProjectRepoLink[];
 }
 
 export interface Team {
@@ -9,7 +14,7 @@ export interface Team {
     key: string;
     name: string;
     color: string;
-    githubRepo: string | null;
+    githubRepos: string[];
     productionUrl: string | null;
     links: ProjectLinks;
     issuesCount: number;

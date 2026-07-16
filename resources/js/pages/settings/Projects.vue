@@ -7,6 +7,7 @@ import EditProjectDialog from '@/components/EditProjectDialog.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
+import RepoInputs from '@/components/RepoInputs.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,14 +95,9 @@ const newColor = ref(palette[0]);
             </div>
 
             <div class="grid gap-2">
-                <Label for="github_repo">GitHub repo</Label>
-                <Input
-                    id="github_repo"
-                    name="github_repo"
-                    class="w-56"
-                    placeholder="owner/repo"
-                />
-                <InputError :message="errors.github_repo" />
+                <Label>GitHub repos</Label>
+                <RepoInputs :model-value="[]" />
+                <InputError :message="errors.github_repos" />
             </div>
 
             <div class="grid gap-2">
