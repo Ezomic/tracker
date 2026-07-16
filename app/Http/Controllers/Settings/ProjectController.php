@@ -39,7 +39,7 @@ class ProjectController extends Controller
     {
         Project::create($request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Team created.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Project created.')]);
 
         return to_route('projects.index');
     }
@@ -48,7 +48,7 @@ class ProjectController extends Controller
     {
         $project->update($request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Team updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Project updated.')]);
 
         return to_route('projects.index');
     }
