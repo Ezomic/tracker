@@ -144,7 +144,9 @@ const newColor = ref(palette[0]);
                     :style="{ backgroundColor: project.color }"
                 />
                 <span class="w-24 font-mono text-sm">{{ project.key }}</span>
-                <span class="flex-1 truncate text-sm">{{ project.name }}</span>
+                <span class="min-w-0 flex-1 truncate text-sm">
+                    {{ project.name }}
+                </span>
                 <ProjectLinks :links="project.links" />
                 <span class="text-xs text-muted-foreground">
                     {{ project.issuesCount }}
