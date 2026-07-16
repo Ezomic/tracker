@@ -44,7 +44,7 @@ it('filters issues by team', function () {
     createFilterableIssue($billr, 'BILLR issue');
 
     $this->actingAs(User::factory()->create())
-        ->get("/issues?team_id={$billr->id}")
+        ->get("/issues?project_id={$billr->id}")
         ->assertInertia(fn ($page) => $page
             ->has('issues', 1)
             ->where('issues.0.title', 'BILLR issue')
@@ -127,7 +127,7 @@ it('returns all issues and echoes back empty filters when none are given', funct
         ->assertInertia(fn ($page) => $page
             ->has('issues', 1)
             ->where('filters.search', null)
-            ->where('filters.team_id', null)
+            ->where('filters.project_id', null)
         );
 });
 

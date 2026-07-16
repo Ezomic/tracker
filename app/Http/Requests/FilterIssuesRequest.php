@@ -23,7 +23,7 @@ class FilterIssuesRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $keys = ['search', 'team_id', 'status', 'type', 'priority', 'label_id'];
+        $keys = ['search', 'project_id', 'status', 'type', 'priority', 'label_id'];
 
         $this->merge(array_combine(
             $keys,
@@ -40,7 +40,7 @@ class FilterIssuesRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:255'],
-            'team_id' => ['nullable', 'integer', 'exists:projects,id'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'status' => ['nullable', Rule::enum(IssueStatus::class)],
             'type' => ['nullable', Rule::enum(IssueType::class)],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],

@@ -55,7 +55,7 @@ class UpdateIssueParentRequest extends FormRequest
                     }
 
                     if ($parent->project_id !== $issue->project_id) {
-                        $fail('The parent issue must belong to the same team.');
+                        $fail('The parent issue must belong to the same project.');
                     }
 
                     if ($issue->children()->exists()) {

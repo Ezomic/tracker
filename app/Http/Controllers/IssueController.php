@@ -26,7 +26,7 @@ class IssueController extends Controller
         $filters = $request->validated();
 
         if ($project !== null) {
-            $filters['team_id'] = $project->id;
+            $filters['project_id'] = $project->id;
         }
 
         return Inertia::render('issues/Index', [
@@ -36,7 +36,7 @@ class IssueController extends Controller
                 ->with(['project', 'labels'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
-                ->when($filters['team_id'] ?? null, fn (Builder $query, int $teamId) => $query->where('project_id', $teamId))
+                ->when($filters['project_id'] ?? null, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
                 ->when($filters['type'] ?? null, fn (Builder $query, string $type) => $query->where('type', $type))
                 ->when($filters['priority'] ?? null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
@@ -44,15 +44,15 @@ class IssueController extends Controller
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
-            'teams' => Project::query()
+            'projects' => Project::query()
                 ->orderBy('key')
                 ->get()
-                ->map(fn (Project $team) => [
-                    'id' => $team->id,
-                    'key' => $team->key,
-                    'name' => $team->name,
-                    'color' => $team->color,
-                    'links' => $team->links(),
+                ->map(fn (Project $project) => [
+                    'id' => $project->id,
+                    'key' => $project->key,
+                    'name' => $project->name,
+                    'color' => $project->color,
+                    'links' => $project->links(),
                 ]),
             'epics' => $this->eligibleParents(),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
@@ -62,7 +62,7 @@ class IssueController extends Controller
 
     public function store(StoreIssueWebRequest $request, CreateIssueAction $action): RedirectResponse
     {
-        $project = Project::where('id', $request->validated('team_id'))->firstOrFail();
+        $project = Project::where('id', $request->validated('project_id'))->firstOrFail();
         $parent = $this->findParent($request->validated('parent_id'));
 
         $issue = $action->handle(
@@ -186,7 +186,7 @@ class IssueController extends Controller
             'branchUrl' => $repoBase !== null ? $repoBase.'/tree/'.$issue->branch_name : null,
             'commitsUrl' => $repoBase !== null ? $repoBase.'/commits/'.$issue->branch_name : null,
             'githubPrUrl' => $issue->github_pr_url,
-            'team' => [
+            'project' => [
                 'key' => $issue->project->key,
                 'name' => $issue->project->name,
             ],
