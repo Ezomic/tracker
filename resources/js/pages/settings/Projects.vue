@@ -23,10 +23,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index } from '@/routes/projects';
-import type { Team } from '@/types';
+import type { Project } from '@/types';
 
 const props = defineProps<{
-    projects: Team[];
+    projects: Project[];
 }>();
 
 const usedColors = computed(() =>

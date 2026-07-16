@@ -19,7 +19,7 @@ it('renders the issues index with existing issues and teams', function () {
         ->assertInertia(fn ($page) => $page
             ->component('issues/Index')
             ->where('issues.0.identifier', 'THI-1')
-            ->where('teams.0.key', 'THI')
+            ->where('projects.0.key', 'THI')
         );
 });
 
@@ -28,7 +28,7 @@ it('creates an issue from the web form and redirects to its detail page', functi
 
     $response = $this->actingAs(User::factory()->create())
         ->post('/issues', [
-            'team_id' => $team->id,
+            'project_id' => $team->id,
             'title' => 'Add quiz question pools',
             'type' => 'feature',
             'description' => 'Randomize quiz questions on replay.',
@@ -42,10 +42,10 @@ it('returns validation errors for an unknown team, blank title, or invalid type'
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/issues', [
-        'team_id' => 999,
+        'project_id' => 999,
         'title' => '',
         'type' => 'chore',
-    ])->assertSessionHasErrors(['team_id', 'title', 'type']);
+    ])->assertSessionHasErrors(['project_id', 'title', 'type']);
 });
 
 it('renders the issue detail page', function () {

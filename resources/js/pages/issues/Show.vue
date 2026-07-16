@@ -53,7 +53,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
         v-slot="{ errors, processing }"
     >
         <div class="mb-4 flex items-center gap-2 text-sm">
-            <span class="text-muted-foreground">{{ issue.team.key }}</span>
+            <span class="text-muted-foreground">{{ issue.project.key }}</span>
             <span class="text-muted-foreground/50">/</span>
             <span class="font-mono text-muted-foreground">
                 {{ issue.identifier }}

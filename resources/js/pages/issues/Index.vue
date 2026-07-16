@@ -33,12 +33,12 @@ import type {
     Issue,
     IssueFilters,
     IssueLabel,
-    Team,
+    Project,
 } from '@/types';
 
 const props = defineProps<{
     issues: Issue[];
-    teams: Pick<Team, 'id' | 'key' | 'name' | 'links'>[];
+    projects: Pick<Project, 'id' | 'key' | 'name' | 'links'>[];
     epics: EpicOption[];
     labels: IssueLabel[];
     filters: IssueFilters;
@@ -55,8 +55,10 @@ const currentPath = computed(() => page.url.split('?')[0]);
 const isScoped = computed(() => !currentPath.value.startsWith('/issues'));
 
 const scopedProject = computed(() =>
-    props.filters.team_id
-        ? props.teams.find((team) => team.id === props.filters.team_id)
+    props.filters.project_id
+        ? props.projects.find(
+              (project) => project.id === props.filters.project_id,
+          )
         : undefined,
 );
 
@@ -67,8 +69,8 @@ const heading = computed(() =>
 );
 
 const search = ref(props.filters.search ?? '');
-const teamId = ref(
-    props.filters.team_id ? String(props.filters.team_id) : 'all',
+const projectId = ref(
+    props.filters.project_id ? String(props.filters.project_id) : 'all',
 );
 const status = ref(props.filters.status ?? 'all');
 const type = ref(props.filters.type ?? 'all');
@@ -84,9 +86,9 @@ function applyFilters() {
         currentPath.value,
         {
             search: search.value || undefined,
-            team_id:
-                !isScoped.value && teamId.value !== 'all'
-                    ? teamId.value
+            project_id:
+                !isScoped.value && projectId.value !== 'all'
+                    ? projectId.value
                     : undefined,
             status: status.value !== 'all' ? status.value : undefined,
             type: type.value !== 'all' ? type.value : undefined,
@@ -98,11 +100,11 @@ function applyFilters() {
 }
 
 watch(debouncedSearch, applyFilters);
-watch([teamId, status, type, priority, labelId], applyFilters);
+watch([projectId, status, type, priority, labelId], applyFilters);
 
 function clearFilters() {
     search.value = '';
-    teamId.value = 'all';
+    projectId.value = 'all';
     status.value = 'all';
     type.value = 'all';
     priority.value = 'all';
@@ -112,7 +114,7 @@ function clearFilters() {
 const hasActiveFilters = computed(
     () =>
         search.value !== '' ||
-        (!isScoped.value && teamId.value !== 'all') ||
+        (!isScoped.value && projectId.value !== 'all') ||
         status.value !== 'all' ||
         type.value !== 'all' ||
         priority.value !== 'all' ||
@@ -209,9 +211,9 @@ const createOpen = ref(false);
                         >
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="grid gap-2">
-                                    <Label for="new-team">Project</Label>
+                                    <Label for="new-project">Project</Label>
                                     <Select
-                                        name="team_id"
+                                        name="project_id"
                                         :default-value="
                                             scopedProject
                                                 ? String(scopedProject.id)
@@ -219,7 +221,7 @@ const createOpen = ref(false);
                                         "
                                     >
                                         <SelectTrigger
-                                            id="new-team"
+                                            id="new-project"
                                             class="w-full"
                                         >
                                             <SelectValue
@@ -228,15 +230,16 @@ const createOpen = ref(false);
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
-                                                v-for="team in teams"
-                                                :key="team.id"
-                                                :value="String(team.id)"
+                                                v-for="project in projects"
+                                                :key="project.id"
+                                                :value="String(project.id)"
                                             >
-                                                {{ team.key }} — {{ team.name }}
+                                                {{ project.key }} —
+                                                {{ project.name }}
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <InputError :message="errors.team_id" />
+                                    <InputError :message="errors.project_id" />
                                 </div>
 
                                 <div class="grid gap-2">
@@ -318,18 +321,18 @@ const createOpen = ref(false);
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <Select v-if="!isScoped" v-model="teamId">
+            <Select v-if="!isScoped" v-model="projectId">
                 <SelectTrigger class="h-8 w-auto gap-1.5">
                     <SelectValue placeholder="Project" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All projects</SelectItem>
                     <SelectItem
-                        v-for="team in teams"
-                        :key="team.id"
-                        :value="String(team.id)"
+                        v-for="project in projects"
+                        :key="project.id"
+                        :value="String(project.id)"
                     >
-                        {{ team.key }}
+                        {{ project.key }}
                     </SelectItem>
                 </SelectContent>
             </Select>

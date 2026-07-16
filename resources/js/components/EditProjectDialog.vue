@@ -19,10 +19,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Team } from '@/types';
+import type { Project } from '@/types';
 
 const props = defineProps<{
-    project: Team;
+    project: Project;
     palette: string[];
     usedColors?: string[];
 }>();

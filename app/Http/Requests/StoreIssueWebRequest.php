@@ -34,7 +34,7 @@ class StoreIssueWebRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'team_id' => ['required', 'integer', 'exists:projects,id'],
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
