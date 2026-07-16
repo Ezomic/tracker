@@ -24,7 +24,7 @@ class IssueController extends Controller
             'project' => ['sometimes', 'string', 'exists:projects,key'],
         ]);
 
-        $query = Issue::query()->notArchived()->with(['project', 'parent']);
+        $query = Issue::query()->visibleTo($request->user())->notArchived()->with(['project', 'parent']);
 
         if (isset($validated['project'])) {
             $query->whereRelation('project', 'key', $validated['project']);
@@ -37,12 +37,16 @@ class IssueController extends Controller
 
     public function show(Issue $issue): JsonResponse
     {
+        $this->authorize('view', $issue);
+
         return response()->json($this->detail($issue->load(['project', 'parent'])));
     }
 
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
     {
         $project = Project::where('key', $request->validated('project'))->firstOrFail();
+
+        $this->authorize('createIssue', $project);
 
         $issue = $action->handle(
             project: $project,
@@ -57,6 +61,8 @@ class IssueController extends Controller
 
     public function update(UpdateIssueParentRequest $request, Issue $issue): JsonResponse
     {
+        $this->authorize('update', $issue);
+
         $parent = $this->resolveParent($request->validated('parent'));
 
         $issue->forceFill(['parent_id' => $parent?->id])->save();
@@ -66,6 +72,8 @@ class IssueController extends Controller
 
     public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): JsonResponse
     {
+        $this->authorize('update', $issue);
+
         $status = IssueStatus::from($request->validated('status'));
 
         $issue->forceFill([
@@ -78,6 +86,8 @@ class IssueController extends Controller
 
     public function destroy(Issue $issue): JsonResponse
     {
+        $this->authorize('delete', $issue);
+
         if ($issue->archived_at === null) {
             $issue->forceFill(['archived_at' => now()])->save();
         }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
-use App\Models\User;
 
 it('shares a per-status ticket breakdown per project', function () {
     $project = Project::factory()->create(['key' => 'THI']);
@@ -19,7 +18,7 @@ it('shares a per-status ticket breakdown per project', function () {
         'archived_at' => now(),
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
             ->where('sidebarProjects.0.key', 'THI')
@@ -31,9 +30,9 @@ it('shares a per-status ticket breakdown per project', function () {
 });
 
 it('reports zero counts for a project with no tickets', function () {
-    Project::factory()->create(['key' => 'THI']);
+    $project = Project::factory()->create(['key' => 'THI']);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
             ->where('sidebarProjects.0.counts.backlog', 0)
@@ -43,11 +42,11 @@ it('reports zero counts for a project with no tickets', function () {
         );
 });
 
-it('still shares the sidebar breakdown on the settings projects page', function () {
+it('still shares the sidebar breakdown on the projects page', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     Issue::factory()->for($project)->create(['status' => IssueStatus::InProgress]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/projects')
         ->assertInertia(fn ($page) => $page
             ->component('projects/Index')

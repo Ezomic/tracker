@@ -42,9 +42,9 @@ it('lets authenticated users visit an empty dashboard', function () {
 });
 
 it('renders stats and status breakdown', function () {
-    seedDashboard();
+    $project = seedDashboard();
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
             ->where('stats.open', 6) // 3 backlog + 2 in progress + 1 in review (archived excluded)
@@ -58,9 +58,9 @@ it('renders stats and status breakdown', function () {
 });
 
 it('counts active tickets per project excluding done and archived', function () {
-    seedDashboard();
+    $project = seedDashboard();
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
             ->where('activeByProject.0.key', 'THI')
@@ -80,7 +80,7 @@ it('lists in-review tickets and this-week completions', function () {
         'closed_at' => now()->subDays(30),
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
             ->where('inReview.0.identifier', $review->identifier)
@@ -96,7 +96,7 @@ it('orders stale tickets by oldest update among open issues', function () {
     $stale->forceFill(['updated_at' => now()->subDays(90)])->save();
     Issue::factory()->for($project)->create(['status' => IssueStatus::Done]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
             ->where('stale.0.identifier', $stale->identifier)

@@ -10,6 +10,7 @@ use App\Models\User;
 it('assigns an existing issue to an epic by identifier', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $issue = (new CreateIssueAction)->handle($team, 'Standalone', IssueType::Feature);
 
@@ -27,6 +28,7 @@ it('assigns an existing issue to an epic by identifier', function () {
 it('detaches the parent when parent is submitted null', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $issue = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
@@ -41,6 +43,7 @@ it('detaches the parent when parent is submitted null', function () {
 it('requires the parent field to be present', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature);
 
     $this->actingAs($user, 'sanctum')
@@ -51,6 +54,7 @@ it('requires the parent field to be present', function () {
 it('rejects an issue being assigned as its own epic', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature);
 
     $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
@@ -61,6 +65,7 @@ it('rejects an issue being assigned as its own epic', function () {
 it('rejects a parent that already sits under another epic', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
     $issue = (new CreateIssueAction)->handle($team, 'Standalone', IssueType::Feature);
@@ -73,6 +78,7 @@ it('rejects a parent that already sits under another epic', function () {
 it('rejects assigning a parent to an issue that already has sub-issues', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
     $epicA = (new CreateIssueAction)->handle($team, 'Epic A', IssueType::Feature);
     $epicB = (new CreateIssueAction)->handle($team, 'Epic B', IssueType::Feature);
     (new CreateIssueAction)->handle($team, 'Child of A', IssueType::Feature, parent: $epicA);
@@ -86,6 +92,7 @@ it('rejects a parent from a different team', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
     $billr = Project::factory()->create(['key' => 'BILLR']);
+    joinProjects($user, [$thi, $billr]);
     $issue = (new CreateIssueAction)->handle($thi, 'Issue', IssueType::Feature);
     $epic = (new CreateIssueAction)->handle($billr, 'Epic', IssueType::Feature);
 

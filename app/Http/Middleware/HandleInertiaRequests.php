@@ -47,9 +47,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarProjects' => fn () => $request->user()
-                ? Project::query()
-                    ->where('is_favorite', true)
-                    ->select(['id', 'key', 'name', 'color'])
+                ? $request->user()->projects()
+                    ->wherePivot('is_favorite', true)
+                    ->select(['projects.id', 'key', 'name', 'color'])
                     ->withCount([
                         'issues as backlog_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Backlog->value),
                         'issues as in_progress_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InProgress->value),

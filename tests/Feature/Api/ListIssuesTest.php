@@ -9,6 +9,7 @@ use App\Models\User;
 it('lists issues ordered by project then number', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $thi);
     Issue::factory()->for($thi)->create(['number' => 2, 'identifier' => 'THI-2', 'title' => 'Second']);
     Issue::factory()->for($thi)->create(['number' => 1, 'identifier' => 'THI-1', 'title' => 'First']);
 
@@ -27,6 +28,7 @@ it('filters issues by project key', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
     $billr = Project::factory()->create(['key' => 'BILLR']);
+    joinProjects($user, [$thi, $billr]);
     Issue::factory()->for($thi)->create(['identifier' => 'THI-1']);
     Issue::factory()->for($billr)->create(['identifier' => 'BILLR-1']);
 
@@ -39,6 +41,7 @@ it('filters issues by project key', function () {
 it('excludes archived issues', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $thi);
     Issue::factory()->for($thi)->create(['identifier' => 'THI-1']);
     Issue::factory()->for($thi)->create(['identifier' => 'THI-2', 'archived_at' => now()]);
 

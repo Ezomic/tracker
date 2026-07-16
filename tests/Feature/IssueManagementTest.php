@@ -13,7 +13,7 @@ it('renders the issues index with existing issues and teams', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get('/issues')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -26,7 +26,7 @@ it('renders the issues index with existing issues and teams', function () {
 it('creates an issue from the web form and redirects to its detail page', function () {
     $team = Project::factory()->create(['key' => 'THI']);
 
-    $response = $this->actingAs(User::factory()->create())
+    $response = $this->actingAs(member($team))
         ->post('/issues', [
             'project_id' => $team->id,
             'title' => 'Add quiz question pools',
@@ -52,7 +52,7 @@ it('renders the issue detail page', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get("/issues/{$issue->identifier}")
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -66,7 +66,7 @@ it('updates an issue title, type, priority, and description', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}", [
             'title' => 'Updated title',
             'type' => 'fix',
@@ -87,7 +87,7 @@ it('rejects an invalid priority', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}", [
             'title' => 'Updated title',
             'type' => 'feature',

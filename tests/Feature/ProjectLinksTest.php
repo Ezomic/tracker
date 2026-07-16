@@ -36,7 +36,7 @@ it('drops empty repo rows when saving', function () {
 it('updates github_repos and production_url', function () {
     $project = Project::factory()->create(['key' => 'SHOP']);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->patch("/projects/{$project->id}", [
             'key' => 'SHOP',
             'name' => 'Shop',
@@ -92,13 +92,13 @@ it('returns empty links when the fields are empty', function () {
 });
 
 it('exposes project links on the settings page', function () {
-    Project::factory()->create([
+    $project = Project::factory()->create([
         'key' => 'SHOP',
         'github_repos' => ['Ezomic/shop'],
         'production_url' => 'https://shop.example.com',
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/projects')
         ->assertInertia(fn ($page) => $page
             ->where('projects.0.links.docs', 'https://shop.example.com/docs')
@@ -108,13 +108,13 @@ it('exposes project links on the settings page', function () {
 });
 
 it('exposes scoped project links on the board', function () {
-    Project::factory()->create([
+    $project = Project::factory()->create([
         'key' => 'SHOP',
         'github_repos' => ['Ezomic/shop'],
         'production_url' => 'https://shop.example.com',
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/SHOP/board')
         ->assertInertia(fn ($page) => $page
             ->component('issues/Board')
@@ -123,13 +123,13 @@ it('exposes scoped project links on the board', function () {
 });
 
 it('exposes project links in the tickets teams list', function () {
-    Project::factory()->create([
+    $project = Project::factory()->create([
         'key' => 'SHOP',
         'github_repos' => ['Ezomic/shop'],
         'production_url' => 'https://shop.example.com',
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
             ->where('projects.0.links.repos.0.name', 'Ezomic/shop')

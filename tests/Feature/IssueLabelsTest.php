@@ -6,7 +6,6 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
 use App\Models\Label;
 use App\Models\Project;
-use App\Models\User;
 
 it('attaches labels to an issue on update', function () {
     $team = Project::factory()->create(['key' => 'THI']);
@@ -14,7 +13,7 @@ it('attaches labels to an issue on update', function () {
     $bug = Label::factory()->create(['name' => 'bug']);
     $urgent = Label::factory()->create(['name' => 'urgent']);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}", [
             'title' => $issue->title,
             'type' => 'feature',
@@ -32,7 +31,7 @@ it('removes labels from an issue when omitted on update', function () {
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->labels()->attach(Label::factory()->create());
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}", [
             'title' => $issue->title,
             'type' => 'feature',
@@ -47,7 +46,7 @@ it('rejects an unknown label id', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->patch("/issues/{$issue->identifier}", [
             'title' => $issue->title,
             'type' => 'feature',
@@ -62,7 +61,7 @@ it('serializes labels on the issue list, board, and detail pages', function () {
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->labels()->attach(Label::factory()->create(['name' => 'bug', 'color' => 'red']));
 
-    $user = User::factory()->create();
+    $user = member($team);
 
     $this->actingAs($user)->get('/issues')
         ->assertInertia(fn ($page) => $page->where('issues.0.labels.0.name', 'bug'));

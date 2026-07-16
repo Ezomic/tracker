@@ -12,6 +12,7 @@ use App\Models\User;
 it('returns the full detail of an issue by identifier', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $thi);
     $issue = Issue::factory()->for($thi)->create([
         'number' => 168,
         'identifier' => 'THI-168',
@@ -42,6 +43,7 @@ it('returns the full detail of an issue by identifier', function () {
 it('includes the parent identifier when the issue sits under an epic', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $thi);
     $epic = Issue::factory()->for($thi)->create(['identifier' => 'THI-1']);
     Issue::factory()->for($thi)->create(['identifier' => 'THI-2', 'parent_id' => $epic->id]);
 

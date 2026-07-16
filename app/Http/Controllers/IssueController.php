@@ -14,8 +14,10 @@ use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\Label;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,14 +25,17 @@ class IssueController extends Controller
 {
     public function index(FilterIssuesRequest $request, ?Project $project = null): Response
     {
+        $user = $request->user();
         $filters = $request->validated();
 
         if ($project !== null) {
+            $this->authorize('view', $project);
             $filters['project_id'] = $project->id;
         }
 
         return Inertia::render('issues/Index', [
             'issues' => Issue::query()
+                ->visibleTo($user)
                 ->notArchived()
                 ->withCount('children')
                 ->with(['project', 'labels'])
@@ -45,6 +50,7 @@ class IssueController extends Controller
                 ->get()
                 ->map($this->serialize(...)),
             'projects' => Project::query()
+                ->visibleTo($user)
                 ->orderBy('key')
                 ->get()
                 ->map(fn (Project $project) => [
@@ -54,7 +60,7 @@ class IssueController extends Controller
                     'color' => $project->color,
                     'links' => $project->links(),
                 ]),
-            'epics' => $this->eligibleParents(),
+            'epics' => $this->eligibleParents($user),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => $filters,
         ]);
@@ -63,6 +69,9 @@ class IssueController extends Controller
     public function store(StoreIssueWebRequest $request, CreateIssueAction $action): RedirectResponse
     {
         $project = Project::where('id', $request->validated('project_id'))->firstOrFail();
+
+        $this->authorize('createIssue', $project);
+
         $parent = $this->findParent($request->validated('parent_id'));
 
         $issue = $action->handle(
@@ -78,19 +87,23 @@ class IssueController extends Controller
         return to_route('issues.show', $issue);
     }
 
-    public function show(Issue $issue): Response
+    public function show(Request $request, Issue $issue): Response
     {
+        $this->authorize('view', $issue);
+
         $issue->load(['project', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
-            'epics' => $this->eligibleParents($issue),
+            'epics' => $this->eligibleParents($request->user(), $issue),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 
     public function update(UpdateIssueRequest $request, Issue $issue): RedirectResponse
     {
+        $this->authorize('update', $issue);
+
         $issue->update($request->safe()->except('labels'));
         $issue->labels()->sync($request->validated('labels', []));
 
@@ -99,10 +112,15 @@ class IssueController extends Controller
         return to_route('issues.show', $issue);
     }
 
-    public function board(?Project $project = null): Response
+    public function board(Request $request, ?Project $project = null): Response
     {
+        if ($project !== null) {
+            $this->authorize('view', $project);
+        }
+
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
+                ->visibleTo($request->user())
                 ->notArchived()
                 ->withCount('children')
                 ->with(['project', 'labels'])
@@ -120,6 +138,8 @@ class IssueController extends Controller
 
     public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): RedirectResponse
     {
+        $this->authorize('update', $issue);
+
         $status = IssueStatus::from($request->validated('status'));
 
         $issue->forceFill([
@@ -142,9 +162,10 @@ class IssueController extends Controller
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function eligibleParents(?Issue $excluding = null): array
+    private function eligibleParents(User $user, ?Issue $excluding = null): array
     {
         return Issue::query()
+            ->visibleTo($user)
             ->whereNull('parent_id')
             ->when($excluding, fn ($query) => $query->where('id', '!=', $excluding->id))
             ->notArchived()

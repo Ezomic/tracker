@@ -7,8 +7,9 @@ use App\Models\User;
 
 it('lists projects ordered by key', function () {
     $user = User::factory()->create();
-    Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
-    Project::factory()->create(['key' => 'BILLR', 'name' => 'Billr', 'color' => '#378add']);
+    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
+    $billr = Project::factory()->create(['key' => 'BILLR', 'name' => 'Billr', 'color' => '#378add']);
+    joinProjects($user, [$thi, $billr]);
 
     $response = $this->actingAs($user, 'sanctum')->getJson('/api/projects');
 
@@ -20,7 +21,8 @@ it('lists projects ordered by key', function () {
 
 it('serves the deprecated /api/teams alias', function () {
     $user = User::factory()->create();
-    Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
+    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
+    joinProjects($user, $thi);
 
     $this->actingAs($user, 'sanctum')->getJson('/api/teams')
         ->assertOk()
