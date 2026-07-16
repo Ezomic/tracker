@@ -2,12 +2,17 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\ProjectsController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Landing')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('projects', [ProjectsController::class, 'index'])->name('projects.browse');
+    Route::patch('projects/{project:key}/favorite', [ProjectsController::class, 'toggleFavorite'])
+        ->name('projects.favorite');
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');

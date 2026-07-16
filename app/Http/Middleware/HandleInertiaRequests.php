@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarProjects' => fn () => $request->user()
                 ? Project::query()
+                    ->where('is_favorite', true)
                     ->select(['id', 'key', 'name', 'color'])
                     ->withCount([
                         'issues as backlog_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Backlog->value),

@@ -31,7 +31,7 @@ function countsTitle(counts: SidebarProjectCounts): string {
 
 <template>
     <SidebarGroup v-if="projects.length" class="px-2 py-0">
-        <SidebarGroupLabel>Projects</SidebarGroupLabel>
+        <SidebarGroupLabel>Favorites</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="project in projects" :key="project.id">
                 <SidebarMenuButton

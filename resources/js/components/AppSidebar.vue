@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Kanban, LayoutGrid, Plus, Search, Ticket } from '@lucide/vue';
+import {
+    FolderKanban,
+    Kanban,
+    LayoutGrid,
+    Plus,
+    Search,
+    Ticket,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -18,6 +25,7 @@ import {
 import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
+import { browse as projectsBrowse } from '@/routes/projects';
 import type { NavItem, SidebarProject } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
@@ -41,6 +49,11 @@ const mainNavItems: NavItem[] = [
         title: 'Board',
         href: issuesBoard(),
         icon: Kanban,
+    },
+    {
+        title: 'Projects',
+        href: projectsBrowse(),
+        icon: FolderKanban,
     },
 ];
 </script>

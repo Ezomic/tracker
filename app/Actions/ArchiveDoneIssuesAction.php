@@ -6,18 +6,28 @@ namespace App\Actions;
 
 use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\Project;
 
 class ArchiveDoneIssuesAction
 {
-    private const ARCHIVE_AFTER_HOURS = 24;
-
     public function handle(): int
     {
-        return Issue::query()
-            ->where('status', IssueStatus::Done)
-            ->whereNotNull('closed_at')
-            ->whereNull('archived_at')
-            ->where('closed_at', '<=', now()->subHours(self::ARCHIVE_AFTER_HOURS))
-            ->update(['archived_at' => now()]);
+        $count = 0;
+
+        // Projects with a null archive_after_days never auto-archive.
+        Project::query()
+            ->whereNotNull('archive_after_days')
+            ->get(['id', 'archive_after_days'])
+            ->each(function (Project $project) use (&$count): void {
+                $count += Issue::query()
+                    ->where('project_id', $project->id)
+                    ->where('status', IssueStatus::Done)
+                    ->whereNotNull('closed_at')
+                    ->whereNull('archived_at')
+                    ->where('closed_at', '<=', now()->subDays($project->archive_after_days))
+                    ->update(['archived_at' => now()]);
+            });
+
+        return $count;
     }
 }
