@@ -165,15 +165,7 @@ class IssueController extends Controller
             return $matches[1];
         }
 
-        $repo = $issue->project->github_repo;
-
-        if ($repo === null || $repo === '') {
-            return null;
-        }
-
-        return str_starts_with($repo, 'http')
-            ? rtrim($repo, '/')
-            : 'https://github.com/'.trim($repo, '/');
+        return $issue->project->primaryRepoBase();
     }
 
     /**

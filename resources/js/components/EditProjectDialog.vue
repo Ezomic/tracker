@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
 import ColorSwatches from '@/components/ColorSwatches.vue';
 import InputError from '@/components/InputError.vue';
+import RepoInputs from '@/components/RepoInputs.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -61,16 +62,12 @@ const color = ref(props.project.color);
                 </div>
 
                 <div class="grid gap-2">
-                    <Label :for="`github_repo-${project.id}`"
-                        >GitHub repo</Label
-                    >
-                    <Input
-                        :id="`github_repo-${project.id}`"
-                        name="github_repo"
-                        :default-value="project.githubRepo ?? ''"
-                        placeholder="owner/repo"
+                    <Label>GitHub repos</Label>
+                    <RepoInputs
+                        :key="project.id"
+                        :model-value="project.githubRepos"
                     />
-                    <InputError :message="errors.github_repo" />
+                    <InputError :message="errors.github_repos" />
                 </div>
 
                 <div class="grid gap-2">

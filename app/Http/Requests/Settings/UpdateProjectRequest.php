@@ -29,11 +29,26 @@ class UpdateProjectRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'github_repo' => ['nullable', 'string', 'max:255'],
+            'github_repos' => ['nullable', 'array'],
+            'github_repos.*' => ['string', 'max:255'],
             'production_url' => ['nullable', 'url', 'max:255'],
             'key' => $project->hasIssues()
                 ? ['prohibited']
                 : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$project->id],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $repos = $this->input('github_repos');
+
+        if (is_array($repos)) {
+            $this->merge([
+                'github_repos' => array_values(array_filter(
+                    $repos,
+                    fn (mixed $repo): bool => is_string($repo) && trim($repo) !== '',
+                )),
+            ]);
+        }
     }
 }

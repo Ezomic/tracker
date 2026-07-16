@@ -23,10 +23,10 @@ it('derives branch and commit links from the pull request url', function () {
         );
 });
 
-it('falls back to the project github_repo when there is no pull request', function () {
+it('falls back to the project github_repos when there is no pull request', function () {
     $project = Project::factory()->create([
         'key' => 'THI',
-        'github_repo' => 'Ezomic/tracker',
+        'github_repos' => ['Ezomic/tracker'],
     ]);
     $issue = Issue::factory()->for($project)->create([
         'branch_name' => 'feature/THI-2-example',
@@ -42,7 +42,7 @@ it('falls back to the project github_repo when there is no pull request', functi
 });
 
 it('leaves links null when no repo can be resolved', function () {
-    $project = Project::factory()->create(['key' => 'THI', 'github_repo' => null]);
+    $project = Project::factory()->create(['key' => 'THI', 'github_repos' => null]);
     $issue = Issue::factory()->for($project)->create([
         'branch_name' => 'feature/THI-3-example',
         'github_pr_url' => null,
