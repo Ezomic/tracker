@@ -32,6 +32,7 @@ const statTiles = computed(() => [
     { label: 'In progress', value: props.stats.in_progress, accent: true },
     { label: 'In review', value: props.stats.in_review, accent: false },
     { label: 'Done', value: props.stats.done, accent: false },
+    { label: 'Archived', value: props.stats.archived, accent: false },
 ]);
 
 const donutSegments = computed(() =>
@@ -62,7 +63,7 @@ const statusMax = computed(() =>
     <Head title="Dashboard" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             <div
                 v-for="tile in statTiles"
                 :key="tile.label"

@@ -51,6 +51,7 @@ it('renders stats and status breakdown', function () {
             ->where('stats.in_progress', 2)
             ->where('stats.in_review', 1)
             ->where('stats.done', 4)
+            ->where('stats.archived', 1)
             ->where('statusBreakdown.backlog', 3)
             ->where('statusBreakdown.done', 4)
         );
