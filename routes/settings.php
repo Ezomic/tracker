@@ -3,7 +3,6 @@
 use App\Http\Controllers\Settings\EmailConfirmationController;
 use App\Http\Controllers\Settings\LabelController;
 use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Controllers\Settings\ProjectController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,10 +11,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-
-    Route::get('settings/projects', [ProjectController::class, 'index'])->name('projects.index');
-    Route::post('settings/projects', [ProjectController::class, 'store'])->name('projects.store');
-    Route::patch('settings/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
 
     Route::get('settings/labels', [LabelController::class, 'index'])->name('labels.index');
     Route::post('settings/labels', [LabelController::class, 'store'])->name('labels.store');

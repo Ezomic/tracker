@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $key
  * @property string $name
+ * @property string|null $description
  * @property string $color
  * @property bool $is_favorite
  * @property int|null $archive_after_days
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $production_url
  * @property int $next_number
  */
-#[Fillable(['key', 'name', 'color', 'github_repos', 'production_url', 'is_favorite', 'archive_after_days'])]
+#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'is_favorite', 'archive_after_days'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
