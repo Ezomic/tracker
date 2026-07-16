@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureEmailConfirmed;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +18,7 @@ class SecurityController extends Controller
     {
         return Inertia::render('settings/Security', [
             'canManagePasskeys' => Features::canManagePasskeys(),
+            'needsEmailConfirmation' => ! EnsureEmailConfirmed::confirmedRecently($request),
             'passkeys' => Features::canManagePasskeys()
                 ? $request->user()
                     ->passkeys()
