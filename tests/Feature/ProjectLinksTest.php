@@ -7,7 +7,7 @@ use App\Models\User;
 
 it('stores github_repos and production_url when creating a project', function () {
     $this->actingAs(User::factory()->create())
-        ->post('/settings/projects', [
+        ->post('/projects', [
             'key' => 'SHOP',
             'name' => 'Shop',
             'github_repos' => ['Ezomic/shop', 'Ezomic/shop-api'],
@@ -22,7 +22,7 @@ it('stores github_repos and production_url when creating a project', function ()
 
 it('drops empty repo rows when saving', function () {
     $this->actingAs(User::factory()->create())
-        ->post('/settings/projects', [
+        ->post('/projects', [
             'key' => 'SHOP',
             'name' => 'Shop',
             'github_repos' => ['Ezomic/shop', '', '  '],
@@ -37,7 +37,7 @@ it('updates github_repos and production_url', function () {
     $project = Project::factory()->create(['key' => 'SHOP']);
 
     $this->actingAs(User::factory()->create())
-        ->patch("/settings/projects/{$project->id}", [
+        ->patch("/projects/{$project->id}", [
             'key' => 'SHOP',
             'name' => 'Shop',
             'github_repos' => ['Ezomic/shop'],
@@ -52,7 +52,7 @@ it('updates github_repos and production_url', function () {
 
 it('rejects an invalid production_url', function () {
     $this->actingAs(User::factory()->create())
-        ->post('/settings/projects', [
+        ->post('/projects', [
             'key' => 'SHOP',
             'name' => 'Shop',
             'production_url' => 'not-a-url',
@@ -99,7 +99,7 @@ it('exposes project links on the settings page', function () {
     ]);
 
     $this->actingAs(User::factory()->create())
-        ->get('/settings/projects')
+        ->get('/projects')
         ->assertInertia(fn ($page) => $page
             ->where('projects.0.links.docs', 'https://shop.example.com/docs')
             ->where('projects.0.links.production', 'https://shop.example.com')
