@@ -147,8 +147,12 @@ const newColor = ref(palette[0]);
                 <span class="min-w-0 flex-1 truncate text-sm">
                     {{ project.name }}
                 </span>
-                <ProjectLinks :links="project.links" />
-                <span class="text-xs text-muted-foreground">
+                <div class="flex w-24 justify-end">
+                    <ProjectLinks :links="project.links" />
+                </div>
+                <span
+                    class="w-20 text-right text-xs text-muted-foreground tabular-nums"
+                >
                     {{ project.issuesCount }}
                     {{ project.issuesCount === 1 ? 'issue' : 'issues' }}
                 </span>
