@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Star } from '@lucide/vue';
+import { Archive, Plus, Star } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
 import ColorSwatches from '@/components/ColorSwatches.vue';
@@ -60,6 +60,21 @@ const palette = [
 
 const newColor = ref(palette[0]);
 const createOpen = ref(false);
+
+function archiveLabel(days: number | null): string {
+    if (days === null) {
+        return 'Never';
+    }
+
+    return (
+        {
+            1: '1 day',
+            7: '1 week',
+            14: '2 weeks',
+            30: '1 month',
+        }[days] ?? `${days} days`
+    );
+}
 
 function toggleFavorite(project: Project) {
     router.patch(
@@ -231,6 +246,13 @@ function toggleFavorite(project: Project) {
                         {{ project.description }}
                     </p>
                 </div>
+                <span
+                    class="flex w-28 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground"
+                    :title="`Auto-archives done issues: ${archiveLabel(project.archiveAfterDays).toLowerCase()}`"
+                >
+                    <Archive class="size-3.5" />
+                    {{ archiveLabel(project.archiveAfterDays) }}
+                </span>
                 <div class="flex w-24 shrink-0 justify-end">
                     <ProjectLinks :links="project.links" />
                 </div>
