@@ -44,14 +44,14 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'projects' => fn () => $request->user()
+            'sidebarProjects' => fn () => $request->user()
                 ? Project::query()
                     ->select(['id', 'key', 'name', 'color'])
                     ->withCount([
-                        'issues as total_count' => fn (Builder $query) => $query->whereNull('archived_at'),
-                        'issues as open_count' => fn (Builder $query) => $query
-                            ->whereNull('archived_at')
-                            ->where('status', '!=', IssueStatus::Done->value),
+                        'issues as backlog_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Backlog->value),
+                        'issues as in_progress_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InProgress->value),
+                        'issues as in_review_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InReview->value),
+                        'issues as done_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Done->value),
                     ])
                     ->orderBy('key')
                     ->get()
@@ -60,8 +60,12 @@ class HandleInertiaRequests extends Middleware
                         'key' => $project->key,
                         'name' => $project->name,
                         'color' => $project->color,
-                        'openCount' => (int) $project->getAttribute('open_count'),
-                        'totalCount' => (int) $project->getAttribute('total_count'),
+                        'counts' => [
+                            'backlog' => (int) $project->getAttribute('backlog_count'),
+                            'in_progress' => (int) $project->getAttribute('in_progress_count'),
+                            'in_review' => (int) $project->getAttribute('in_review_count'),
+                            'done' => (int) $project->getAttribute('done_count'),
+                        ],
                     ])
                 : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

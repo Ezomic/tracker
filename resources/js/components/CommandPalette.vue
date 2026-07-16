@@ -21,7 +21,9 @@ type Command = {
 
 const { open, close, toggle } = useCommandPalette();
 const page = usePage();
-const projects = computed<SidebarProject[]>(() => page.props.projects ?? []);
+const projects = computed<SidebarProject[]>(
+    () => page.props.sidebarProjects ?? [],
+);
 
 const query = ref('');
 const selected = ref(0);

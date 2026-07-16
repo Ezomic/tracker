@@ -50,8 +50,8 @@ it('shares projects to authenticated pages', function () {
     $this->actingAs(User::factory()->create())
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->has('projects', 1)
-            ->where('projects.0.key', 'THI')
-            ->where('projects.0.color', '#d85a30')
+            ->has('sidebarProjects', 1)
+            ->where('sidebarProjects.0.key', 'THI')
+            ->where('sidebarProjects.0.color', '#d85a30')
         );
 });
