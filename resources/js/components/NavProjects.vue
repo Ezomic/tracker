@@ -10,13 +10,30 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { board } from '@/routes/projects';
-import type { SidebarProject } from '@/types';
+import type { SidebarProject, SidebarProjectCounts } from '@/types';
 
 defineProps<{
     projects: SidebarProject[];
 }>();
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
+
+const statuses: {
+    key: keyof SidebarProjectCounts;
+    label: string;
+    dot: string;
+}[] = [
+    { key: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
+    { key: 'in_progress', label: 'In progress', dot: 'bg-primary' },
+    { key: 'in_review', label: 'In review', dot: 'bg-sky-500' },
+    { key: 'done', label: 'Done', dot: 'bg-emerald-500' },
+];
+
+function countsTitle(counts: SidebarProjectCounts): string {
+    return statuses
+        .map((s) => `${counts[s.key]} ${s.label.toLowerCase()}`)
+        .join(' · ');
+}
 </script>
 
 <template>
@@ -41,10 +58,21 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                     </Link>
                 </SidebarMenuButton>
                 <SidebarMenuBadge
-                    :title="`${project.openCount} open · ${project.totalCount} total`"
-                    class="text-muted-foreground tabular-nums"
+                    :title="countsTitle(project.counts)"
+                    class="gap-1.5 text-muted-foreground tabular-nums"
                 >
-                    {{ project.openCount }}/{{ project.totalCount }}
+                    <span
+                        v-for="status in statuses"
+                        v-show="project.counts[status.key] > 0"
+                        :key="status.key"
+                        class="flex items-center gap-1"
+                    >
+                        <span
+                            class="size-1.5 rounded-full"
+                            :class="status.dot"
+                        />
+                        {{ project.counts[status.key] }}
+                    </span>
                 </SidebarMenuBadge>
             </SidebarMenuItem>
         </SidebarMenu>

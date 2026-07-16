@@ -22,7 +22,9 @@ import type { NavItem, SidebarProject } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
 const page = usePage();
-const projects = computed<SidebarProject[]>(() => page.props.projects ?? []);
+const projects = computed<SidebarProject[]>(
+    () => page.props.sidebarProjects ?? [],
+);
 
 const mainNavItems: NavItem[] = [
     {
