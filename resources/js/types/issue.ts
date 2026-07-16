@@ -9,7 +9,7 @@ export interface Issue {
     branchUrl: string | null;
     commitsUrl: string | null;
     githubPrUrl: string | null;
-    team: {
+    project: {
         key: string;
         name: string;
     };
@@ -46,7 +46,7 @@ export interface IssueLabel {
 
 export interface IssueFilters {
     search: string | null;
-    team_id: number | null;
+    project_id: number | null;
     status: Issue['status'] | null;
     type: Issue['type'] | null;
     priority: Issue['priority'] | null;

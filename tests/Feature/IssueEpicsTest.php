@@ -15,7 +15,7 @@ it('creates an issue assigned to an epic', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)->post('/issues', [
-        'team_id' => $team->id,
+        'project_id' => $team->id,
         'title' => 'Sub-task',
         'type' => 'feature',
         'parent_id' => $epic->id,
@@ -31,7 +31,7 @@ it('rejects creating an issue under a parent that already has a parent itself', 
     $child = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
     $this->actingAs(User::factory()->create())->post('/issues', [
-        'team_id' => $team->id,
+        'project_id' => $team->id,
         'title' => 'Grandchild',
         'type' => 'feature',
         'parent_id' => $child->id,

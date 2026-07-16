@@ -132,6 +132,6 @@ it('exposes project links in the tickets teams list', function () {
     $this->actingAs(User::factory()->create())
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->where('teams.0.links.repos.0.name', 'Ezomic/shop')
+            ->where('projects.0.links.repos.0.name', 'Ezomic/shop')
         );
 });

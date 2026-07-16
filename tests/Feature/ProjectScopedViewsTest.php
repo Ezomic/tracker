@@ -19,7 +19,7 @@ it('scopes the tickets view to the project in the url', function () {
             ->component('issues/Index')
             ->has('issues', 1)
             ->where('issues.0.identifier', 'THI-1')
-            ->where('filters.team_id', $thi->id)
+            ->where('filters.project_id', $thi->id)
         );
 });
 
