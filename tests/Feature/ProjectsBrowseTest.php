@@ -50,7 +50,7 @@ it('only shares favorited projects to the sidebar', function () {
 
 it('stores an archive duration and never (null) when creating a project', function () {
     $this->actingAs(User::factory()->create())
-        ->post('/settings/projects', [
+        ->post('/projects', [
             'key' => 'SHOP',
             'name' => 'Shop',
             'archive_after_days' => 14,
@@ -60,7 +60,7 @@ it('stores an archive duration and never (null) when creating a project', functi
     expect(Project::query()->where('key', 'SHOP')->first()->archive_after_days)->toBe(14);
 
     $this->actingAs(User::factory()->create())
-        ->post('/settings/projects', [
+        ->post('/projects', [
             'key' => 'ZERO',
             'name' => 'Zero',
             'archive_after_days' => null,

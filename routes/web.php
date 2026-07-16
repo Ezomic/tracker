@@ -10,7 +10,9 @@ Route::inertia('/', 'Landing')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('projects', [ProjectsController::class, 'index'])->name('projects.browse');
+    Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index');
+    Route::post('projects', [ProjectsController::class, 'store'])->name('projects.store');
+    Route::patch('projects/{project}', [ProjectsController::class, 'update'])->name('projects.update');
     Route::patch('projects/{project:key}/favorite', [ProjectsController::class, 'toggleFavorite'])
         ->name('projects.favorite');
 

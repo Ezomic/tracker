@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import ProjectController from '@/actions/App/Http/Controllers/Settings/ProjectController';
+import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
 import ArchiveDurationSelect from '@/components/ArchiveDurationSelect.vue';
 import ColorSwatches from '@/components/ColorSwatches.vue';
 import InputError from '@/components/InputError.vue';
@@ -37,7 +37,7 @@ const color = ref(props.project.color);
         </DialogTrigger>
         <DialogContent>
             <Form
-                v-bind="ProjectController.update.form({ project: project.id })"
+                v-bind="ProjectsController.update.form({ project: project.id })"
                 :options="{ preserveScroll: true }"
                 class="space-y-6"
                 v-slot="{ errors, processing }"
@@ -60,6 +60,21 @@ const color = ref(props.project.color);
                         required
                     />
                     <InputError :message="errors.name" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label :for="`description-${project.id}`"
+                        >Description</Label
+                    >
+                    <textarea
+                        :id="`description-${project.id}`"
+                        name="description"
+                        rows="2"
+                        :default-value="project.description ?? ''"
+                        placeholder="What is this project?"
+                        class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                    />
+                    <InputError :message="errors.description" />
                 </div>
 
                 <div class="grid gap-2">

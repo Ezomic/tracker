@@ -25,7 +25,7 @@ import {
 import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
-import { browse as projectsBrowse } from '@/routes/projects';
+import { index as projectsIndex } from '@/routes/projects';
 import type { NavItem, SidebarProject } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
@@ -52,7 +52,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Projects',
-        href: projectsBrowse(),
+        href: projectsIndex(),
         icon: FolderKanban,
     },
 ];

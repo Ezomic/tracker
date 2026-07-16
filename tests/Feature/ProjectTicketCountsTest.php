@@ -48,9 +48,9 @@ it('still shares the sidebar breakdown on the settings projects page', function 
     Issue::factory()->for($project)->create(['status' => IssueStatus::InProgress]);
 
     $this->actingAs(User::factory()->create())
-        ->get('/settings/projects')
+        ->get('/projects')
         ->assertInertia(fn ($page) => $page
-            ->component('settings/Projects')
+            ->component('projects/Index')
             ->where('sidebarProjects.0.key', 'THI')
             ->where('sidebarProjects.0.counts.in_progress', 1)
         );
