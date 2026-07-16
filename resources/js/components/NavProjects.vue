@@ -4,7 +4,6 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
-    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -18,21 +17,15 @@ defineProps<{
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
 
-const statuses: {
-    key: keyof SidebarProjectCounts;
-    label: string;
-    dot: string;
-}[] = [
-    { key: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
-    { key: 'in_progress', label: 'In progress', dot: 'bg-primary' },
-    { key: 'in_review', label: 'In review', dot: 'bg-sky-500' },
-    { key: 'done', label: 'Done', dot: 'bg-emerald-500' },
-];
+function countsLabel(counts: SidebarProjectCounts): string {
+    return `${counts.backlog}/${counts.in_progress}/${counts.in_review}/${counts.done}`;
+}
 
 function countsTitle(counts: SidebarProjectCounts): string {
-    return statuses
-        .map((s) => `${counts[s.key]} ${s.label.toLowerCase()}`)
-        .join(' · ');
+    return (
+        `${counts.backlog} backlog · ${counts.in_progress} in progress · ` +
+        `${counts.in_review} in review · ${counts.done} done`
+    );
 }
 </script>
 
@@ -54,26 +47,15 @@ function countsTitle(counts: SidebarProjectCounts): string {
                             class="size-2 shrink-0 rounded-full"
                             :style="{ backgroundColor: project.color }"
                         />
-                        <span class="truncate">{{ project.key }}</span>
+                        <span class="truncate">{{ project.name }}</span>
+                        <span
+                            :title="countsTitle(project.counts)"
+                            class="ml-auto font-mono text-xs text-muted-foreground tabular-nums group-data-[collapsible=icon]:hidden"
+                        >
+                            {{ countsLabel(project.counts) }}
+                        </span>
                     </Link>
                 </SidebarMenuButton>
-                <SidebarMenuBadge
-                    :title="countsTitle(project.counts)"
-                    class="gap-1.5 text-muted-foreground tabular-nums"
-                >
-                    <span
-                        v-for="status in statuses"
-                        v-show="project.counts[status.key] > 0"
-                        :key="status.key"
-                        class="flex items-center gap-1"
-                    >
-                        <span
-                            class="size-1.5 rounded-full"
-                            :class="status.dot"
-                        />
-                        {{ project.counts[status.key] }}
-                    </span>
-                </SidebarMenuBadge>
             </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>

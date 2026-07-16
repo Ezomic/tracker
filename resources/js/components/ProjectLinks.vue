@@ -1,73 +1,87 @@
 <script setup lang="ts">
-import { BookText, FolderGit2, Globe } from '@lucide/vue';
+import {
+    BookText,
+    ChevronDown,
+    ExternalLink,
+    FolderGit2,
+    Globe,
+} from '@lucide/vue';
 import { computed } from 'vue';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { ProjectLinks } from '@/types';
-
-const MAX_REPOS = 4;
 
 const props = defineProps<{
     links: ProjectLinks;
 }>();
 
-const hasAny = computed(
-    () =>
-        props.links.production !== null ||
-        props.links.docs !== null ||
-        props.links.repos.length > 0,
+const hasPrimary = computed(
+    () => props.links.production !== null || props.links.docs !== null,
 );
 
-const visibleRepos = computed(() => props.links.repos.slice(0, MAX_REPOS));
-const extraRepos = computed(() => props.links.repos.slice(MAX_REPOS));
-const extraTitle = computed(() =>
-    extraRepos.value.map((repo) => repo.name).join(', '),
-);
-
-const linkClass =
-    'flex size-7 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground';
+const hasAny = computed(() => hasPrimary.value || props.links.repos.length > 0);
 </script>
 
 <template>
-    <div v-if="hasAny" class="flex shrink-0 items-center gap-1">
-        <a
-            v-if="links.production"
-            :href="links.production"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Production"
-            aria-label="Production"
-            :class="linkClass"
-        >
-            <Globe class="size-4" />
-        </a>
-        <a
-            v-if="links.docs"
-            :href="links.docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Docs"
-            aria-label="Docs"
-            :class="linkClass"
-        >
-            <BookText class="size-4" />
-        </a>
-        <a
-            v-for="repo in visibleRepos"
-            :key="repo.url"
-            :href="repo.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            :title="repo.name"
-            :aria-label="`Repository ${repo.name}`"
-            :class="linkClass"
-        >
-            <FolderGit2 class="size-4" />
-        </a>
-        <span
-            v-if="extraRepos.length"
-            :title="extraTitle"
-            class="flex h-7 items-center rounded-md px-1.5 text-xs font-medium text-muted-foreground tabular-nums"
-        >
-            +{{ extraRepos.length }}
-        </span>
-    </div>
+    <DropdownMenu v-if="hasAny">
+        <DropdownMenuTrigger as-child>
+            <Button
+                variant="outline"
+                size="sm"
+                class="h-7 gap-1.5 text-muted-foreground"
+            >
+                <ExternalLink class="size-3.5" />
+                Links
+                <ChevronDown class="size-3.5 opacity-70" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-56">
+            <DropdownMenuItem v-if="links.production" as-child>
+                <a
+                    :href="links.production"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <Globe />
+                    <span>Production</span>
+                    <ExternalLink class="ml-auto size-3 opacity-50" />
+                </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="links.docs" as-child>
+                <a :href="links.docs" target="_blank" rel="noopener noreferrer">
+                    <BookText />
+                    <span>Documentation</span>
+                    <ExternalLink class="ml-auto size-3 opacity-50" />
+                </a>
+            </DropdownMenuItem>
+
+            <template v-if="links.repos.length">
+                <DropdownMenuSeparator v-if="hasPrimary" />
+                <DropdownMenuLabel class="text-xs text-muted-foreground">
+                    Repositories
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                    v-for="repo in links.repos"
+                    :key="repo.url"
+                    as-child
+                >
+                    <a
+                        :href="repo.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <FolderGit2 />
+                        <span class="truncate">{{ repo.name }}</span>
+                    </a>
+                </DropdownMenuItem>
+            </template>
+        </DropdownMenuContent>
+    </DropdownMenu>
 </template>
