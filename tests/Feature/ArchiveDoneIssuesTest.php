@@ -7,7 +7,6 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Project;
-use App\Models\User;
 
 it('archives a done issue closed more than 24 hours ago', function () {
     $team = Project::factory()->create(['key' => 'THI']);
@@ -61,7 +60,7 @@ it('excludes archived issues from the index and board', function () {
     $archived = (new CreateIssueAction)->handle($team, 'Archived issue', IssueType::Feature);
     $archived->forceFill(['status' => IssueStatus::Done, 'archived_at' => now()])->save();
 
-    $user = User::factory()->create();
+    $user = member($team);
 
     $this->actingAs($user)->get('/issues')->assertInertia(fn ($page) => $page
         ->where('issues.0.identifier', $visible->identifier)
@@ -79,7 +78,7 @@ it('still shows an archived issue on its own detail page', function () {
     $issue = (new CreateIssueAction)->handle($team, 'Archived issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'archived_at' => now()])->save();
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($team))
         ->get("/issues/{$issue->identifier}")
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('issue.archivedAt', fn ($value) => $value !== null));

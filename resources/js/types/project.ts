@@ -24,12 +24,15 @@ export interface ProjectLinks {
     repos: ProjectRepoLink[];
 }
 
+export type ProjectRole = 'owner' | 'admin' | 'member';
+
 export interface Project {
     id: number;
     key: string;
     name: string;
     description: string | null;
     color: string;
+    role: ProjectRole;
     isFavorite: boolean;
     githubRepos: string[];
     productionUrl: string | null;

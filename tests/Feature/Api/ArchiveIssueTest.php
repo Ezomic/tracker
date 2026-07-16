@@ -10,6 +10,7 @@ use App\Models\User;
 it('archives an issue and stamps archived_at', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $project);
     $issue = (new CreateIssueAction)->handle($project, 'Issue', IssueType::Feature);
 
     $response = $this->actingAs($user, 'sanctum')->deleteJson("/api/issues/{$issue->identifier}");
@@ -21,6 +22,7 @@ it('archives an issue and stamps archived_at', function () {
 it('drops an archived issue from the issues list', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $project);
     $issue = (new CreateIssueAction)->handle($project, 'Issue', IssueType::Feature);
 
     $this->actingAs($user, 'sanctum')->deleteJson("/api/issues/{$issue->identifier}")->assertOk();
@@ -34,6 +36,7 @@ it('drops an archived issue from the issues list', function () {
 it('is idempotent and preserves the original archived_at', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $project);
     $issue = (new CreateIssueAction)->handle($project, 'Issue', IssueType::Feature);
     $issue->forceFill(['archived_at' => now()->subDay()])->save();
     $firstArchivedAt = $issue->fresh()->archived_at;

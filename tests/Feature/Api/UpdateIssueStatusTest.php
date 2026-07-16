@@ -11,6 +11,7 @@ use App\Models\User;
 it('updates an issue status and stamps closed_at when done', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $project);
     $issue = (new CreateIssueAction)->handle($project, 'Issue', IssueType::Feature);
 
     $response = $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}/status", [
@@ -25,6 +26,7 @@ it('updates an issue status and stamps closed_at when done', function () {
 it('clears closed_at when moving an issue out of done', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $project);
     $issue = (new CreateIssueAction)->handle($project, 'Issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()])->save();
 
@@ -39,6 +41,7 @@ it('clears closed_at when moving an issue out of done', function () {
 it('rejects an unknown status value', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $project);
     $issue = (new CreateIssueAction)->handle($project, 'Issue', IssueType::Feature);
 
     $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}/status", [

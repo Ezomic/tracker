@@ -7,15 +7,18 @@ namespace App\Http\Controllers;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $counts = $this->statusCounts();
+        $user = $request->user();
+        $counts = $this->statusCounts($user);
 
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -23,23 +26,24 @@ class DashboardController extends Controller
                 'in_progress' => $counts['in_progress'],
                 'in_review' => $counts['in_review'],
                 'done' => $counts['done'],
-                'archived' => Issue::query()->whereNotNull('archived_at')->count(),
+                'archived' => Issue::query()->visibleTo($user)->whereNotNull('archived_at')->count(),
             ],
             'statusBreakdown' => $counts,
-            'activeByProject' => $this->activeByProject(),
-            'recent' => $this->recent(),
-            'stale' => $this->stale(),
-            'inReview' => $this->inReview(),
-            'recentlyCompleted' => $this->recentlyCompleted(),
+            'activeByProject' => $this->activeByProject($user),
+            'recent' => $this->recent($user),
+            'stale' => $this->stale($user),
+            'inReview' => $this->inReview($user),
+            'recentlyCompleted' => $this->recentlyCompleted($user),
         ]);
     }
 
     /**
      * @return array{backlog: int, in_progress: int, in_review: int, done: int}
      */
-    private function statusCounts(): array
+    private function statusCounts(User $user): array
     {
         $count = fn (IssueStatus $status): int => Issue::query()
+            ->visibleTo($user)
             ->notArchived()
             ->where('status', $status->value)
             ->count();
@@ -55,9 +59,10 @@ class DashboardController extends Controller
     /**
      * @return list<array{key: string, name: string, color: string, count: int}>
      */
-    private function activeByProject(): array
+    private function activeByProject(User $user): array
     {
         $rows = Project::query()
+            ->visibleTo($user)
             ->withCount(['issues as active_count' => fn (Builder $query) => $query
                 ->whereNull('archived_at')
                 ->where('status', '!=', IssueStatus::Done->value)])
@@ -79,9 +84,10 @@ class DashboardController extends Controller
     /**
      * @return list<array<string, mixed>>
      */
-    private function recent(): array
+    private function recent(User $user): array
     {
         return array_values(Issue::query()
+            ->visibleTo($user)
             ->notArchived()
             ->with('project')
             ->latest()
@@ -94,9 +100,10 @@ class DashboardController extends Controller
     /**
      * @return list<array<string, mixed>>
      */
-    private function stale(): array
+    private function stale(User $user): array
     {
         return array_values(Issue::query()
+            ->visibleTo($user)
             ->notArchived()
             ->where('status', '!=', IssueStatus::Done->value)
             ->with('project')
@@ -110,9 +117,10 @@ class DashboardController extends Controller
     /**
      * @return list<array<string, mixed>>
      */
-    private function inReview(): array
+    private function inReview(User $user): array
     {
         return array_values(Issue::query()
+            ->visibleTo($user)
             ->notArchived()
             ->where('status', IssueStatus::InReview->value)
             ->with('project')
@@ -126,9 +134,10 @@ class DashboardController extends Controller
     /**
      * @return list<array<string, mixed>>
      */
-    private function recentlyCompleted(): array
+    private function recentlyCompleted(User $user): array
     {
         return array_values(Issue::query()
+            ->visibleTo($user)
             ->where('status', IssueStatus::Done->value)
             ->whereNotNull('closed_at')
             ->where('closed_at', '>=', now()->subDays(7))

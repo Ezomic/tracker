@@ -4,51 +4,60 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateProjectAction;
 use App\Enums\IssueStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProjectsController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('projects/Index', [
-            'projects' => Project::query()
+            'projects' => $request->user()->projects()
                 ->withCount([
                     'issues',
                     'issues as open_count' => fn (Builder $query) => $query
                         ->whereNull('archived_at')
                         ->where('status', '!=', IssueStatus::Done->value),
                 ])
-                ->orderByDesc('is_favorite')
+                ->orderByPivot('is_favorite', 'desc')
                 ->orderBy('key')
                 ->get()
-                ->map(fn (Project $project): array => [
-                    'id' => $project->id,
-                    'key' => $project->key,
-                    'name' => $project->name,
-                    'description' => $project->description,
-                    'color' => $project->color,
-                    'isFavorite' => $project->is_favorite,
-                    'githubRepos' => $project->github_repos ?? [],
-                    'productionUrl' => $project->production_url,
-                    'archiveAfterDays' => $project->archive_after_days,
-                    'links' => $project->links(),
-                    'openCount' => (int) $project->getAttribute('open_count'),
-                    'issuesCount' => (int) $project->getAttribute('issues_count'),
-                    'keyLocked' => (int) $project->getAttribute('issues_count') > 0,
-                ]),
+                ->map(function (Project $project): array {
+                    /** @var Pivot $pivot */
+                    $pivot = $project->getAttribute('pivot');
+
+                    return [
+                        'id' => $project->id,
+                        'key' => $project->key,
+                        'name' => $project->name,
+                        'description' => $project->description,
+                        'color' => $project->color,
+                        'role' => (string) $pivot->getAttribute('role'),
+                        'isFavorite' => (bool) $pivot->getAttribute('is_favorite'),
+                        'githubRepos' => $project->github_repos ?? [],
+                        'productionUrl' => $project->production_url,
+                        'archiveAfterDays' => $project->archive_after_days,
+                        'links' => $project->links(),
+                        'openCount' => (int) $project->getAttribute('open_count'),
+                        'issuesCount' => (int) $project->getAttribute('issues_count'),
+                        'keyLocked' => (int) $project->getAttribute('issues_count') > 0,
+                    ];
+                }),
         ]);
     }
 
-    public function store(StoreProjectRequest $request): RedirectResponse
+    public function store(StoreProjectRequest $request, CreateProjectAction $action): RedirectResponse
     {
-        Project::create($request->validated());
+        $action->handle($request->validated(), $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project created.')]);
 
@@ -57,6 +66,8 @@ class ProjectsController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
+        $this->authorize('update', $project);
+
         $project->update($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project updated.')]);
@@ -64,9 +75,14 @@ class ProjectsController extends Controller
         return to_route('projects.index');
     }
 
-    public function toggleFavorite(Project $project): RedirectResponse
+    public function toggleFavorite(Request $request, Project $project): RedirectResponse
     {
-        $project->forceFill(['is_favorite' => ! $project->is_favorite])->save();
+        $this->authorize('view', $project);
+
+        $member = $request->user()->projects()->find($project->id);
+        $current = $member !== null && (bool) $member->getAttribute('pivot')->getAttribute('is_favorite');
+
+        $request->user()->projects()->updateExistingPivot($project->id, ['is_favorite' => ! $current]);
 
         return back();
     }

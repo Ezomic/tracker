@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ProjectRole;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * @property int $id
@@ -16,13 +20,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property string|null $description
  * @property string $color
- * @property bool $is_favorite
  * @property int|null $archive_after_days
  * @property list<string>|null $github_repos
  * @property string|null $production_url
  * @property int $next_number
  */
-#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'is_favorite', 'archive_after_days'])]
+#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -34,6 +37,49 @@ class Project extends Model
     public function issues(): HasMany
     {
         return $this->hasMany(Issue::class);
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withPivot('role', 'is_favorite')
+            ->withTimestamps();
+    }
+
+    public function owner(): ?User
+    {
+        return $this->members()->wherePivot('role', ProjectRole::Owner->value)->first();
+    }
+
+    public function roleFor(User $user): ?ProjectRole
+    {
+        $member = $this->members()->find($user->id);
+
+        if ($member === null) {
+            return null;
+        }
+
+        /** @var Pivot $pivot */
+        $pivot = $member->getAttribute('pivot');
+
+        return ProjectRole::from((string) $pivot->getAttribute('role'));
+    }
+
+    public function hasMember(User $user): bool
+    {
+        return $this->members()->whereKey($user->id)->exists();
+    }
+
+    /**
+     * @param  Builder<Project>  $query
+     * @return Builder<Project>
+     */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $query->whereHas('members', fn (Builder $members) => $members->whereKey($user->id));
     }
 
     public function hasIssues(): bool
@@ -112,7 +158,6 @@ class Project extends Model
     {
         return [
             'github_repos' => 'array',
-            'is_favorite' => 'boolean',
         ];
     }
 }

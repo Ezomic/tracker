@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Models\Issue;
 use App\Models\Project;
-use App\Models\User;
 
 it('derives branch and commit links from the pull request url', function () {
     $project = Project::factory()->create(['key' => 'THI']);
@@ -13,7 +12,7 @@ it('derives branch and commit links from the pull request url', function () {
         'github_pr_url' => 'https://github.com/Ezomic/tracker/pull/42',
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get("/issues/{$issue->identifier}")
         ->assertInertia(fn ($page) => $page
             ->component('issues/Show')
@@ -33,7 +32,7 @@ it('falls back to the project github_repos when there is no pull request', funct
         'github_pr_url' => null,
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get("/issues/{$issue->identifier}")
         ->assertInertia(fn ($page) => $page
             ->where('issue.branchUrl', 'https://github.com/Ezomic/tracker/tree/feature/THI-2-example')
@@ -48,7 +47,7 @@ it('leaves links null when no repo can be resolved', function () {
         'github_pr_url' => null,
     ]);
 
-    $this->actingAs(User::factory()->create())
+    $this->actingAs(member($project))
         ->get("/issues/{$issue->identifier}")
         ->assertInertia(fn ($page) => $page
             ->where('issue.branchUrl', null)
