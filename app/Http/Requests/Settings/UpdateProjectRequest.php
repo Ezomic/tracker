@@ -1,13 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Settings;
 
+use App\Concerns\NormalizesGithubRepos;
 use App\Models\Project;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProjectRequest extends FormRequest
 {
+    use NormalizesGithubRepos;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,19 +42,5 @@ class UpdateProjectRequest extends FormRequest
                 ? ['prohibited']
                 : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$project->id],
         ];
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $repos = $this->input('github_repos');
-
-        if (is_array($repos)) {
-            $this->merge([
-                'github_repos' => array_values(array_filter(
-                    $repos,
-                    fn (mixed $repo): bool => is_string($repo) && trim($repo) !== '',
-                )),
-            ]);
-        }
     }
 }

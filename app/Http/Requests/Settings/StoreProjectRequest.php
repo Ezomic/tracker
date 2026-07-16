@@ -1,32 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Settings;
 
+use App\Concerns\NormalizesGithubRepos;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProjectRequest extends FormRequest
 {
+    use NormalizesGithubRepos;
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
         return true;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $repos = $this->input('github_repos');
-
-        if (is_array($repos)) {
-            $this->merge([
-                'github_repos' => array_values(array_filter(
-                    $repos,
-                    fn (mixed $repo): bool => is_string($repo) && trim($repo) !== '',
-                )),
-            ]);
-        }
     }
 
     /**
