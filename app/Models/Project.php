@@ -15,11 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $key
  * @property string $name
  * @property string $color
- * @property string|null $github_repo
+ * @property list<string>|null $github_repos
  * @property string|null $production_url
  * @property int $next_number
  */
-#[Fillable(['key', 'name', 'color', 'github_repo', 'production_url'])]
+#[Fillable(['key', 'name', 'color', 'github_repos', 'production_url'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -39,9 +39,20 @@ class Project extends Model
     }
 
     /**
-     * External reference links for this project, each null when unavailable.
+     * The normalised repo base URL (e.g. https://github.com/owner/repo) of the
+     * project's first GitHub repo, or null. Used as a fallback for issue links.
+     */
+    public function primaryRepoBase(): ?string
+    {
+        $repos = $this->github_repos ?? [];
+
+        return $repos === [] ? null : $this->repoBase($repos[0]);
+    }
+
+    /**
+     * External reference links for this project.
      *
-     * @return array{docs: string|null, readme: string|null, production: string|null}
+     * @return array{docs: string|null, production: string|null, repos: list<array{name: string, url: string}>}
      */
     public function links(): array
     {
@@ -51,21 +62,53 @@ class Project extends Model
 
         return [
             'docs' => $production !== null ? $production.'/docs' : null,
-            'readme' => $this->readmeUrl(),
             'production' => $production,
+            'repos' => $this->repoLinks(),
         ];
     }
 
-    private function readmeUrl(): ?string
+    /**
+     * @return list<array{name: string, url: string}>
+     */
+    private function repoLinks(): array
     {
-        if ($this->github_repo === null || $this->github_repo === '') {
-            return null;
+        return array_values(array_map(
+            fn (string $repo): array => [
+                'name' => $this->repoSlug($repo),
+                'url' => $this->repoBase($repo),
+            ],
+            array_filter(
+                $this->github_repos ?? [],
+                fn (string $repo): bool => $repo !== '',
+            ),
+        ));
+    }
+
+    private function repoBase(string $repo): string
+    {
+        return str_starts_with($repo, 'http')
+            ? rtrim($repo, '/')
+            : 'https://github.com/'.trim($repo, '/');
+    }
+
+    private function repoSlug(string $repo): string
+    {
+        if (str_starts_with($repo, 'http')) {
+            $path = trim((string) parse_url($repo, PHP_URL_PATH), '/');
+
+            return $path !== '' ? $path : $repo;
         }
 
-        $base = str_starts_with($this->github_repo, 'http')
-            ? rtrim($this->github_repo, '/')
-            : 'https://github.com/'.trim($this->github_repo, '/');
+        return trim($repo, '/');
+    }
 
-        return $base.'#readme';
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'github_repos' => 'array',
+        ];
     }
 }
