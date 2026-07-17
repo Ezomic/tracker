@@ -15,8 +15,10 @@ use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
+use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use App\Support\Duration;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,6 +44,7 @@ class IssueController extends Controller
                 ->inOrganization($organization)
                 ->notArchived()
                 ->withCount('children')
+                ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
@@ -106,13 +109,21 @@ class IssueController extends Controller
     {
         $this->authorize('view', $issue);
 
-        $issue->load(['project', 'owner', 'assignee', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
+        $issue->load([
+            'project', 'owner', 'assignee', 'parent', 'labels',
+            'children' => fn ($query) => $query->orderBy('number'),
+            'timeEntries' => fn ($query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
+        ]);
+        $issue->loadSum('timeEntries', 'minutes');
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
             'members' => $this->projectMembers($issue->project),
             'epics' => $this->eligibleParents($request->user(), $issue),
             'labels' => Label::query()->forProject($issue->project)->orderBy('name')->get(['id', 'name', 'color']),
+            'canLogTime' => $request->user()->can('update', $issue),
+            'canManageTime' => $request->user()->can('delete', $issue),
+            'currentUserId' => $request->user()->id,
         ]);
     }
 
@@ -120,8 +131,12 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $issue->update($request->safe()->except('labels'));
+        $issue->update($request->safe()->except(['labels', 'estimate']));
         $issue->labels()->sync($request->validated('labels', []));
+
+        if ($request->has('estimate')) {
+            $issue->forceFill(['estimate_minutes' => Duration::toMinutes($request->validated('estimate'))])->save();
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue updated.')]);
 
@@ -142,6 +157,7 @@ class IssueController extends Controller
                 ->inOrganization($current->for($request->user()))
                 ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
                 ->withCount('children')
+                ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->latest()
@@ -255,6 +271,8 @@ class IssueController extends Controller
             'identifier' => $issue->identifier,
             'title' => $issue->title,
             'description' => $issue->description,
+            'estimateMinutes' => $issue->estimate_minutes,
+            'loggedMinutes' => (int) ($issue->getAttribute('time_entries_sum_minutes') ?? 0),
             'type' => $issue->type->value,
             'priority' => $issue->priority->value,
             'status' => $issue->status->value,
@@ -286,6 +304,13 @@ class IssueController extends Controller
                 'id' => $label->id,
                 'name' => $label->name,
                 'color' => $label->color->value,
+            ])->all() : [],
+            'timeEntries' => $issue->relationLoaded('timeEntries') ? $issue->timeEntries->map(fn (TimeEntry $entry) => [
+                'id' => $entry->id,
+                'minutes' => $entry->minutes,
+                'note' => $entry->note,
+                'spentOn' => $entry->spent_on->toDateString(),
+                'user' => $this->serializeUser($entry->relationLoaded('user') ? $entry->user : null),
             ])->all() : [],
         ];
     }

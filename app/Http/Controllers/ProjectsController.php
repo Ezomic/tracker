@@ -30,6 +30,7 @@ class ProjectsController extends Controller
                         ->whereNull('archived_at')
                         ->where('status', '!=', IssueStatus::Done->value),
                 ])
+                ->withSum('timeEntries', 'minutes')
                 ->orderByPivot('is_favorite', 'desc')
                 ->orderBy('key')
                 ->get()
@@ -51,6 +52,7 @@ class ProjectsController extends Controller
                         'links' => $project->links(),
                         'openCount' => (int) $project->getAttribute('open_count'),
                         'issuesCount' => (int) $project->getAttribute('issues_count'),
+                        'loggedMinutes' => (int) ($project->getAttribute('time_entries_sum_minutes') ?? 0),
                         'keyLocked' => (int) $project->getAttribute('issues_count') > 0,
                     ];
                 }),
