@@ -62,6 +62,24 @@ it('renders the issue detail page', function () {
         );
 });
 
+it('keeps the description when it is resubmitted with an unrelated change', function () {
+    $team = Project::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature, 'A meaningful description');
+
+    $this->actingAs(member($team))
+        ->patch("/issues/{$issue->identifier}", [
+            'title' => 'An issue',
+            'type' => 'feature',
+            'priority' => 'high',
+            'description' => 'A meaningful description',
+        ])
+        ->assertRedirect("/issues/{$issue->identifier}");
+
+    expect($issue->fresh())
+        ->description->toBe('A meaningful description')
+        ->priority->toBe(IssuePriority::High);
+});
+
 it('updates an issue title, type, priority, and description', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'Original title', IssueType::Feature);
