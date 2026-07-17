@@ -2,7 +2,9 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Mail } from '@lucide/vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
+import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
+import { register } from '@/routes';
 import { create as createLoginCode } from '@/routes/login/code';
 import { redirect as ssoRedirect } from '@/routes/sso';
 
@@ -43,4 +45,9 @@ defineProps<{
     </div>
 
     <PasskeyVerify />
+
+    <div class="mt-4 space-x-1 text-center text-sm text-muted-foreground">
+        <span>New here?</span>
+        <TextLink :href="register()">Create an account</TextLink>
+    </div>
 </template>
