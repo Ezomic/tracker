@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\StoreRegistrationRequest;
 use App\Mail\LoginCodeMail;
 use App\Models\User;
 use App\Services\OneTimeCodeService;
+use App\Services\PersonalOrganization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -18,7 +19,10 @@ use Inertia\Response;
 
 class RegisterController extends Controller
 {
-    public function __construct(private readonly OneTimeCodeService $codes) {}
+    public function __construct(
+        private readonly OneTimeCodeService $codes,
+        private readonly PersonalOrganization $organizations,
+    ) {}
 
     public function create(Request $request): Response
     {
@@ -36,10 +40,13 @@ class RegisterController extends Controller
         // always issue a code and land on the verify screen, so an existing
         // email simply logs in instead of leaking that it is taken.
         if (! User::query()->where('email', $email)->exists()) {
-            User::create([
+            $user = User::create([
                 'name' => $request->validated('name'),
                 'email' => $email,
             ]);
+
+            // Everyone needs somewhere to put their projects.
+            $this->organizations->create($user);
         }
 
         $code = $this->codes->issue("login-code:{$email}");

@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * @property int $id
+ * @property int|null $organization_id
  * @property string $key
  * @property string $name
  * @property string|null $description
@@ -30,6 +32,14 @@ class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
+
+    /**
+     * @return BelongsTo<Organization, $this>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
 
     /**
      * @return HasMany<Issue, $this>
@@ -106,6 +116,23 @@ class Project extends Model
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         return $query->whereHas('members', fn (Builder $members) => $members->whereKey($user->id));
+    }
+
+    /**
+     * Narrow a listing to the organization being viewed. Membership remains the
+     * security boundary; this is which workspace you are looking at.
+     *
+     * @param  Builder<Project>  $query
+     * @return Builder<Project>
+     */
+    public function scopeInOrganization(Builder $query, ?Organization $organization): Builder
+    {
+        // No organization in play (a user who predates one, or has none yet):
+        // filter nothing rather than matching organization_id = null, which
+        // would silently surface unfiled projects.
+        return $organization === null
+            ? $query
+            : $query->where('projects.organization_id', $organization->id);
     }
 
     public function hasIssues(): bool

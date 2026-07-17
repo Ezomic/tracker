@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueTemplateController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
@@ -16,6 +17,9 @@ Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::put('organizations/{organization:slug}/switch', [OrganizationController::class, 'switch'])
+        ->name('organizations.switch');
 
     Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index');
     Route::post('projects', [ProjectsController::class, 'store'])->name('projects.store');

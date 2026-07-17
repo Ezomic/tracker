@@ -6,7 +6,9 @@ namespace App\Http\Middleware;
 
 use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Services\CurrentOrganization;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -41,14 +43,33 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $organization = $request->user() === null
+            ? null
+            : app(CurrentOrganization::class)->for($request->user());
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'currentOrganization' => $organization === null ? null : [
+                'id' => $organization->id,
+                'name' => $organization->name,
+                'slug' => $organization->slug,
+            ],
+            'organizations' => fn () => $request->user() === null ? [] : $request->user()
+                ->organizations()
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Organization $each) => [
+                    'id' => $each->id,
+                    'name' => $each->name,
+                    'slug' => $each->slug,
+                ]),
             'sidebarProjects' => fn () => $request->user()
                 ? $request->user()->projects()
+                    ->inOrganization($organization)
                     ->wherePivot('is_favorite', true)
                     ->select(['projects.id', 'key', 'name', 'color'])
                     ->withCount([
@@ -76,6 +97,7 @@ class HandleInertiaRequests extends Middleware
             // modal (which can be opened from any page).
             'newIssueProjects' => fn () => $request->user()
                 ? $request->user()->projects()
+                    ->inOrganization($organization)
                     ->select(['projects.id', 'key', 'name'])
                     ->orderBy('key')
                     ->get()
