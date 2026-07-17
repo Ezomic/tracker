@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+import { FolderPlus } from '@lucide/vue';
 import { computed } from 'vue';
 import DashboardTicketList from '@/components/DashboardTicketList.vue';
 import DonutChart from '@/components/DonutChart.vue';
+import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
+import { index as projectsIndex } from '@/routes/projects';
 import type {
     ActiveByProject,
     DashboardRow,
@@ -14,6 +17,7 @@ import type {
 const props = defineProps<{
     stats: DashboardStats;
     statusBreakdown: StatusBreakdown;
+    hasProjects: boolean;
     activeByProject: ActiveByProject[];
     recent: DashboardRow[];
     stale: DashboardRow[];
@@ -62,7 +66,29 @@ const statusMax = computed(() =>
 <template>
     <Head title="Dashboard" />
 
-    <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <div
+        v-if="!hasProjects"
+        class="flex h-full flex-1 flex-col items-center justify-center gap-4 p-8 text-center"
+    >
+        <div class="rounded-full bg-muted p-4">
+            <FolderPlus class="size-8 text-muted-foreground" />
+        </div>
+        <div class="space-y-1">
+            <h2 class="text-lg font-medium">Welcome aboard</h2>
+            <p class="max-w-sm text-sm text-muted-foreground">
+                Create your first project to start tracking issues. You can
+                invite people to it once it exists.
+            </p>
+        </div>
+        <Button as-child>
+            <Link :href="projectsIndex()">
+                <FolderPlus class="size-4" />
+                Create your first project
+            </Link>
+        </Button>
+    </div>
+
+    <div v-else class="flex h-full flex-1 flex-col gap-4 p-4">
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             <div
                 v-for="tile in statTiles"
