@@ -3,6 +3,7 @@ import { Form, Head, Link } from '@inertiajs/vue3';
 import { GitBranch, GitCommit, GitPullRequest } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
+import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -122,11 +123,11 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     >
                         Description
                     </Label>
-                    <textarea
+                    <AutoTextarea
                         id="description"
                         v-model="description"
                         name="description"
-                        rows="6"
+                        rows="3"
                         placeholder="Add a description…"
                         class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                     />
