@@ -6,8 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\CurrentOrganization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,9 +17,12 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): Response
+    private ?Organization $organization = null;
+
+    public function index(Request $request, CurrentOrganization $current): Response
     {
         $user = $request->user();
+        $this->organization = $current->for($user);
         $counts = $this->statusCounts($user);
 
         return Inertia::render('Dashboard', [
@@ -26,7 +31,7 @@ class DashboardController extends Controller
                 'in_progress' => $counts['in_progress'],
                 'in_review' => $counts['in_review'],
                 'done' => $counts['done'],
-                'archived' => Issue::query()->visibleTo($user)->whereNotNull('archived_at')->count(),
+                'archived' => Issue::query()->visibleTo($user)->inOrganization($this->organization)->whereNotNull('archived_at')->count(),
             ],
             'statusBreakdown' => $counts,
             'hasProjects' => $user->projects()->exists(),
@@ -44,7 +49,7 @@ class DashboardController extends Controller
     private function statusCounts(User $user): array
     {
         $count = fn (IssueStatus $status): int => Issue::query()
-            ->visibleTo($user)
+            ->visibleTo($user)->inOrganization($this->organization)
             ->notArchived()
             ->where('status', $status->value)
             ->count();
@@ -63,7 +68,7 @@ class DashboardController extends Controller
     private function activeByProject(User $user): array
     {
         $rows = Project::query()
-            ->visibleTo($user)
+            ->visibleTo($user)->inOrganization($this->organization)
             ->withCount(['issues as active_count' => fn (Builder $query) => $query
                 ->whereNull('archived_at')
                 ->where('status', '!=', IssueStatus::Done->value)])
@@ -88,7 +93,7 @@ class DashboardController extends Controller
     private function recent(User $user): array
     {
         return array_values(Issue::query()
-            ->visibleTo($user)
+            ->visibleTo($user)->inOrganization($this->organization)
             ->notArchived()
             ->with('project')
             ->latest()
@@ -104,7 +109,7 @@ class DashboardController extends Controller
     private function stale(User $user): array
     {
         return array_values(Issue::query()
-            ->visibleTo($user)
+            ->visibleTo($user)->inOrganization($this->organization)
             ->notArchived()
             ->where('status', '!=', IssueStatus::Done->value)
             ->with('project')
@@ -121,7 +126,7 @@ class DashboardController extends Controller
     private function inReview(User $user): array
     {
         return array_values(Issue::query()
-            ->visibleTo($user)
+            ->visibleTo($user)->inOrganization($this->organization)
             ->notArchived()
             ->where('status', IssueStatus::InReview->value)
             ->with('project')
@@ -138,7 +143,7 @@ class DashboardController extends Controller
     private function recentlyCompleted(User $user): array
     {
         return array_values(Issue::query()
-            ->visibleTo($user)
+            ->visibleTo($user)->inOrganization($this->organization)
             ->where('status', IssueStatus::Done->value)
             ->whereNotNull('closed_at')
             ->where('closed_at', '>=', now()->subDays(7))

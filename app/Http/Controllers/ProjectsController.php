@@ -9,6 +9,7 @@ use App\Enums\IssueStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
+use App\Services\CurrentOrganization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\RedirectResponse;
@@ -18,10 +19,11 @@ use Inertia\Response;
 
 class ProjectsController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, CurrentOrganization $current): Response
     {
         return Inertia::render('projects/Index', [
             'projects' => $request->user()->projects()
+                ->inOrganization($current->for($request->user()))
                 ->withCount([
                     'issues',
                     'issues as open_count' => fn (Builder $query) => $query
@@ -55,9 +57,9 @@ class ProjectsController extends Controller
         ]);
     }
 
-    public function store(StoreProjectRequest $request, CreateProjectAction $action): RedirectResponse
+    public function store(StoreProjectRequest $request, CreateProjectAction $action, CurrentOrganization $current): RedirectResponse
     {
-        $action->handle($request->validated(), $request->user());
+        $action->handle($request->validated(), $request->user(), $current->for($request->user()));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project created.')]);
 

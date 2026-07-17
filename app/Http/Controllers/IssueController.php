@@ -16,6 +16,7 @@ use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\CurrentOrganization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,9 +25,10 @@ use Inertia\Response;
 
 class IssueController extends Controller
 {
-    public function index(FilterIssuesRequest $request, ?Project $project = null): Response
+    public function index(FilterIssuesRequest $request, CurrentOrganization $current, ?Project $project = null): Response
     {
         $user = $request->user();
+        $organization = $current->for($user);
         $filters = $request->validated();
 
         if ($project !== null) {
@@ -37,6 +39,7 @@ class IssueController extends Controller
         return Inertia::render('issues/Index', [
             'issues' => Issue::query()
                 ->visibleTo($user)
+                ->inOrganization($organization)
                 ->notArchived()
                 ->withCount('children')
                 ->with(['project', 'labels', 'assignee'])
@@ -52,6 +55,7 @@ class IssueController extends Controller
                 ->map($this->serialize(...)),
             'projects' => Project::query()
                 ->visibleTo($user)
+                ->inOrganization($organization)
                 ->orderBy('key')
                 ->get()
                 ->map(fn (Project $project) => [
@@ -124,7 +128,7 @@ class IssueController extends Controller
         return to_route('issues.show', $issue);
     }
 
-    public function board(Request $request, ?Project $project = null): Response
+    public function board(Request $request, CurrentOrganization $current, ?Project $project = null): Response
     {
         if ($project !== null) {
             $this->authorize('view', $project);
@@ -133,6 +137,7 @@ class IssueController extends Controller
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
                 ->visibleTo($request->user())
+                ->inOrganization($current->for($request->user()))
                 ->notArchived()
                 ->withCount('children')
                 ->with(['project', 'labels', 'assignee'])
