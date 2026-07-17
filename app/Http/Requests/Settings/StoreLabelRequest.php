@@ -27,7 +27,13 @@ class StoreLabelRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:50', 'unique:labels,name'],
+            // Unique within the owner's own labels, not globally.
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('labels', 'name')->where('user_id', $this->user()->id),
+            ],
             'color' => ['required', Rule::enum(LabelColor::class)],
         ];
     }

@@ -46,9 +46,10 @@ it('forbids a non-member from viewing templates', function () {
 
 it('creates a template with defaults and labels', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    $label = Label::factory()->create();
+    $owner = member($project);
+    $label = Label::factory()->for($owner)->create();
 
-    $this->actingAs(member($project))
+    $this->actingAs($owner)
         ->post('/projects/THI/templates', [
             'name' => 'Bug report',
             'description' => "## Steps\n## Expected",
@@ -202,14 +203,15 @@ it('forbids a non-member from fetching template options', function () {
 
 it('applies a template priority and labels when filing an issue', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    $label = Label::factory()->create();
+    $owner = member($project);
+    $label = Label::factory()->for($owner)->create();
     $template = IssueTemplate::factory()->for($project)->create([
         'type' => IssueType::Fix,
         'priority' => IssuePriority::High,
     ]);
     $template->labels()->attach($label);
 
-    $this->actingAs(member($project))->post('/issues', [
+    $this->actingAs($owner)->post('/issues', [
         'project_id' => $project->id,
         'title' => 'Filed from a template',
         'type' => 'fix',

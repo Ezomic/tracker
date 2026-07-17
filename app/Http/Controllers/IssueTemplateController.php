@@ -31,7 +31,7 @@ class IssueTemplateController extends Controller
             // Templates from the user's other projects, offered as a starting
             // point so a Bug template needn't be retyped per project.
             'copyable' => $this->copyable($request, $project),
-            'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
+            'labels' => Label::query()->forProject($project)->orderBy('name')->get(['id', 'name', 'color']),
             'canManage' => $request->user()->can('update', $project),
         ]);
     }

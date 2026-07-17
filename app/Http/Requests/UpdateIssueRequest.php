@@ -75,7 +75,11 @@ class UpdateIssueRequest extends FormRequest
                 },
             ],
             'labels' => ['array'],
-            'labels.*' => ['integer', 'exists:labels,id'],
+            'labels.*' => [
+                'integer',
+                // Only the project's own label set — not any id in the table.
+                Rule::exists('labels', 'id')->where('user_id', $issue->project->ownerId()),
+            ],
         ];
     }
 }
