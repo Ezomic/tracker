@@ -11,11 +11,11 @@ class LabelPolicy
 {
     public function update(User $user, Label $label): bool
     {
-        return $label->user_id === $user->id;
+        return $label->organization?->roleFor($user)?->manages() ?? false;
     }
 
     public function delete(User $user, Label $label): bool
     {
-        return $label->user_id === $user->id;
+        return $label->organization?->roleFor($user)?->manages() ?? false;
     }
 }

@@ -9,6 +9,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { index as indexLabels } from '@/routes/labels';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { index as indexTemplates } from '@/routes/templates';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
@@ -27,6 +28,10 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Labels',
         href: indexLabels(),
+    },
+    {
+        title: 'Templates',
+        href: indexTemplates(),
     },
 ];
 

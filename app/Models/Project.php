@@ -50,14 +50,6 @@ class Project extends Model
     }
 
     /**
-     * @return HasMany<IssueTemplate, $this>
-     */
-    public function issueTemplates(): HasMany
-    {
-        return $this->hasMany(IssueTemplate::class);
-    }
-
-    /**
      * @return HasMany<Invitation, $this>
      */
     public function invitations(): HasMany

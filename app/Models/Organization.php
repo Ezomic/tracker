@@ -34,6 +34,22 @@ class Organization extends Model
     }
 
     /**
+     * @return HasMany<IssueTemplate, $this>
+     */
+    public function issueTemplates(): HasMany
+    {
+        return $this->hasMany(IssueTemplate::class);
+    }
+
+    /**
+     * @return HasMany<Label, $this>
+     */
+    public function labels(): HasMany
+    {
+        return $this->hasMany(Label::class);
+    }
+
+    /**
      * @return BelongsToMany<User, $this>
      */
     public function members(): BelongsToMany

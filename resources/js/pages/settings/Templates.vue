@@ -16,21 +16,18 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { index as projectsIndex } from '@/routes/projects';
-import { destroy as destroyTemplate } from '@/routes/projects/templates';
-import type { CopyableIssueTemplate, IssueLabel, IssueTemplate } from '@/types';
+import { destroy as destroyTemplate, index } from '@/routes/templates';
+import type { IssueLabel, IssueTemplate } from '@/types';
 
 const props = defineProps<{
-    project: { key: string; name: string };
     templates: IssueTemplate[];
-    copyable: CopyableIssueTemplate[];
     labels: IssueLabel[];
     canManage: boolean;
 }>();
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: 'Projects', href: projectsIndex() }],
+        breadcrumbs: [{ title: 'Templates', href: index() }],
     },
 });
 
@@ -55,30 +52,26 @@ function remove() {
         return;
     }
 
-    router.delete(
-        destroyTemplate({
-            project: props.project.key,
-            template: deleting.value.id,
-        }).url,
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                deleting.value = null;
-            },
+    router.delete(destroyTemplate({ template: deleting.value.id }).url, {
+        preserveScroll: true,
+        onFinish: () => {
+            deleting.value = null;
         },
-    );
+    });
 }
 </script>
 
 <template>
-    <Head :title="`${project.name} templates`" />
+    <Head title="Templates" />
 
-    <div class="flex flex-col gap-4 p-4">
+    <h1 class="sr-only">Templates</h1>
+
+    <div class="flex flex-col space-y-6">
         <div class="flex items-start justify-between gap-4">
             <Heading
                 variant="small"
-                :title="`${project.name} templates`"
-                description="Starting points for new issues in this project"
+                title="Templates"
+                description="Starting points for new issues, shared across every project in this organization"
             />
 
             <Button
@@ -168,16 +161,13 @@ function remove() {
     <IssueTemplateDialog
         v-if="canManage"
         v-model:open="createOpen"
-        :project-key="project.key"
         :labels="labels"
-        :copyable="copyable"
     />
 
     <IssueTemplateDialog
         v-if="canManage && editing"
         :key="editing.id"
         :open="true"
-        :project-key="project.key"
         :labels="labels"
         :template="editing"
         @update:open="(value) => !value && (editing = null)"

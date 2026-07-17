@@ -69,7 +69,3 @@ export interface IssueTemplate {
     priority: Issue['priority'] | null;
     labelIds: number[];
 }
-
-export interface CopyableIssueTemplate extends IssueTemplate {
-    projectKey: string;
-}

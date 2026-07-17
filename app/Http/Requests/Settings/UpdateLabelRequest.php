@@ -36,7 +36,7 @@ class UpdateLabelRequest extends FormRequest
                 'string',
                 'max:50',
                 Rule::unique('labels', 'name')
-                    ->where('user_id', $this->user()->id)
+                    ->where('organization_id', $label->organization_id)
                     ->ignore($label->id),
             ],
             'color' => ['required', Rule::enum(LabelColor::class)],
