@@ -1,12 +1,17 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Landing')->name('home');
+
+// Public: the accept flow handles guests by sending them to log in or register first.
+Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -23,6 +28,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('projects.members.update');
     Route::delete('projects/{project:key}/members/{user}', [ProjectMemberController::class, 'destroy'])
         ->name('projects.members.destroy');
+
+    Route::post('projects/{project:key}/invitations', [ProjectInvitationController::class, 'store'])
+        ->name('projects.invitations.store');
+    Route::post('projects/{project:key}/invitations/{invitation}/resend', [ProjectInvitationController::class, 'resend'])
+        ->name('projects.invitations.resend');
+    Route::delete('projects/{project:key}/invitations/{invitation}', [ProjectInvitationController::class, 'destroy'])
+        ->name('projects.invitations.destroy');
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');
