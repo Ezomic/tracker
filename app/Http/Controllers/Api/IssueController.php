@@ -13,8 +13,10 @@ use App\Http\Requests\UpdateIssueParentRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class IssueController extends Controller
 {
@@ -24,7 +26,7 @@ class IssueController extends Controller
             'project' => ['sometimes', 'string', 'exists:projects,key'],
         ]);
 
-        $query = Issue::query()->visibleTo($request->user())->notArchived()->with(['project', 'parent']);
+        $query = Issue::query()->visibleTo($request->user())->notArchived()->with(['project', 'parent', 'owner', 'assignee']);
 
         if (isset($validated['project'])) {
             $query->whereRelation('project', 'key', $validated['project']);
@@ -39,7 +41,7 @@ class IssueController extends Controller
     {
         $this->authorize('view', $issue);
 
-        return response()->json($this->detail($issue->load(['project', 'parent'])));
+        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee'])));
     }
 
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
@@ -54,6 +56,8 @@ class IssueController extends Controller
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description'),
             parent: $this->resolveParent($request->validated('parent')),
+            owner: $request->user(),
+            assignee: $this->resolveAssignee($request->validated('assignee')),
         );
 
         return response()->json($this->payload($issue), 201);
@@ -106,6 +110,13 @@ class IssueController extends Controller
             : null;
     }
 
+    private function resolveAssignee(?string $email): ?User
+    {
+        return $email !== null
+            ? User::query()->where('email', Str::lower($email))->first()
+            : null;
+    }
+
     /**
      * @return array<string, string|null>
      */
@@ -116,6 +127,8 @@ class IssueController extends Controller
             'url' => url("/issues/{$issue->identifier}"),
             'branch_name' => $issue->branch_name,
             'parent' => $issue->parent?->identifier,
+            'owner' => $issue->owner?->email,
+            'assignee' => $issue->assignee?->email,
         ];
     }
 
@@ -155,6 +168,8 @@ class IssueController extends Controller
             'branch_name' => $issue->branch_name,
             'github_pr_url' => $issue->github_pr_url,
             'project' => $issue->project->key,
+            'owner' => $issue->owner?->email,
+            'assignee' => $issue->assignee?->email,
             'parent' => $issue->parent?->identifier,
             'url' => url("/issues/{$issue->identifier}"),
             'created_at' => $issue->created_at?->toIso8601String(),

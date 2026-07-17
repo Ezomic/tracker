@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\Issue;
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,10 @@ class UpdateIssueRequest extends FormRequest
     {
         if ($this->input('parent_id') === '') {
             $this->merge(['parent_id' => null]);
+        }
+
+        if ($this->input('assignee_id') === '') {
+            $this->merge(['assignee_id' => null]);
         }
     }
 
@@ -55,6 +60,17 @@ class UpdateIssueRequest extends FormRequest
 
                     if ($issue->children()->exists()) {
                         $fail('An issue with sub-issues cannot itself be assigned to an epic.');
+                    }
+                },
+            ],
+            'assignee_id' => [
+                'nullable',
+                'integer',
+                function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
+                    $user = User::query()->whereKey((int) $value)->first();
+
+                    if ($user === null || ! $issue->project->hasMember($user)) {
+                        $fail('The assignee must be a member of this project.');
                     }
                 },
             ],

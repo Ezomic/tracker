@@ -20,6 +20,8 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $project_id
+ * @property int|null $owner_id
+ * @property int|null $assignee_id
  * @property int|null $parent_id
  * @property int $number
  * @property string $identifier
@@ -34,7 +36,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
  */
-#[Fillable(['title', 'description', 'type', 'priority', 'parent_id'])]
+// owner_id is deliberately not fillable: it is stamped once, at creation.
+#[Fillable(['title', 'description', 'type', 'priority', 'parent_id', 'assignee_id'])]
 class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
@@ -46,6 +49,24 @@ class Issue extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * The reporter — stamped when the issue is filed.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assignee_id');
     }
 
     /**
