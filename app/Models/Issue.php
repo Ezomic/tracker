@@ -119,6 +119,19 @@ class Issue extends Model
     }
 
     /**
+     * Narrow a listing to the organization being viewed.
+     *
+     * @param  Builder<Issue>  $query
+     * @return Builder<Issue>
+     */
+    public function scopeInOrganization(Builder $query, ?Organization $organization): Builder
+    {
+        return $organization === null
+            ? $query
+            : $query->whereHas('project', fn (Builder $project) => $project->where('organization_id', $organization->id));
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

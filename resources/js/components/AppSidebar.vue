@@ -14,6 +14,7 @@ import NavMain from '@/components/NavMain.vue';
 import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
 import NewIssueDialog from '@/components/NewIssueDialog.vue';
+import OrganizationSwitcher from '@/components/OrganizationSwitcher.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -77,6 +78,9 @@ const mainNavItems: NavItem[] = [
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <OrganizationSwitcher />
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton

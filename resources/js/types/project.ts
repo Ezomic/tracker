@@ -56,3 +56,9 @@ export interface Project {
     issuesCount: number;
     keyLocked: boolean;
 }
+
+export interface OrganizationSummary {
+    id: number;
+    name: string;
+    slug: string;
+}

@@ -37,6 +37,16 @@ class User extends Authenticatable implements PasskeyUser
     use HasApiTokens, HasFactory, Notifiable, PasskeyAuthenticatable;
 
     /**
+     * @return BelongsToMany<Organization, $this>
+     */
+    public function organizations(): BelongsToMany
+    {
+        return $this->belongsToMany(Organization::class)
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
      * Labels this user owns. Becomes an organization relation later.
      *
      * @return HasMany<Label, $this>
