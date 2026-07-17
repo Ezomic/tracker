@@ -10,6 +10,7 @@ use App\Models\Label;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -33,6 +34,19 @@ class IssueTemplateController extends Controller
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
             'canManage' => $request->user()->can('update', $project),
         ]);
+    }
+
+    /**
+     * The project's templates as JSON, fetched when the new-issue picker needs
+     * them. Bodies are too big to ship as a shared prop on every page load.
+     */
+    public function options(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        return response()->json(
+            $this->serializeMany($project->issueTemplates()->with('labels')->orderBy('name')->get())
+        );
     }
 
     public function store(StoreIssueTemplateRequest $request, Project $project): RedirectResponse

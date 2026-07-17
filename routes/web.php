@@ -39,6 +39,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('projects/{project:key}/templates', [IssueTemplateController::class, 'index'])
         ->name('projects.templates.index');
+    Route::get('projects/{project:key}/template-options', [IssueTemplateController::class, 'options'])
+        ->name('projects.templates.options');
     Route::post('projects/{project:key}/templates', [IssueTemplateController::class, 'store'])
         ->name('projects.templates.store');
     Route::patch('projects/{project:key}/templates/{template}', [IssueTemplateController::class, 'update'])
