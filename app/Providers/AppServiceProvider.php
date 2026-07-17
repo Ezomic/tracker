@@ -21,6 +21,14 @@ class AppServiceProvider extends ServiceProvider
         // on the passkey routes. The EnsureEmailConfirmed middleware re-gates
         // them with an email-code re-auth instead.
         config(['fortify-options.passkeys.confirmPassword' => false]);
+
+        // Pin the product name in code so it no longer depends on the server's
+        // APP_NAME (which shipped as "Laravel"). Covers the shared Inertia name
+        // prop and the outgoing mail "from" name.
+        config([
+            'app.name' => 'Tracker',
+            'mail.from.name' => 'Tracker',
+        ]);
     }
 
     /**
