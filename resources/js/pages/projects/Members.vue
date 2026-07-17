@@ -136,7 +136,11 @@ const canManageMember = (member: ProjectMember) =>
 
             <Dialog v-if="canManage" v-model:open="addOpen">
                 <DialogTrigger as-child>
-                    <Button size="sm" class="shrink-0" :disabled="!hasAssignable">
+                    <Button
+                        size="sm"
+                        class="shrink-0"
+                        :disabled="!hasAssignable"
+                    >
                         <UserPlus />
                         Add member
                     </Button>
@@ -147,7 +151,9 @@ const canManageMember = (member: ProjectMember) =>
                         <DialogDescription>
                             Grant an organization member access to this project.
                             Invite new people from
-                            <span class="font-medium">Settings &rarr; Members</span>.
+                            <span class="font-medium"
+                                >Settings &rarr; Members</span
+                            >.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -156,7 +162,9 @@ const canManageMember = (member: ProjectMember) =>
                             <Label>Member</Label>
                             <Select v-model="addUserId">
                                 <SelectTrigger class="w-full">
-                                    <SelectValue placeholder="Select a member" />
+                                    <SelectValue
+                                        placeholder="Select a member"
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem

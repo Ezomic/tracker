@@ -187,7 +187,9 @@ function remove() {
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Invite to {{ organization.name }}</DialogTitle>
+                        <DialogTitle
+                            >Invite to {{ organization.name }}</DialogTitle
+                        >
                         <DialogDescription>
                             We'll email a link to join. It expires in 7 days.
                         </DialogDescription>
@@ -218,7 +220,8 @@ function remove() {
                                         organization
                                     </SelectItem>
                                     <SelectItem value="guest">
-                                        Guest &mdash; only the projects you grant
+                                        Guest &mdash; only the projects you
+                                        grant
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
