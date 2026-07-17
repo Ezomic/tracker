@@ -27,16 +27,13 @@ import {
 import {
     store as storeTemplate,
     update as updateTemplate,
-} from '@/routes/projects/templates';
-import type { CopyableIssueTemplate, IssueLabel, IssueTemplate } from '@/types';
+} from '@/routes/templates';
+import type { IssueLabel, IssueTemplate } from '@/types';
 
 const props = defineProps<{
-    projectKey: string;
     labels: IssueLabel[];
     // Present when editing; absent when creating.
     template?: IssueTemplate | null;
-    // Only offered when creating, as a starting point.
-    copyable?: CopyableIssueTemplate[];
 }>();
 
 const open = defineModel<boolean>('open', { default: false });
@@ -47,27 +44,19 @@ const type = ref('none');
 const priority = ref('none');
 const labelIds = ref<number[]>([]);
 
-function fill(source: IssueTemplate | null | undefined) {
-    name.value = source?.name ?? '';
-    description.value = source?.description ?? '';
-    type.value = source?.type ?? 'none';
-    priority.value = source?.priority ?? 'none';
-    labelIds.value = [...(source?.labelIds ?? [])];
-}
-
-// Reset from the template each time it opens, so a cancelled edit doesn't
-// leak into the next one.
-watch(open, (isOpen) => isOpen && fill(props.template));
-
-function copyFrom(id: string) {
-    const source = props.copyable?.find((item) => String(item.id) === id);
-
-    if (source) {
-        // Keep the copied name out of it — names are unique per project and
-        // the user is likely to want their own anyway.
-        fill({ ...source, name: name.value });
+// Reset from the template each time it opens, so a cancelled edit doesn't leak
+// into the next one.
+watch(open, (isOpen) => {
+    if (!isOpen) {
+        return;
     }
-}
+
+    name.value = props.template?.name ?? '';
+    description.value = props.template?.description ?? '';
+    type.value = props.template?.type ?? 'none';
+    priority.value = props.template?.priority ?? 'none';
+    labelIds.value = [...(props.template?.labelIds ?? [])];
+});
 
 function toggleLabel(id: number, checked: boolean) {
     labelIds.value = checked
@@ -82,11 +71,8 @@ function toggleLabel(id: number, checked: boolean) {
             <Form
                 v-bind="
                     template
-                        ? updateTemplate.form({
-                              project: projectKey,
-                              template: template.id,
-                          })
-                        : storeTemplate.form({ project: projectKey })
+                        ? updateTemplate.form({ template: template.id })
+                        : storeTemplate.form()
                 "
                 :options="{ preserveScroll: true }"
                 class="space-y-5"
@@ -98,33 +84,10 @@ function toggleLabel(id: number, checked: boolean) {
                         {{ template ? 'Edit template' : 'New template' }}
                     </DialogTitle>
                     <DialogDescription>
-                        A starting point for new issues in this project.
-                        Everyone on the project can use it.
+                        A starting point for new issues, available across every
+                        project in this organization.
                     </DialogDescription>
                 </DialogHeader>
-
-                <div
-                    v-if="!template && copyable && copyable.length > 0"
-                    class="grid gap-2"
-                >
-                    <Label for="copy-from"
-                        >Start from an existing template</Label
-                    >
-                    <Select @update:model-value="(v) => copyFrom(v as string)">
-                        <SelectTrigger id="copy-from" class="w-full">
-                            <SelectValue placeholder="Blank" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="item in copyable"
-                                :key="item.id"
-                                :value="String(item.id)"
-                            >
-                                {{ item.projectKey }} — {{ item.name }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
 
                 <div class="grid gap-2">
                     <Label for="template-name">Name</Label>

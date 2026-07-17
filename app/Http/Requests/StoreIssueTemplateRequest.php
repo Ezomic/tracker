@@ -7,7 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\IssueTemplate;
-use App\Models\Project;
+use App\Services\CurrentOrganization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,8 +32,7 @@ class StoreIssueTemplateRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Project $project */
-        $project = $this->route('project');
+        $organizationId = app(CurrentOrganization::class)->for($this->user())?->id;
 
         /** @var IssueTemplate|null $template */
         $template = $this->route('template');
@@ -44,7 +43,7 @@ class StoreIssueTemplateRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('issue_templates', 'name')
-                    ->where('project_id', $project->id)
+                    ->where('organization_id', $organizationId)
                     ->ignore($template?->id),
             ],
             'description' => ['nullable', 'string', 'max:5000'],
@@ -53,7 +52,7 @@ class StoreIssueTemplateRequest extends FormRequest
             'labels' => ['array'],
             'labels.*' => [
                 'integer',
-                Rule::exists('labels', 'id')->where('user_id', $project->ownerId()),
+                Rule::exists('labels', 'id')->where('organization_id', $organizationId),
             ],
         ];
     }

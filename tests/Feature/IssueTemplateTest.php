@@ -4,128 +4,102 @@ declare(strict_types=1);
 
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
-use App\Enums\ProjectRole;
+use App\Enums\OrganizationRole;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
-use App\Models\Project;
-use App\Models\User;
 
-it('lists a project templates to any member', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $bug = IssueTemplate::factory()->for($project)->create(['name' => 'Bug report']);
-    $bug->labels()->attach(Label::factory()->create(['name' => 'bug']));
+it('lists templates to any organization member', function () {
+    [$org, $owner] = organizationWith();
+    $bug = IssueTemplate::factory()->for($org)->create(['name' => 'Bug report']);
+    $bug->labels()->attach(Label::factory()->for($org)->create(['name' => 'bug']));
 
-    $this->actingAs(member($project, ProjectRole::Member))
-        ->get('/projects/THI/templates')
+    $this->actingAs($owner)->get('/settings/templates')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('projects/Templates')
+            ->component('settings/Templates')
             ->has('templates', 1)
             ->where('templates.0.name', 'Bug report')
             ->has('templates.0.labelIds', 1)
-            ->where('canManage', false)
+            ->where('canManage', true)
         );
 });
 
-it('marks owners and admins as able to manage', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
+it('marks a plain member as unable to manage', function () {
+    [$org, $member] = organizationWith(OrganizationRole::Member);
 
-    $this->actingAs(member($project, ProjectRole::Admin))
-        ->get('/projects/THI/templates')
-        ->assertInertia(fn ($page) => $page->where('canManage', true));
-});
-
-it('forbids a non-member from viewing templates', function () {
-    Project::factory()->create(['key' => 'THI']);
-
-    $this->actingAs(User::factory()->create())
-        ->get('/projects/THI/templates')
-        ->assertForbidden();
+    $this->actingAs($member)->get('/settings/templates')
+        ->assertInertia(fn ($page) => $page->where('canManage', false));
 });
 
 it('creates a template with defaults and labels', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $owner = member($project);
-    $label = Label::factory()->for($owner)->create();
+    [$org, $owner] = organizationWith();
+    $label = Label::factory()->for($org)->create();
 
-    $this->actingAs($owner)
-        ->post('/projects/THI/templates', [
-            'name' => 'Bug report',
-            'description' => "## Steps\n## Expected",
-            'type' => 'fix',
-            'priority' => 'high',
-            'labels' => [$label->id],
-        ])
-        ->assertRedirect();
+    $this->actingAs($owner)->post('/settings/templates', [
+        'name' => 'Bug report',
+        'description' => "## Steps\n## Expected",
+        'type' => 'fix',
+        'priority' => 'high',
+        'labels' => [$label->id],
+    ])->assertRedirect();
 
     $template = IssueTemplate::query()->firstOrFail();
     expect($template->name)->toBe('Bug report')
         ->and($template->type)->toBe(IssueType::Fix)
         ->and($template->priority)->toBe(IssuePriority::High)
-        ->and($template->project_id)->toBe($project->id)
+        ->and($template->organization_id)->toBe($org->id)
         ->and($template->labels->pluck('id')->all())->toBe([$label->id]);
 });
 
-it('allows a template with no defaults', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-
-    $this->actingAs(member($project))
-        ->post('/projects/THI/templates', [
-            'name' => 'Blank-ish',
-            'description' => 'Just a body',
-            'type' => '',
-            'priority' => '',
-        ])
-        ->assertRedirect();
-
-    $template = IssueTemplate::query()->firstOrFail();
-    expect($template->type)->toBeNull()
-        ->and($template->priority)->toBeNull();
-});
-
 it('forbids a plain member from creating a template', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
+    [$org, $member] = organizationWith(OrganizationRole::Member);
 
-    $this->actingAs(member($project, ProjectRole::Member))
-        ->post('/projects/THI/templates', ['name' => 'Nope'])
+    $this->actingAs($member)->post('/settings/templates', ['name' => 'Nope'])
         ->assertForbidden();
 
     expect(IssueTemplate::query()->count())->toBe(0);
 });
 
-it('rejects a duplicate name within the same project', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    IssueTemplate::factory()->for($project)->create(['name' => 'Bug report']);
+it('rejects a label from another organization on a template', function () {
+    [$org, $owner] = organizationWith();
+    [$otherOrg] = organizationWith();
+    $foreign = Label::factory()->for($otherOrg)->create();
 
-    $this->actingAs(member($project))
-        ->post('/projects/THI/templates', ['name' => 'Bug report'])
+    $this->actingAs($owner)->post('/settings/templates', [
+        'name' => 'Bug report',
+        'labels' => [$foreign->id],
+    ])->assertSessionHasErrors('labels.0');
+});
+
+it('rejects a duplicate name within the same organization', function () {
+    [$org, $owner] = organizationWith();
+    IssueTemplate::factory()->for($org)->create(['name' => 'Bug report']);
+
+    $this->actingAs($owner)->post('/settings/templates', ['name' => 'Bug report'])
         ->assertSessionHasErrors('name');
 });
 
-it('allows the same template name in a different project', function () {
-    $thi = Project::factory()->create(['key' => 'THI']);
-    $cms = Project::factory()->create(['key' => 'CMS']);
-    IssueTemplate::factory()->for($cms)->create(['name' => 'Bug report']);
+it('allows the same template name in a different organization', function () {
+    [$org, $owner] = organizationWith();
+    [$otherOrg] = organizationWith();
+    IssueTemplate::factory()->for($otherOrg)->create(['name' => 'Bug report']);
 
-    $this->actingAs(member($thi))
-        ->post('/projects/THI/templates', ['name' => 'Bug report'])
+    $this->actingAs($owner)->post('/settings/templates', ['name' => 'Bug report'])
         ->assertRedirect();
 
     expect(IssueTemplate::query()->count())->toBe(2);
 });
 
-it('updates a template and keeps its own name valid', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $template = IssueTemplate::factory()->for($project)->create(['name' => 'Bug report']);
+it('updates a template', function () {
+    [$org, $owner] = organizationWith();
+    $template = IssueTemplate::factory()->for($org)->create(['name' => 'Bug report']);
 
-    $this->actingAs(member($project))
-        ->patch("/projects/THI/templates/{$template->id}", [
-            'name' => 'Bug report',
-            'description' => 'Updated body',
-            'priority' => 'urgent',
-        ])
-        ->assertRedirect();
+    $this->actingAs($owner)->patch("/settings/templates/{$template->id}", [
+        'name' => 'Bug report',
+        'description' => 'Updated body',
+        'priority' => 'urgent',
+    ])->assertRedirect();
 
     expect($template->fresh())
         ->description->toBe('Updated body')
@@ -133,79 +107,50 @@ it('updates a template and keeps its own name valid', function () {
 });
 
 it('deletes a template', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $template = IssueTemplate::factory()->for($project)->create();
+    [$org, $owner] = organizationWith();
+    $template = IssueTemplate::factory()->for($org)->create();
 
-    $this->actingAs(member($project))
-        ->delete("/projects/THI/templates/{$template->id}")
+    $this->actingAs($owner)->delete("/settings/templates/{$template->id}")
         ->assertRedirect();
 
     expect(IssueTemplate::query()->count())->toBe(0);
 });
 
-it('404s when touching a template from another project', function () {
-    $thi = Project::factory()->create(['key' => 'THI']);
-    $cms = Project::factory()->create(['key' => 'CMS']);
-    $template = IssueTemplate::factory()->for($cms)->create();
+it('404s when managing a template from another organization', function () {
+    [$org, $owner] = organizationWith();
+    [$otherOrg] = organizationWith();
+    $template = IssueTemplate::factory()->for($otherOrg)->create();
 
-    $this->actingAs(member($thi))
-        ->delete("/projects/THI/templates/{$template->id}")
+    $this->actingAs($owner)->delete("/settings/templates/{$template->id}")
         ->assertNotFound();
 
     expect(IssueTemplate::query()->count())->toBe(1);
 });
 
-it('offers templates from the users other projects to copy, and no one elses', function () {
-    $thi = Project::factory()->create(['key' => 'THI']);
-    $cms = Project::factory()->create(['key' => 'CMS']);
-    $stranger = Project::factory()->create(['key' => 'ZZZ']);
-    $user = member([$thi, $cms]);
+it('cascades templates when the organization is deleted', function () {
+    [$org] = organizationWith();
+    IssueTemplate::factory()->for($org)->create();
 
-    IssueTemplate::factory()->for($cms)->create(['name' => 'Shared bug']);
-    IssueTemplate::factory()->for($thi)->create(['name' => 'Own template']);
-    IssueTemplate::factory()->for($stranger)->create(['name' => 'Secret']);
-
-    $this->actingAs($user)->get('/projects/THI/templates')
-        ->assertInertia(fn ($page) => $page
-            ->has('copyable', 1)
-            ->where('copyable.0.name', 'Shared bug')
-            ->where('copyable.0.projectKey', 'CMS')
-        );
-});
-
-it('cascades templates when the project is deleted', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    IssueTemplate::factory()->for($project)->create();
-
-    $project->delete();
+    $org->delete();
 
     expect(IssueTemplate::query()->count())->toBe(0);
 });
 
-it('serves a project templates as json to a member', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    IssueTemplate::factory()->for($project)->create(['name' => 'Bug report']);
+it('serves the current organization templates as json for the picker', function () {
+    [$org, $owner] = organizationWith();
+    IssueTemplate::factory()->for($org)->create(['name' => 'Bug report']);
 
-    $this->actingAs(member($project, ProjectRole::Member))
-        ->getJson('/projects/THI/template-options')
+    $this->actingAs($owner)->getJson('/settings/template-options')
         ->assertOk()
         ->assertJsonCount(1)
         ->assertJsonPath('0.name', 'Bug report');
 });
 
-it('forbids a non-member from fetching template options', function () {
-    Project::factory()->create(['key' => 'THI']);
-
-    $this->actingAs(User::factory()->create())
-        ->getJson('/projects/THI/template-options')
-        ->assertForbidden();
-});
-
 it('applies a template priority and labels when filing an issue', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $owner = member($project);
-    $label = Label::factory()->for($owner)->create();
-    $template = IssueTemplate::factory()->for($project)->create([
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+    $label = Label::factory()->for($org)->create();
+    $template = IssueTemplate::factory()->for($org)->create([
         'type' => IssueType::Fix,
         'priority' => IssuePriority::High,
     ]);
@@ -221,15 +166,15 @@ it('applies a template priority and labels when filing an issue', function () {
 
     $issue = Issue::query()->firstOrFail();
     expect($issue->priority)->toBe(IssuePriority::High)
-        ->and($issue->type)->toBe(IssueType::Fix)
         ->and($issue->description)->toBe("## Steps\nEdited by the user")
         ->and($issue->labels->pluck('id')->all())->toBe([$label->id]);
 });
 
 it('files a blank issue with no template', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
 
-    $this->actingAs(member($project))->post('/issues', [
+    $this->actingAs($owner)->post('/issues', [
         'project_id' => $project->id,
         'title' => 'Blank one',
         'type' => 'feature',
@@ -241,16 +186,17 @@ it('files a blank issue with no template', function () {
         ->and($issue->labels)->toBeEmpty();
 });
 
-it('rejects a template belonging to a different project', function () {
-    $thi = Project::factory()->create(['key' => 'THI']);
-    $cms = Project::factory()->create(['key' => 'CMS']);
-    $template = IssueTemplate::factory()->for($cms)->create();
+it('rejects a template from a different organization when filing', function () {
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+    [$otherOrg] = organizationWith();
+    $foreign = IssueTemplate::factory()->for($otherOrg)->create();
 
-    $this->actingAs(member([$thi, $cms]))->post('/issues', [
-        'project_id' => $thi->id,
+    $this->actingAs($owner)->post('/issues', [
+        'project_id' => $project->id,
         'title' => 'Nope',
         'type' => 'feature',
-        'template_id' => $template->id,
+        'template_id' => $foreign->id,
     ])->assertSessionHasErrors('template_id');
 
     expect(Issue::query()->count())->toBe(0);

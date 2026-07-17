@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\IssueTemplate;
-use App\Models\Project;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +17,7 @@ class IssueTemplateFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => Project::factory(),
+            'organization_id' => Organization::factory(),
             'name' => $this->faker->unique()->words(2, true),
             'description' => $this->faker->paragraph(),
             'type' => null,

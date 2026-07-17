@@ -23,7 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { options as templateOptions } from '@/routes/projects/templates';
+import { options as templateOptions } from '@/routes/templates';
 import type { EpicOption, IssueTemplate, Project } from '@/types';
 
 const props = defineProps<{
@@ -69,30 +69,21 @@ watch(open, (isOpen) => {
     }
 });
 
-// Bodies are fetched per project rather than shipped on every page load.
-watch([open, projectId], async ([isOpen, id]) => {
+// Templates are organization-wide, so fetch the current org's set once on
+// open rather than per selected project or on every page load.
+watch(open, async (isOpen) => {
+    if (!isOpen) {
+        return;
+    }
+
     templates.value = [];
-
-    if (!isOpen || !id) {
-        return;
-    }
-
-    const project = props.projects.find((item) => String(item.id) === id);
-
-    if (!project) {
-        return;
-    }
-
     loadingTemplates.value = true;
 
     try {
-        const response = await fetch(
-            templateOptions({ project: project.key }).url,
-            {
-                headers: { Accept: 'application/json' },
-                credentials: 'same-origin',
-            },
-        );
+        const response = await fetch(templateOptions().url, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
 
         if (response.ok) {
             templates.value = await response.json();

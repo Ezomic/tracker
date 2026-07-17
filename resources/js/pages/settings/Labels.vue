@@ -20,6 +20,7 @@ import type { IssueLabel, LabelColor } from '@/types';
 
 defineProps<{
     labels: (IssueLabel & { issuesCount: number })[];
+    canManage: boolean;
 }>();
 
 defineOptions({
@@ -53,10 +54,11 @@ function remove(label: IssueLabel) {
         <Heading
             variant="small"
             title="Labels"
-            description="Labels let you tag issues to group them across projects and epics"
+            description="Labels tag issues across the organization's projects and epics"
         />
 
         <Form
+            v-if="canManage"
             v-bind="LabelController.store.form()"
             reset-on-success
             class="flex flex-wrap items-end gap-4 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
@@ -103,7 +105,7 @@ function remove(label: IssueLabel) {
                 v-if="labels.length === 0"
                 class="p-8 text-center text-sm text-muted-foreground"
             >
-                No labels yet — add one above.
+                No labels yet.
             </p>
             <div
                 v-for="label in labels"
@@ -115,10 +117,12 @@ function remove(label: IssueLabel) {
                     {{ label.issuesCount }}
                     {{ label.issuesCount === 1 ? 'issue' : 'issues' }}
                 </span>
-                <EditLabelDialog :label="label" />
-                <Button variant="outline" size="sm" @click="remove(label)">
-                    Delete
-                </Button>
+                <template v-if="canManage">
+                    <EditLabelDialog :label="label" />
+                    <Button variant="outline" size="sm" @click="remove(label)">
+                        Delete
+                    </Button>
+                </template>
             </div>
         </div>
     </div>
