@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Label;
 use App\Models\User;
 
@@ -27,7 +27,7 @@ it('offers a project organization labels to any collaborator', function () {
     Label::factory()->for($org)->create(['name' => 'org-label']);
 
     $collaborator = User::factory()->create();
-    joinProjects($collaborator, $project, ProjectRole::Member);
+    joinProjects($collaborator, $project, ProjectLevel::Write);
 
     $issue = (new CreateIssueAction)->handle($project, 'An issue', IssueType::Feature);
 

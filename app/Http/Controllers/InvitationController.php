@@ -69,8 +69,8 @@ class InvitationController extends Controller
             'state' => $state,
             'invitation' => $invitation === null ? null : [
                 'email' => $invitation->email,
-                'role' => $invitation->role->value,
-                'roleLabel' => $invitation->role->label(),
+                'level' => $invitation->level->value,
+                'roleLabel' => $invitation->level->label(),
                 'projectName' => $invitation->project->name,
                 'inviterName' => $invitation->invitedBy?->name,
             ],

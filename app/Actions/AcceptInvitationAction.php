@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class AcceptInvitationAction
 {
     /**
-     * Attach the user to the project with the invited role and close the
+     * Attach the user to the project with the invited level and close the
      * invitation. Existing membership is left as-is rather than downgraded.
      */
     public function handle(Invitation $invitation, User $user): void
@@ -21,7 +21,7 @@ class AcceptInvitationAction
 
             if (! $project->hasMember($user)) {
                 $project->members()->attach($user->id, [
-                    'role' => $invitation->role->value,
+                    'level' => $invitation->level->value,
                     'is_favorite' => true,
                 ]);
             }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -23,10 +23,10 @@ class StoreInvitationRequest extends FormRequest
     {
         return [
             'email' => ['required', 'email', 'max:255'],
-            // Ownership is not transferable through an invitation.
-            'role' => ['required', new Enum(ProjectRole::class), Rule::in([
-                ProjectRole::Admin->value,
-                ProjectRole::Member->value,
+            'level' => ['required', new Enum(ProjectLevel::class), Rule::in([
+                ProjectLevel::Admin->value,
+                ProjectLevel::Write->value,
+                ProjectLevel::Read->value,
             ])],
         ];
     }

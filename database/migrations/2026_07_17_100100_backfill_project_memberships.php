@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\ProjectRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +26,7 @@ return new class extends Migration
             DB::table('project_user')->updateOrInsert(
                 ['project_id' => $project->id, 'user_id' => $owner->id],
                 [
-                    'role' => ProjectRole::Owner->value,
+                    'role' => 'owner',
                     'is_favorite' => (bool) $project->is_favorite,
                     'updated_at' => $now,
                     'created_at' => $now,

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\ProjectRole;
+use App\Enums\OrganizationRole;
+use App\Enums\ProjectLevel;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -63,26 +64,15 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot('role', 'is_favorite')
+            ->withPivot('level', 'is_favorite')
             ->withTimestamps();
     }
 
-    public function owner(): ?User
-    {
-        return $this->members()->wherePivot('role', ProjectRole::Owner->value)->first();
-    }
-
     /**
-     * The owning member's id, without hydrating the user.
+     * The user's directly granted level on this project, ignoring anything
+     * their organization role implies.
      */
-    public function ownerId(): ?int
-    {
-        $id = $this->members()->wherePivot('role', ProjectRole::Owner->value)->value('users.id');
-
-        return $id === null ? null : (int) $id;
-    }
-
-    public function roleFor(User $user): ?ProjectRole
+    public function grantFor(User $user): ?ProjectLevel
     {
         $member = $this->members()->find($user->id);
 
@@ -93,7 +83,21 @@ class Project extends Model
         /** @var Pivot $pivot */
         $pivot = $member->getAttribute('pivot');
 
-        return ProjectRole::from((string) $pivot->getAttribute('role'));
+        return ProjectLevel::from((string) $pivot->getAttribute('level'));
+    }
+
+    /**
+     * The effective level: the highest of the direct grant and what the user's
+     * organization role implies (owners and admins get admin on every project),
+     * or null when they have no access at all.
+     */
+    public function effectiveLevel(User $user): ?ProjectLevel
+    {
+        $implied = ($this->organization?->roleFor($user)?->manages() ?? false)
+            ? ProjectLevel::Admin
+            : null;
+
+        return ProjectLevel::max($this->grantFor($user), $implied);
     }
 
     public function hasMember(User $user): bool
@@ -107,7 +111,15 @@ class Project extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $query->whereHas('members', fn (Builder $members) => $members->whereKey($user->id));
+        // A direct grant, or being an owner/admin of the project's organization
+        // (which implies admin on every project in it).
+        return $query->where(function (Builder $query) use ($user): void {
+            $query
+                ->whereHas('members', fn (Builder $members) => $members->whereKey($user->id))
+                ->orWhereHas('organization.members', fn (Builder $members) => $members
+                    ->whereKey($user->id)
+                    ->whereIn('organization_user.role', [OrganizationRole::Owner->value, OrganizationRole::Admin->value]));
+        });
     }
 
     /**

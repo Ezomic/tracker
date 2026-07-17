@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
@@ -22,7 +22,7 @@ class CreateProjectAction
             $project->forceFill(['organization_id' => $organization?->id])->save();
 
             $project->members()->attach($owner->id, [
-                'role' => ProjectRole::Owner->value,
+                'level' => ProjectLevel::Admin->value,
                 'is_favorite' => true,
             ]);
 

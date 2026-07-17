@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\OrganizationRole;
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
@@ -50,23 +50,23 @@ expect()->extend('toBeOne', function () {
 */
 
 /**
- * Create a user who is a member of the given projects (Owner by default).
+ * Create a user who is a member of the given projects (Admin by default).
  */
-function member(Project|array $projects, ProjectRole $role = ProjectRole::Owner): User
+function member(Project|array $projects, ProjectLevel $level = ProjectLevel::Admin): User
 {
-    return joinProjects(User::factory()->create(), $projects, $role);
+    return joinProjects(User::factory()->create(), $projects, $level);
 }
 
 /**
- * Attach an existing user to the given project(s) with the given role.
+ * Grant an existing user the given level on the given project(s).
  *
  * @param  Project|array<int, Project>  $projects
  */
-function joinProjects(User $user, Project|array $projects, ProjectRole $role = ProjectRole::Owner): User
+function joinProjects(User $user, Project|array $projects, ProjectLevel $level = ProjectLevel::Admin): User
 {
     foreach (is_array($projects) ? $projects : [$projects] as $project) {
         $project->members()->syncWithoutDetaching([
-            $user->id => ['role' => $role->value, 'is_favorite' => true],
+            $user->id => ['level' => $level->value, 'is_favorite' => true],
         ]);
     }
 

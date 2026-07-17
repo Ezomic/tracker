@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Mail\ProjectInvitationMail;
 use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
-function inviteFor(Project $project, string $email, ProjectRole $role = ProjectRole::Member, ?User $invitedBy = null): array
+function inviteFor(Project $project, string $email, ProjectLevel $level = ProjectLevel::Write, ?User $invitedBy = null): array
 {
     $plain = Str::random(40);
 
     $invitation = Invitation::create([
         'project_id' => $project->id,
         'email' => $email,
-        'role' => $role,
+        'level' => $level,
         'token' => Invitation::hashToken($plain),
         'invited_by_id' => $invitedBy?->id,
         'expires_at' => now()->addDays(7),
@@ -31,12 +31,12 @@ it('lets an owner invite someone by email and role', function () {
     $owner = member($project);
 
     $this->actingAs($owner)
-        ->post('/projects/THI/invitations', ['email' => 'New@Example.com', 'role' => 'admin'])
+        ->post('/projects/THI/invitations', ['email' => 'New@Example.com', 'level' => 'admin'])
         ->assertRedirect();
 
     $invitation = Invitation::query()->firstOrFail();
     expect($invitation->email)->toBe('new@example.com')
-        ->and($invitation->role)->toBe(ProjectRole::Admin)
+        ->and($invitation->level)->toBe(ProjectLevel::Admin)
         ->and($invitation->invited_by_id)->toBe($owner->id)
         ->and($invitation->isPending())->toBeTrue();
 
@@ -45,10 +45,10 @@ it('lets an owner invite someone by email and role', function () {
 
 it('forbids a plain member from inviting', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    $plain = member($project, ProjectRole::Member);
+    $plain = member($project, ProjectLevel::Write);
 
     $this->actingAs($plain)
-        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'role' => 'member'])
+        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'level' => 'write'])
         ->assertForbidden();
 
     expect(Invitation::query()->count())->toBe(0);
@@ -59,7 +59,7 @@ it('forbids a non-member from inviting', function () {
     member($project);
 
     $this->actingAs(User::factory()->create())
-        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'role' => 'member'])
+        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'level' => 'write'])
         ->assertForbidden();
 });
 
@@ -67,18 +67,18 @@ it('rejects inviting someone to owner', function () {
     $project = Project::factory()->create(['key' => 'THI']);
 
     $this->actingAs(member($project))
-        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'role' => 'owner'])
-        ->assertSessionHasErrors('role');
+        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'level' => 'owner'])
+        ->assertSessionHasErrors('level');
 });
 
 it('rejects inviting an existing member', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $owner = member($project);
     $existing = User::factory()->create(['email' => 'in@example.com']);
-    joinProjects($existing, $project, ProjectRole::Member);
+    joinProjects($existing, $project, ProjectLevel::Write);
 
     $this->actingAs($owner)
-        ->post('/projects/THI/invitations', ['email' => 'in@example.com', 'role' => 'member'])
+        ->post('/projects/THI/invitations', ['email' => 'in@example.com', 'level' => 'write'])
         ->assertSessionHasErrors('email');
 });
 
@@ -89,7 +89,7 @@ it('re-inviting refreshes the token and invalidates the old link', function () {
     [$invitation, $oldPlain] = inviteFor($project, 'new@example.com');
 
     $this->actingAs($owner)
-        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'role' => 'member']);
+        ->post('/projects/THI/invitations', ['email' => 'new@example.com', 'level' => 'write']);
 
     expect(Invitation::query()->count())->toBe(1)
         ->and($invitation->fresh()->token)->not->toBe(Invitation::hashToken($oldPlain));
@@ -98,7 +98,7 @@ it('re-inviting refreshes the token and invalidates the old link', function () {
 it('lists pending invitations to managers only', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $owner = member($project);
-    $plain = member($project, ProjectRole::Member);
+    $plain = member($project, ProjectLevel::Write);
     inviteFor($project, 'pending@example.com');
 
     $this->actingAs($owner)->get('/projects/THI/members')
@@ -143,20 +143,20 @@ it('accepts an invitation for the signed-in invited user', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     member($project);
     $invitee = User::factory()->create(['email' => 'new@example.com']);
-    [$invitation, $plain] = inviteFor($project, 'new@example.com', ProjectRole::Admin);
+    [$invitation, $plain] = inviteFor($project, 'new@example.com', ProjectLevel::Admin);
 
     $this->actingAs($invitee)
         ->get("/invitations/{$plain}")
         ->assertRedirect(route('projects.board', 'THI'));
 
-    expect($project->roleFor($invitee))->toBe(ProjectRole::Admin)
+    expect($project->grantFor($invitee))->toBe(ProjectLevel::Admin)
         ->and($invitation->fresh()->accepted_at)->not->toBeNull();
 });
 
 it('shows the invitation to a guest and remembers where to return', function () {
     $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen']);
     $inviter = member($project);
-    [, $plain] = inviteFor($project, 'new@example.com', ProjectRole::Member, $inviter);
+    [, $plain] = inviteFor($project, 'new@example.com', ProjectLevel::Write, $inviter);
 
     $this->get("/invitations/{$plain}")
         ->assertOk()
@@ -237,5 +237,5 @@ it('routes an invited newcomer through registration and then joins them', functi
     // Landing back on the link completes the join.
     $this->get("/invitations/{$plain}")->assertRedirect(route('projects.board', 'THI'));
 
-    expect($project->roleFor($user))->toBe(ProjectRole::Member);
+    expect($project->grantFor($user))->toBe(ProjectLevel::Write);
 });
