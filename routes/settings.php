@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\EmailConfirmationController;
+use App\Http\Controllers\Settings\IssueTemplateController;
 use App\Http\Controllers\Settings\LabelController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -16,6 +17,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings/labels', [LabelController::class, 'store'])->name('labels.store');
     Route::patch('settings/labels/{label}', [LabelController::class, 'update'])->name('labels.update');
     Route::delete('settings/labels/{label}', [LabelController::class, 'destroy'])->name('labels.destroy');
+
+    Route::get('settings/templates', [IssueTemplateController::class, 'index'])->name('templates.index');
+    Route::get('settings/template-options', [IssueTemplateController::class, 'options'])->name('templates.options');
+    Route::post('settings/templates', [IssueTemplateController::class, 'store'])->name('templates.store');
+    Route::patch('settings/templates/{template}', [IssueTemplateController::class, 'update'])->name('templates.update');
+    Route::delete('settings/templates/{template}', [IssueTemplateController::class, 'destroy'])->name('templates.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

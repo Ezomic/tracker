@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\OrganizationRole;
 use App\Enums\ProjectRole;
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,4 +71,31 @@ function joinProjects(User $user, Project|array $projects, ProjectRole $role = P
     }
 
     return $user;
+}
+
+/**
+ * Create an organization with a member in the given role, returning both.
+ *
+ * @return array{0: Organization, 1: User}
+ */
+function organizationWith(OrganizationRole $role = OrganizationRole::Owner): array
+{
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create();
+    $organization->members()->attach($user->id, ['role' => $role->value]);
+
+    return [$organization, $user];
+}
+
+/**
+ * A project inside an organization, with the given user as a project member.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function projectInOrganization(Organization $organization, User $member, array $attributes = []): Project
+{
+    $project = Project::factory()->create([...$attributes, 'organization_id' => $organization->id]);
+    joinProjects($member, $project);
+
+    return $project;
 }

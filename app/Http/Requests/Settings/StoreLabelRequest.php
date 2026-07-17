@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Settings;
 
 use App\Enums\LabelColor;
+use App\Services\CurrentOrganization;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,12 +28,13 @@ class StoreLabelRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Unique within the owner's own labels, not globally.
+            // Unique within the current organization's labels.
             'name' => [
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('labels', 'name')->where('user_id', $this->user()->id),
+                Rule::unique('labels', 'name')
+                    ->where('organization_id', app(CurrentOrganization::class)->for($this->user())?->id),
             ],
             'color' => ['required', Rule::enum(LabelColor::class)],
         ];

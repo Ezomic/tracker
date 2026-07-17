@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
- * @property int $project_id
+ * @property int $organization_id
  * @property string $name
  * @property string|null $description
  * @property IssueType|null $type
@@ -28,11 +28,11 @@ class IssueTemplate extends Model
     use HasFactory;
 
     /**
-     * @return BelongsTo<Project, $this>
+     * @return BelongsTo<Organization, $this>
      */
-    public function project(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Organization::class);
     }
 
     /**

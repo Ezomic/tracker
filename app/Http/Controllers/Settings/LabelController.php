@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreLabelRequest;
 use App\Http\Requests\Settings\UpdateLabelRequest;
 use App\Models\Label;
+use App\Services\CurrentOrganization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,10 +16,16 @@ use Inertia\Response;
 
 class LabelController extends Controller
 {
+    public function __construct(private readonly CurrentOrganization $current) {}
+
     public function index(Request $request): Response
     {
+        $organization = $this->current->for($request->user());
+        $this->authorize('view', $organization);
+
         return Inertia::render('settings/Labels', [
-            'labels' => $request->user()->labels()
+            'labels' => Label::query()
+                ->forOrganization($organization)
                 ->withCount('issues')
                 ->orderBy('name')
                 ->get()
@@ -28,12 +35,16 @@ class LabelController extends Controller
                     'color' => $label->color->value,
                     'issuesCount' => $label->issues_count,
                 ]),
+            'canManage' => $request->user()->can('update', $organization),
         ]);
     }
 
     public function store(StoreLabelRequest $request): RedirectResponse
     {
-        $request->user()->labels()->create($request->validated());
+        $organization = $this->current->for($request->user());
+        $this->authorize('update', $organization);
+
+        $organization->labels()->create($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Label created.')]);
 
