@@ -29,6 +29,7 @@ class DashboardController extends Controller
                 'archived' => Issue::query()->visibleTo($user)->whereNotNull('archived_at')->count(),
             ],
             'statusBreakdown' => $counts,
+            'hasProjects' => $user->projects()->exists(),
             'activeByProject' => $this->activeByProject($user),
             'recent' => $this->recent($user),
             'stale' => $this->stale($user),

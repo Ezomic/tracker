@@ -74,6 +74,12 @@ class EmailLoginCodeController extends Controller
 
         $user = User::query()->where('email', $email)->firstOrFail();
 
+        // A verified code proves ownership of the address, so confirm the email
+        // on first use — new registrants start unverified.
+        if ($user->email_verified_at === null) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+        }
+
         $request->session()->forget('login-code-email');
 
         Auth::login($user);
