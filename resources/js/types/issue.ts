@@ -1,3 +1,9 @@
+export interface IssueUser {
+    id: number;
+    name: string;
+    email: string;
+}
+
 export interface Issue {
     identifier: string;
     title: string;
@@ -13,6 +19,8 @@ export interface Issue {
         key: string;
         name: string;
     };
+    owner: IssueUser | null;
+    assignee: IssueUser | null;
     createdAt: string;
     archivedAt: string | null;
     childrenCount: number;

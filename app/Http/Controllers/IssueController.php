@@ -38,7 +38,7 @@ class IssueController extends Controller
                 ->visibleTo($user)
                 ->notArchived()
                 ->withCount('children')
-                ->with(['project', 'labels'])
+                ->with(['project', 'labels', 'assignee'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
                 ->when($filters['project_id'] ?? null, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
@@ -80,6 +80,7 @@ class IssueController extends Controller
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description'),
             parent: $parent,
+            owner: $request->user(),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue created.')]);
@@ -91,10 +92,11 @@ class IssueController extends Controller
     {
         $this->authorize('view', $issue);
 
-        $issue->load(['project', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
+        $issue->load(['project', 'owner', 'assignee', 'parent', 'labels', 'children' => fn ($query) => $query->orderBy('number')]);
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
+            'members' => $this->projectMembers($issue->project),
             'epics' => $this->eligibleParents($request->user(), $issue),
             'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
@@ -123,7 +125,7 @@ class IssueController extends Controller
                 ->visibleTo($request->user())
                 ->notArchived()
                 ->withCount('children')
-                ->with(['project', 'labels'])
+                ->with(['project', 'labels', 'assignee'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->latest()
                 ->get()
@@ -190,6 +192,34 @@ class IssueController extends Controller
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    private function serializeUser(?User $user): ?array
+    {
+        return $user === null ? null : [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function projectMembers(Project $project): array
+    {
+        return array_values($project->members()
+            ->orderBy('name')
+            ->get()
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ])
+            ->all());
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function serialize(Issue $issue): array
@@ -211,6 +241,8 @@ class IssueController extends Controller
                 'key' => $issue->project->key,
                 'name' => $issue->project->name,
             ],
+            'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
+            'assignee' => $this->serializeUser($issue->relationLoaded('assignee') ? $issue->assignee : null),
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),
             'childrenCount' => $issue->children_count

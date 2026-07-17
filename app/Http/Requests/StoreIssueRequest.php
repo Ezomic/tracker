@@ -6,9 +6,12 @@ namespace App\Http\Requests;
 
 use App\Enums\IssueType;
 use App\Models\Issue;
+use App\Models\Project;
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreIssueRequest extends FormRequest
@@ -31,6 +34,10 @@ class StoreIssueRequest extends FormRequest
         if ($this->input('parent') === '') {
             $this->merge(['parent' => null]);
         }
+
+        if ($this->input('assignee') === '') {
+            $this->merge(['assignee' => null]);
+        }
     }
 
     /**
@@ -45,6 +52,22 @@ class StoreIssueRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
+            'assignee' => [
+                'nullable',
+                'email',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $project = Project::query()->where('key', $this->input('project'))->first();
+                    $user = User::query()->where('email', Str::lower((string) $value))->first();
+
+                    if ($project === null) {
+                        return;
+                    }
+
+                    if ($user === null || ! $project->hasMember($user)) {
+                        $fail('The assignee must be a member of this project.');
+                    }
+                },
+            ],
             'parent' => [
                 'nullable',
                 'string',
