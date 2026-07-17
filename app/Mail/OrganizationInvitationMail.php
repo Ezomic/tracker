@@ -11,7 +11,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ProjectInvitationMail extends Mailable
+class OrganizationInvitationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -23,17 +23,18 @@ class ProjectInvitationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "You've been invited to {$this->invitation->project->name}",
+            subject: "You've been invited to {$this->invitation->organization->name}",
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.project-invitation',
+            view: 'emails.organization-invitation',
             with: [
-                'projectName' => $this->invitation->project->name,
-                'roleLabel' => $this->invitation->level->label(),
+                'organizationName' => $this->invitation->organization->name,
+                'roleLabel' => $this->invitation->role->label(),
+                'projectName' => $this->invitation->project?->name,
                 'inviterName' => $this->invitation->invitedBy?->name,
                 'acceptUrl' => $this->acceptUrl,
             ],

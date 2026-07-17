@@ -7,8 +7,13 @@
         @else
             You've been invited to join
         @endif
-        <strong>{{ $projectName }}</strong> on Tracker as {{ $roleLabel }}.
+        <strong>{{ $organizationName }}</strong> on Tracker as {{ $roleLabel }}.
     </p>
+    @if ($projectName)
+        <p style="color: #6b7280; font-size: 14px;">
+            You'll get access to <strong>{{ $projectName }}</strong> straight away.
+        </p>
+    @endif
     <p>
         <a href="{{ $acceptUrl }}" style="display: inline-block; background: #17181A; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none;">
             Accept invitation

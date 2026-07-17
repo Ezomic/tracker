@@ -57,6 +57,8 @@ class HandleInertiaRequests extends Middleware
                 'id' => $organization->id,
                 'name' => $organization->name,
                 'slug' => $organization->slug,
+                // A non-null organization only resolves for an authenticated user.
+                'canManage' => $organization->roleFor($request->user())?->manages() ?? false,
             ],
             'organizations' => fn () => $request->user() === null ? [] : $request->user()
                 ->organizations()

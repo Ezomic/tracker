@@ -8,9 +8,9 @@ defineProps<{
     state: 'guest' | 'mismatch' | 'expired' | 'accepted' | 'invalid';
     invitation: {
         email: string;
-        level: string;
         roleLabel: string;
-        projectName: string;
+        organizationName: string;
+        projectName: string | null;
         inviterName: string | null;
     } | null;
     hasAccount?: boolean;
@@ -19,8 +19,8 @@ defineProps<{
 
 defineOptions({
     layout: {
-        title: 'Project invitation',
-        description: 'Join a project on Tracker',
+        title: 'Organization invitation',
+        description: 'Join an organization on Tracker',
     },
 });
 
@@ -32,7 +32,7 @@ const messages: Record<string, string> = {
 </script>
 
 <template>
-    <Head title="Project invitation" />
+    <Head title="Organization invitation" />
 
     <div class="space-y-6">
         <template v-if="state === 'guest' && invitation">
@@ -47,9 +47,20 @@ const messages: Record<string, string> = {
                 </span>
                 to join
                 <span class="font-medium text-foreground">
-                    {{ invitation.projectName }}
+                    {{ invitation.organizationName }}
                 </span>
                 as {{ invitation.roleLabel }}.
+            </p>
+
+            <p
+                v-if="invitation.projectName"
+                class="text-center text-sm text-muted-foreground"
+            >
+                You'll get access to
+                <span class="font-medium text-foreground">
+                    {{ invitation.projectName }}
+                </span>
+                right away.
             </p>
 
             <div class="grid gap-2">
@@ -86,7 +97,7 @@ const messages: Record<string, string> = {
             </p>
             <p class="text-center text-sm text-muted-foreground">
                 Sign in with the invited address to join
-                {{ invitation.projectName }}.
+                {{ invitation.organizationName }}.
             </p>
         </template>
 

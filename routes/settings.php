@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\OrganizationInvitationController;
+use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\Settings\EmailConfirmationController;
 use App\Http\Controllers\Settings\IssueTemplateController;
 use App\Http\Controllers\Settings\LabelController;
@@ -23,6 +25,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings/templates', [IssueTemplateController::class, 'store'])->name('templates.store');
     Route::patch('settings/templates/{template}', [IssueTemplateController::class, 'update'])->name('templates.update');
     Route::delete('settings/templates/{template}', [IssueTemplateController::class, 'destroy'])->name('templates.destroy');
+
+    Route::get('settings/members', [OrganizationMemberController::class, 'index'])->name('members.index');
+    Route::patch('settings/members/{user}', [OrganizationMemberController::class, 'update'])->name('members.update');
+    Route::delete('settings/members/{user}', [OrganizationMemberController::class, 'destroy'])->name('members.destroy');
+
+    Route::post('settings/invitations', [OrganizationInvitationController::class, 'store'])->name('invitations.store');
+    Route::post('settings/invitations/{invitation}/resend', [OrganizationInvitationController::class, 'resend'])->name('invitations.resend');
+    Route::delete('settings/invitations/{invitation}', [OrganizationInvitationController::class, 'destroy'])->name('invitations.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
