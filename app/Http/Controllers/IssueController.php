@@ -134,11 +134,13 @@ class IssueController extends Controller
             $this->authorize('view', $project);
         }
 
+        $showArchived = $request->boolean('archived');
+
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
                 ->visibleTo($request->user())
                 ->inOrganization($current->for($request->user()))
-                ->notArchived()
+                ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
                 ->withCount('children')
                 ->with(['project', 'labels', 'assignee'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
@@ -150,6 +152,7 @@ class IssueController extends Controller
                 'name' => $project->name,
                 'links' => $project->links(),
             ],
+            'showArchived' => $showArchived,
         ]);
     }
 

@@ -22,6 +22,27 @@ it('renders the board with all issues regardless of status', function () {
         );
 });
 
+it('hides archived issues by default and shows them when asked', function () {
+    $team = Project::factory()->create(['key' => 'THI']);
+    (new CreateIssueAction)->handle($team, 'Active', IssueType::Feature);
+    $archived = (new CreateIssueAction)->handle($team, 'Old', IssueType::Feature);
+    $archived->forceFill(['archived_at' => now()])->save();
+    $user = member($team);
+
+    $this->actingAs($user)->get('/issues/board')
+        ->assertInertia(fn ($page) => $page
+            ->where('showArchived', false)
+            ->has('issues', 1)
+            ->where('issues.0.identifier', 'THI-1')
+        );
+
+    $this->actingAs($user)->get('/issues/board?archived=1')
+        ->assertInertia(fn ($page) => $page
+            ->where('showArchived', true)
+            ->has('issues', 2)
+        );
+});
+
 it('updates an issue status via drag and drop', function () {
     $team = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
