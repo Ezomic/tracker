@@ -1,5 +1,5 @@
 import type { Auth } from '@/types/auth';
-import type { SidebarProject } from '@/types/project';
+import type { Project, SidebarProject } from '@/types/project';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -20,6 +20,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarProjects: SidebarProject[];
+            newIssueProjects: Pick<Project, 'id' | 'key' | 'name'>[];
+            currentProjectId: number | null;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };
