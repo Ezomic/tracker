@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { GitBranch, GitCommit, GitPullRequest } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import InputError from '@/components/InputError.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
@@ -35,6 +35,11 @@ const doneChildrenCount = computed(
     () =>
         props.issue.children.filter((child) => child.status === 'done').length,
 );
+
+// A raw <textarea> ignores :default-value (Vue doesn't map it to the
+// defaultValue DOM property), so bind the initial value via v-model to keep
+// the field populated — otherwise saving would submit a blank description.
+const description = ref(props.issue.description ?? '');
 
 const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
     backlog: { label: 'Backlog', dot: 'bg-muted-foreground/50' },
@@ -109,9 +114,9 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     </Label>
                     <textarea
                         id="description"
+                        v-model="description"
                         name="description"
                         rows="6"
-                        :default-value="issue.description ?? ''"
                         placeholder="Add a description…"
                         class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                     />
