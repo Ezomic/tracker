@@ -62,7 +62,7 @@ class IssueController extends Controller
                     'links' => $project->links(),
                 ]),
             'epics' => $this->eligibleParents($user),
-            'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
+            'labels' => Label::query()->availableTo($user)->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => $filters,
         ]);
     }
@@ -108,7 +108,7 @@ class IssueController extends Controller
             'issue' => $this->serialize($issue),
             'members' => $this->projectMembers($issue->project),
             'epics' => $this->eligibleParents($request->user(), $issue),
-            'labels' => Label::query()->orderBy('name')->get(['id', 'name', 'color']),
+            'labels' => Label::query()->forProject($issue->project)->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 

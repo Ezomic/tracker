@@ -31,7 +31,14 @@ class UpdateLabelRequest extends FormRequest
         $label = $this->route('label');
 
         return [
-            'name' => ['required', 'string', 'max:50', Rule::unique('labels', 'name')->ignore($label->id)],
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('labels', 'name')
+                    ->where('user_id', $this->user()->id)
+                    ->ignore($label->id),
+            ],
             'color' => ['required', Rule::enum(LabelColor::class)],
         ];
     }

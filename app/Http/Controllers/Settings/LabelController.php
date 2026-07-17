@@ -9,15 +9,16 @@ use App\Http\Requests\Settings\StoreLabelRequest;
 use App\Http\Requests\Settings\UpdateLabelRequest;
 use App\Models\Label;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LabelController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('settings/Labels', [
-            'labels' => Label::query()
+            'labels' => $request->user()->labels()
                 ->withCount('issues')
                 ->orderBy('name')
                 ->get()
@@ -32,7 +33,7 @@ class LabelController extends Controller
 
     public function store(StoreLabelRequest $request): RedirectResponse
     {
-        Label::create($request->validated());
+        $request->user()->labels()->create($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Label created.')]);
 
@@ -41,6 +42,8 @@ class LabelController extends Controller
 
     public function update(UpdateLabelRequest $request, Label $label): RedirectResponse
     {
+        $this->authorize('update', $label);
+
         $label->update($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Label updated.')]);
@@ -50,6 +53,8 @@ class LabelController extends Controller
 
     public function destroy(Label $label): RedirectResponse
     {
+        $this->authorize('delete', $label);
+
         $label->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Label deleted.')]);

@@ -51,7 +51,10 @@ class StoreIssueTemplateRequest extends FormRequest
             'type' => ['nullable', Rule::enum(IssueType::class)],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],
             'labels' => ['array'],
-            'labels.*' => ['integer', 'exists:labels,id'],
+            'labels.*' => [
+                'integer',
+                Rule::exists('labels', 'id')->where('user_id', $project->ownerId()),
+            ],
         ];
     }
 }
