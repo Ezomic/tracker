@@ -1,25 +1,15 @@
 <script setup lang="ts">
-import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Plus, Search } from '@lucide/vue';
 import { refDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
-import IssueController from '@/actions/App/Http/Controllers/IssueController';
-import InputError from '@/components/InputError.vue';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import NewIssueDialog from '@/components/NewIssueDialog.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -186,137 +176,10 @@ const createOpen = ref(false);
                     />
                 </div>
 
-                <Dialog v-model:open="createOpen">
-                    <DialogTrigger as-child>
-                        <Button size="sm">
-                            <Plus />
-                            New issue
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent class="sm:max-w-lg">
-                        <DialogHeader>
-                            <DialogTitle>New issue</DialogTitle>
-                            <DialogDescription>
-                                Create an issue and hand off a ready-to-use
-                                branch name.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <Form
-                            v-bind="IssueController.store.form()"
-                            reset-on-success
-                            class="grid gap-4"
-                            @success="createOpen = false"
-                            v-slot="{ errors, processing }"
-                        >
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div class="grid gap-2">
-                                    <Label for="new-project">Project</Label>
-                                    <Select
-                                        name="project_id"
-                                        :default-value="
-                                            scopedProject
-                                                ? String(scopedProject.id)
-                                                : undefined
-                                        "
-                                    >
-                                        <SelectTrigger
-                                            id="new-project"
-                                            class="w-full"
-                                        >
-                                            <SelectValue
-                                                placeholder="Select a project"
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem
-                                                v-for="project in projects"
-                                                :key="project.id"
-                                                :value="String(project.id)"
-                                            >
-                                                {{ project.key }} —
-                                                {{ project.name }}
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError :message="errors.project_id" />
-                                </div>
-
-                                <div class="grid gap-2">
-                                    <Label for="new-type">Type</Label>
-                                    <Select name="type" default-value="feature">
-                                        <SelectTrigger
-                                            id="new-type"
-                                            class="w-full"
-                                        >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="feature">
-                                                Feature
-                                            </SelectItem>
-                                            <SelectItem value="fix">
-                                                Fix
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError :message="errors.type" />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="new-parent">Epic (optional)</Label>
-                                <Select name="parent_id">
-                                    <SelectTrigger
-                                        id="new-parent"
-                                        class="w-full"
-                                    >
-                                        <SelectValue placeholder="No epic" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem
-                                            v-for="epic in epics"
-                                            :key="epic.id"
-                                            :value="String(epic.id)"
-                                        >
-                                            {{ epic.identifier }} —
-                                            {{ epic.title }}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <InputError :message="errors.parent_id" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="new-title">Title</Label>
-                                <Input
-                                    id="new-title"
-                                    name="title"
-                                    required
-                                    placeholder="Add per-lesson quiz question pools"
-                                />
-                                <InputError :message="errors.title" />
-                            </div>
-
-                            <div class="grid gap-2">
-                                <Label for="new-description">Description</Label>
-                                <textarea
-                                    id="new-description"
-                                    name="description"
-                                    rows="3"
-                                    class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                                />
-                                <InputError :message="errors.description" />
-                            </div>
-
-                            <div class="flex justify-end">
-                                <Button type="submit" :disabled="processing">
-                                    Create issue
-                                </Button>
-                            </div>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
+                <Button size="sm" @click="createOpen = true">
+                    <Plus />
+                    New issue
+                </Button>
             </div>
         </div>
 
@@ -463,4 +326,11 @@ const createOpen = ref(false);
             </template>
         </div>
     </div>
+
+    <NewIssueDialog
+        v-model:open="createOpen"
+        :projects="projects"
+        :epics="epics"
+        :default-project-id="scopedProject?.id ?? null"
+    />
 </template>

@@ -8,11 +8,12 @@ import {
     Search,
     Ticket,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
+import NewIssueDialog from '@/components/NewIssueDialog.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -26,12 +27,20 @@ import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
 import { index as projectsIndex } from '@/routes/projects';
-import type { NavItem, SidebarProject } from '@/types';
+import type { NavItem, Project, SidebarProject } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
 const page = usePage();
 const projects = computed<SidebarProject[]>(
     () => page.props.sidebarProjects ?? [],
+);
+
+const newIssueOpen = ref(false);
+const newIssueProjects = computed<Pick<Project, 'id' | 'key' | 'name'>[]>(
+    () => page.props.newIssueProjects ?? [],
+);
+const currentProjectId = computed<number | null>(
+    () => page.props.currentProjectId ?? null,
 );
 
 const mainNavItems: NavItem[] = [
@@ -71,13 +80,11 @@ const mainNavItems: NavItem[] = [
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton
-                        as-child
                         class="bg-primary font-medium text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                        @click="newIssueOpen = true"
                     >
-                        <Link :href="issuesIndex()">
-                            <Plus />
-                            <span>New issue</span>
-                        </Link>
+                        <Plus />
+                        <span>New issue</span>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
@@ -106,5 +113,12 @@ const mainNavItems: NavItem[] = [
             <NavUser />
         </SidebarFooter>
     </Sidebar>
+
+    <NewIssueDialog
+        v-model:open="newIssueOpen"
+        :projects="newIssueProjects"
+        :default-project-id="currentProjectId"
+    />
+
     <slot />
 </template>
