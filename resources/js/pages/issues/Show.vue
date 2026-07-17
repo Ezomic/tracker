@@ -17,12 +17,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index, show } from '@/routes/issues';
-import type { EpicOption, Issue, IssueLabel } from '@/types';
+import type { EpicOption, Issue, IssueLabel, IssueUser } from '@/types';
 
 const props = defineProps<{
     issue: Issue;
     epics: EpicOption[];
     labels: IssueLabel[];
+    members: IssueUser[];
 }>();
 
 defineOptions({
@@ -40,6 +41,15 @@ const doneChildrenCount = computed(
 // defaultValue DOM property), so bind the initial value via v-model to keep
 // the field populated — otherwise saving would submit a blank description.
 const description = ref(props.issue.description ?? '');
+
+// The Select needs a non-empty value, so "unassigned" stands in for null and
+// the hidden input submits an empty value the request normalises back to null.
+const assigneeId = ref(
+    props.issue.assignee ? String(props.issue.assignee.id) : 'unassigned',
+);
+const submittedAssignee = computed(() =>
+    assigneeId.value === 'unassigned' ? '' : assigneeId.value,
+);
 
 const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
     backlog: { label: 'Backlog', dot: 'bg-muted-foreground/50' },
@@ -163,6 +173,42 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             <aside
                 class="flex flex-col gap-4 lg:border-l lg:border-sidebar-border/70 lg:pl-6 dark:lg:border-sidebar-border"
             >
+                <div class="grid gap-1.5">
+                    <Label for="assignee" class="text-xs text-muted-foreground">
+                        Assignee
+                    </Label>
+                    <input
+                        type="hidden"
+                        name="assignee_id"
+                        :value="submittedAssignee"
+                    />
+                    <Select v-model="assigneeId">
+                        <SelectTrigger id="assignee" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="unassigned">
+                                Unassigned
+                            </SelectItem>
+                            <SelectItem
+                                v-for="person in members"
+                                :key="person.id"
+                                :value="String(person.id)"
+                            >
+                                {{ person.name }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="errors.assignee_id" />
+                </div>
+
+                <div class="grid gap-1.5">
+                    <Label class="text-xs text-muted-foreground">Owner</Label>
+                    <p class="text-sm">
+                        {{ issue.owner?.name ?? 'Unknown' }}
+                    </p>
+                </div>
+
                 <div class="grid gap-1.5">
                     <Label for="type" class="text-xs text-muted-foreground">
                         Type
