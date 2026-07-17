@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\OrganizationRole;
-use App\Enums\ProjectRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -49,7 +48,7 @@ return new class extends Migration
         }
 
         $ownerships = DB::table('project_user')
-            ->where('role', ProjectRole::Owner->value)
+            ->where('role', 'owner')
             ->get(['project_id', 'user_id']);
 
         foreach ($ownerships as $ownership) {

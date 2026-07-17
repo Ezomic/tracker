@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\SendProjectInvitationAction;
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Http\Requests\StoreInvitationRequest;
 use App\Models\Invitation;
 use App\Models\Project;
@@ -31,7 +31,7 @@ class ProjectInvitationController extends Controller
         $action->handle(
             $project,
             $email,
-            ProjectRole::from($request->validated('role')),
+            ProjectLevel::from($request->validated('level')),
             $request->user(),
         );
 
@@ -45,7 +45,7 @@ class ProjectInvitationController extends Controller
         $this->authorize('manageMembers', $project);
         $this->guardBelongsToProject($project, $invitation);
 
-        $action->handle($project, $invitation->email, $invitation->role, $request->user());
+        $action->handle($project, $invitation->email, $invitation->level, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation resent.')]);
 

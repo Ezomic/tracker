@@ -62,7 +62,7 @@ class User extends Authenticatable implements PasskeyUser
     public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class)
-            ->withPivot('role', 'is_favorite')
+            ->withPivot('level', 'is_favorite')
             ->withTimestamps();
     }
 

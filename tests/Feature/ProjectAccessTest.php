@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
-use App\Enums\ProjectRole;
+use App\Enums\OrganizationRole;
+use App\Enums\ProjectLevel;
 use App\Models\Project;
 use App\Models\User;
 
@@ -28,7 +29,7 @@ it('hides a project and its issues from non-members', function () {
 it('lets a member view a project they belong to', function () {
     $member = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($member, $project, ProjectRole::Member);
+    joinProjects($member, $project, ProjectLevel::Write);
     $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
 
     $this->actingAs($member)->get("/issues/{$issue->identifier}")->assertOk();
@@ -38,7 +39,7 @@ it('lets a member view a project they belong to', function () {
 it('forbids a plain member from editing project settings', function () {
     $member = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI', 'name' => 'Original']);
-    joinProjects($member, $project, ProjectRole::Member);
+    joinProjects($member, $project, ProjectLevel::Write);
 
     $this->actingAs($member)
         ->patch("/projects/{$project->id}", ['key' => 'THI', 'name' => 'Changed'])
@@ -47,47 +48,43 @@ it('forbids a plain member from editing project settings', function () {
     expect($project->fresh()->name)->toBe('Original');
 });
 
-it('lets an admin edit project settings but not delete the project', function () {
+it('applies the level permission matrix', function () {
     $admin = User::factory()->create();
+    $writer = User::factory()->create();
+    $reader = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($admin, $project, ProjectRole::Admin);
+    joinProjects($admin, $project, ProjectLevel::Admin);
+    joinProjects($writer, $project, ProjectLevel::Write);
+    joinProjects($reader, $project, ProjectLevel::Read);
 
-    $this->actingAs($admin)
-        ->patch("/projects/{$project->id}", ['key' => 'THI', 'name' => 'Renamed'])
-        ->assertRedirect(route('projects.index'));
-
-    expect($project->fresh()->name)->toBe('Renamed');
-    expect($admin->can('delete', $project))->toBeFalse();
-});
-
-it('applies the role permission matrix', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $member = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($admin, $project, ProjectRole::Admin);
-    joinProjects($member, $project, ProjectRole::Member);
-
-    expect($owner->can('update', $project))->toBeTrue()
-        ->and($owner->can('manageMembers', $project))->toBeTrue()
-        ->and($owner->can('delete', $project))->toBeTrue();
-
-    expect($admin->can('update', $project))->toBeTrue()
+    expect($admin->can('view', $project))->toBeTrue()
+        ->and($admin->can('createIssue', $project))->toBeTrue()
+        ->and($admin->can('update', $project))->toBeTrue()
         ->and($admin->can('manageMembers', $project))->toBeTrue()
-        ->and($admin->can('delete', $project))->toBeFalse();
+        ->and($admin->can('delete', $project))->toBeTrue();
 
-    expect($member->can('update', $project))->toBeFalse()
-        ->and($member->can('manageMembers', $project))->toBeFalse()
-        ->and($member->can('delete', $project))->toBeFalse();
+    expect($writer->can('view', $project))->toBeTrue()
+        ->and($writer->can('createIssue', $project))->toBeTrue()
+        ->and($writer->can('update', $project))->toBeFalse()
+        ->and($writer->can('manageMembers', $project))->toBeFalse()
+        ->and($writer->can('delete', $project))->toBeFalse();
+
+    expect($reader->can('view', $project))->toBeTrue()
+        ->and($reader->can('createIssue', $project))->toBeFalse()
+        ->and($reader->can('update', $project))->toBeFalse();
 });
 
-it('resolves the owner of a project', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($member, $project, ProjectRole::Member);
+it('resolves effective level as the max of a direct grant and the org role', function () {
+    [$org, $orgAdmin] = organizationWith(OrganizationRole::Admin);
+    $project = Project::factory()->create(['key' => 'THI', 'organization_id' => $org->id]);
 
-    expect($project->owner()->is($owner))->toBeTrue();
+    // Org admin implies project admin even with only a read grant, or none.
+    joinProjects($orgAdmin, $project, ProjectLevel::Read);
+    expect($project->effectiveLevel($orgAdmin))->toBe(ProjectLevel::Admin);
+
+    $plain = User::factory()->create();
+    $org->members()->attach($plain->id, ['role' => OrganizationRole::Member->value]);
+    joinProjects($plain, $project, ProjectLevel::Write);
+    // Org member implies nothing, so their write grant stands.
+    expect($project->effectiveLevel($plain))->toBe(ProjectLevel::Write);
 });

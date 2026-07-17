@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
@@ -41,7 +41,7 @@ it('assigns via the api by member email', function () {
     $project = Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
     $creator = member($project);
     $dev = User::factory()->create(['email' => 'dev@example.com']);
-    joinProjects($dev, $project, ProjectRole::Member);
+    joinProjects($dev, $project, ProjectLevel::Write);
 
     $this->actingAs($creator, 'sanctum')->postJson('/api/issues', [
         'project' => 'THI',
@@ -81,7 +81,7 @@ it('assigns a member from the ticket page', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $owner = member($project);
     $dev = User::factory()->create();
-    joinProjects($dev, $project, ProjectRole::Member);
+    joinProjects($dev, $project, ProjectLevel::Write);
     $issue = (new CreateIssueAction)->handle($project, 'An issue', IssueType::Feature, owner: $owner);
 
     $this->actingAs($owner)->patch("/issues/{$issue->identifier}", [
@@ -129,7 +129,7 @@ it('does not let the owner be reassigned through the update form', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $owner = member($project);
     $other = User::factory()->create();
-    joinProjects($other, $project, ProjectRole::Member);
+    joinProjects($other, $project, ProjectLevel::Write);
     $issue = (new CreateIssueAction)->handle($project, 'An issue', IssueType::Feature, owner: $owner);
 
     $this->actingAs($owner)->patch("/issues/{$issue->identifier}", [

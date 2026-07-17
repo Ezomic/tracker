@@ -8,7 +8,7 @@ defineProps<{
     state: 'guest' | 'mismatch' | 'expired' | 'accepted' | 'invalid';
     invitation: {
         email: string;
-        role: string;
+        level: string;
         roleLabel: string;
         projectName: string;
         inviterName: string | null;

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\OrganizationRole;
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
@@ -23,7 +23,7 @@ it('creates the Calendar project in the founder organization with the founder as
     $project = Project::query()->where('key', 'CAL')->firstOrFail();
     expect($project->name)->toBe('Calendar')
         ->and($project->organization_id)->toBe($org->id)
-        ->and($project->roleFor($founder))->toBe(ProjectRole::Owner);
+        ->and($project->grantFor($founder))->toBe(ProjectLevel::Admin);
 });
 
 it('is idempotent and does not duplicate the project', function () {

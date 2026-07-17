@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Enums\OrganizationRole;
 use Database\Factories\IssueFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -115,7 +116,14 @@ class Issue extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $query->whereHas('project.members', fn (Builder $members) => $members->whereKey($user->id));
+        // Grouped so the OR does not leak into sibling conditions on the query.
+        return $query->where(function (Builder $query) use ($user): void {
+            $query
+                ->whereHas('project.members', fn (Builder $members) => $members->whereKey($user->id))
+                ->orWhereHas('project.organization.members', fn (Builder $members) => $members
+                    ->whereKey($user->id)
+                    ->whereIn('organization_user.role', [OrganizationRole::Owner->value, OrganizationRole::Admin->value]));
+        });
     }
 
     /**

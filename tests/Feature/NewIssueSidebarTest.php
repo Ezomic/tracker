@@ -24,7 +24,7 @@ it('shares favorited and unfavorited projects alike to the modal', function () {
     $thi = Project::factory()->create(['key' => 'THI']);
     $cms = Project::factory()->create(['key' => 'CMS']);
     $user = member($thi);
-    $cms->members()->attach($user->id, ['role' => 'owner', 'is_favorite' => false]);
+    $cms->members()->attach($user->id, ['level' => 'admin', 'is_favorite' => false]);
 
     // The sidebar nav only lists favorites, but you can file against any of them.
     $this->actingAs($user)->get('/dashboard')

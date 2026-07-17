@@ -24,19 +24,19 @@ export interface ProjectLinks {
     repos: ProjectRepoLink[];
 }
 
-export type ProjectRole = 'owner' | 'admin' | 'member';
+export type ProjectLevel = 'read' | 'write' | 'admin';
 
 export interface ProjectMember {
     id: number;
     name: string;
     email: string;
-    role: ProjectRole;
+    level: ProjectLevel;
 }
 
 export interface PendingInvitation {
     id: number;
     email: string;
-    role: ProjectRole;
+    level: ProjectLevel;
     expiresAt: string;
 }
 
@@ -46,7 +46,7 @@ export interface Project {
     name: string;
     description: string | null;
     color: string;
-    role: ProjectRole;
+    level: ProjectLevel;
     isFavorite: boolean;
     githubRepos: string[];
     productionUrl: string | null;
