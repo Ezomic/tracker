@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProjectMemberRequest;
 use App\Http\Requests\UpdateProjectMemberRequest;
-use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Pivot;
@@ -40,11 +40,31 @@ class ProjectMemberController extends Controller
                 'name' => $project->name,
             ],
             'members' => $members,
-            // Pending invitations are only the managers' business.
-            'invitations' => $canManage ? $this->pendingInvitations($project) : [],
+            // Only managers add people, and only from the organization's roster.
+            'assignable' => $canManage ? $this->assignableMembers($project) : [],
             'canManage' => $canManage,
             'currentUserId' => $request->user()->id,
         ]);
+    }
+
+    public function store(StoreProjectMemberRequest $request, Project $project): RedirectResponse
+    {
+        $this->authorize('manageMembers', $project);
+
+        $user = $this->guardOrganizationMember($project, (int) $request->validated('user_id'));
+
+        if ($project->hasMember($user)) {
+            return back()->withErrors(['user_id' => 'They already have access to this project.']);
+        }
+
+        $project->members()->attach($user->id, [
+            'level' => $request->validated('level'),
+            'is_favorite' => false,
+        ]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Member added.')]);
+
+        return back();
     }
 
     public function update(UpdateProjectMemberRequest $request, Project $project, User $user): RedirectResponse
@@ -74,21 +94,39 @@ class ProjectMemberController extends Controller
     }
 
     /**
+     * Organization members who aren't yet on the project.
+     *
      * @return list<array<string, mixed>>
      */
-    private function pendingInvitations(Project $project): array
+    private function assignableMembers(Project $project): array
     {
-        return array_values($project->invitations()
-            ->pending()
-            ->orderBy('email')
+        $organization = $project->organization;
+
+        if ($organization === null) {
+            return [];
+        }
+
+        $existingIds = $project->members()->pluck('users.id')->all();
+
+        return array_values($organization->members()
+            ->whereNotIn('users.id', $existingIds)
+            ->orderBy('name')
             ->get()
-            ->map(fn (Invitation $invitation): array => [
-                'id' => $invitation->id,
-                'email' => $invitation->email,
-                'level' => $invitation->level->value,
-                'expiresAt' => $invitation->expires_at->toIso8601String(),
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
             ])
             ->all());
+    }
+
+    private function guardOrganizationMember(Project $project, int $userId): User
+    {
+        $user = User::query()->findOrFail($userId);
+
+        abort_unless($project->organization?->hasMember($user) ?? false, 404);
+
+        return $user;
     }
 
     private function guardMember(Project $project, User $user): void

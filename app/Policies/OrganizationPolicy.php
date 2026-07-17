@@ -18,4 +18,9 @@ class OrganizationPolicy
     {
         return $organization->roleFor($user)?->manages() ?? false;
     }
+
+    public function manageMembers(User $user, Organization $organization): bool
+    {
+        return $organization->roleFor($user)?->manages() ?? false;
+    }
 }

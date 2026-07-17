@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\OrganizationRole;
 use App\Enums\ProjectLevel;
 use App\Models\Project;
 use App\Models\User;
@@ -106,6 +107,47 @@ it('404s when acting on a user who has no grant on the project', function () {
     $this->actingAs($admin)
         ->delete("/projects/THI/members/{$stranger->id}")
         ->assertNotFound();
+});
+
+it('offers assignable organization members to a manager', function () {
+    [$org, $owner] = organizationWith();
+    $project = Project::factory()->create(['key' => 'THI', 'organization_id' => $org->id]);
+    joinProjects($owner, $project, ProjectLevel::Admin);
+    $colleague = User::factory()->create(['name' => 'Colleague']);
+    $org->members()->attach($colleague->id, ['role' => OrganizationRole::Member->value]);
+
+    $this->actingAs($owner)->get('/projects/THI/members')
+        ->assertInertia(fn ($page) => $page
+            ->has('assignable', 1)
+            ->where('assignable.0.name', 'Colleague')
+        );
+});
+
+it('lets a manager add an existing organization member to the project', function () {
+    [$org, $owner] = organizationWith();
+    $project = Project::factory()->create(['key' => 'THI', 'organization_id' => $org->id]);
+    joinProjects($owner, $project, ProjectLevel::Admin);
+    $colleague = User::factory()->create();
+    $org->members()->attach($colleague->id, ['role' => OrganizationRole::Member->value]);
+
+    $this->actingAs($owner)
+        ->post('/projects/THI/members', ['user_id' => $colleague->id, 'level' => 'write'])
+        ->assertRedirect();
+
+    expect($project->grantFor($colleague))->toBe(ProjectLevel::Write);
+});
+
+it('refuses to add someone who is not in the organization', function () {
+    [$org, $owner] = organizationWith();
+    $project = Project::factory()->create(['key' => 'THI', 'organization_id' => $org->id]);
+    joinProjects($owner, $project, ProjectLevel::Admin);
+    $stranger = User::factory()->create();
+
+    $this->actingAs($owner)
+        ->post('/projects/THI/members', ['user_id' => $stranger->id, 'level' => 'write'])
+        ->assertNotFound();
+
+    expect($project->grantFor($stranger))->toBeNull();
 });
 
 it('grants an organization owner admin without a direct project grant', function () {
