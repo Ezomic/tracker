@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('projects/{project}', [ProjectsController::class, 'update'])->name('projects.update');
     Route::patch('projects/{project:key}/favorite', [ProjectsController::class, 'toggleFavorite'])
         ->name('projects.favorite');
+
+    Route::get('projects/{project:key}/members', [ProjectMemberController::class, 'index'])
+        ->name('projects.members.index');
+    Route::patch('projects/{project:key}/members/{user}', [ProjectMemberController::class, 'update'])
+        ->name('projects.members.update');
+    Route::delete('projects/{project:key}/members/{user}', [ProjectMemberController::class, 'destroy'])
+        ->name('projects.members.destroy');
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');

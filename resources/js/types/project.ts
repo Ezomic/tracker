@@ -26,6 +26,13 @@ export interface ProjectLinks {
 
 export type ProjectRole = 'owner' | 'admin' | 'member';
 
+export interface ProjectMember {
+    id: number;
+    name: string;
+    email: string;
+    role: ProjectRole;
+}
+
 export interface Project {
     id: number;
     key: string;
