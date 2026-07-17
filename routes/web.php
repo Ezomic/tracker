@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\IssueTemplateController;
 use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
@@ -35,6 +36,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('projects.invitations.resend');
     Route::delete('projects/{project:key}/invitations/{invitation}', [ProjectInvitationController::class, 'destroy'])
         ->name('projects.invitations.destroy');
+
+    Route::get('projects/{project:key}/templates', [IssueTemplateController::class, 'index'])
+        ->name('projects.templates.index');
+    Route::post('projects/{project:key}/templates', [IssueTemplateController::class, 'store'])
+        ->name('projects.templates.store');
+    Route::patch('projects/{project:key}/templates/{template}', [IssueTemplateController::class, 'update'])
+        ->name('projects.templates.update');
+    Route::delete('projects/{project:key}/templates/{template}', [IssueTemplateController::class, 'destroy'])
+        ->name('projects.templates.destroy');
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');

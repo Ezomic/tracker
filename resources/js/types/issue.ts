@@ -60,3 +60,16 @@ export interface IssueFilters {
     priority: Issue['priority'] | null;
     label_id: number | null;
 }
+
+export interface IssueTemplate {
+    id: number;
+    name: string;
+    description: string | null;
+    type: Issue['type'] | null;
+    priority: Issue['priority'] | null;
+    labelIds: number[];
+}
+
+export interface CopyableIssueTemplate extends IssueTemplate {
+    projectKey: string;
+}
