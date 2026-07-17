@@ -33,7 +33,7 @@ import {
     store as storeInvitation,
 } from '@/routes/projects/invitations';
 import { destroy, update } from '@/routes/projects/members';
-import type { PendingInvitation, ProjectMember, ProjectRole } from '@/types';
+import type { PendingInvitation, ProjectLevel, ProjectMember } from '@/types';
 
 const props = defineProps<{
     project: { key: string; name: string };
@@ -44,7 +44,7 @@ const props = defineProps<{
 }>();
 
 const inviteOpen = ref(false);
-const inviteRole = ref<ProjectRole>('member');
+const inviteLevel = ref<ProjectLevel>('write');
 
 function resend(invitation: PendingInvitation) {
     router.post(
@@ -75,10 +75,10 @@ defineOptions({
 
 const removing = ref<ProjectMember | null>(null);
 
-const roleLabels: Record<ProjectRole, string> = {
-    owner: 'Owner',
+const levelLabels: Record<ProjectLevel, string> = {
     admin: 'Admin',
-    member: 'Member',
+    write: 'Write',
+    read: 'Read',
 };
 
 function formatExpiry(iso: string): string {
@@ -98,14 +98,14 @@ function initials(name: string): string {
         .toUpperCase();
 }
 
-function changeRole(member: ProjectMember, role: string) {
-    if (role === member.role) {
+function changeLevel(member: ProjectMember, level: string) {
+    if (level === member.level) {
         return;
     }
 
     router.patch(
         update({ project: props.project.key, user: member.id }).url,
-        { role },
+        { level },
         { preserveScroll: true },
     );
 }
@@ -127,7 +127,7 @@ function remove() {
 }
 
 const canManageMember = (member: ProjectMember) =>
-    props.canManage && member.role !== 'owner';
+    props.canManage && member.id !== props.currentUserId;
 </script>
 
 <template>
@@ -138,7 +138,7 @@ const canManageMember = (member: ProjectMember) =>
             <Heading
                 variant="small"
                 :title="`${project.name} members`"
-                description="People with access to this project and their roles"
+                description="People with access to this project and their level"
             />
 
             <Dialog v-if="canManage" v-model:open="inviteOpen">
@@ -179,24 +179,23 @@ const canManageMember = (member: ProjectMember) =>
                         </div>
 
                         <div class="grid gap-2">
-                            <Label>Role</Label>
+                            <Label>Level</Label>
                             <input
                                 type="hidden"
-                                name="role"
-                                :value="inviteRole"
+                                name="level"
+                                :value="inviteLevel"
                             />
-                            <Select v-model="inviteRole">
+                            <Select v-model="inviteLevel">
                                 <SelectTrigger class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="admin">Admin</SelectItem>
-                                    <SelectItem value="member">
-                                        Member
-                                    </SelectItem>
+                                    <SelectItem value="write">Write</SelectItem>
+                                    <SelectItem value="read">Read</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <InputError :message="errors.role" />
+                            <InputError :message="errors.level" />
                         </div>
 
                         <DialogFooter class="gap-2">
@@ -242,9 +241,9 @@ const canManageMember = (member: ProjectMember) =>
 
                 <template v-if="canManageMember(member)">
                     <Select
-                        :model-value="member.role"
+                        :model-value="member.level"
                         @update:model-value="
-                            (value) => changeRole(member, value as string)
+                            (value) => changeLevel(member, value as string)
                         "
                     >
                         <SelectTrigger class="w-32">
@@ -252,7 +251,8 @@ const canManageMember = (member: ProjectMember) =>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="member">Member</SelectItem>
+                            <SelectItem value="write">Write</SelectItem>
+                            <SelectItem value="read">Read</SelectItem>
                         </SelectContent>
                     </Select>
                     <Button
@@ -265,7 +265,7 @@ const canManageMember = (member: ProjectMember) =>
                     </Button>
                 </template>
                 <Badge v-else variant="secondary" class="shrink-0">
-                    {{ roleLabels[member.role] }}
+                    {{ levelLabels[member.level] }}
                 </Badge>
             </div>
         </div>
@@ -296,7 +296,7 @@ const canManageMember = (member: ProjectMember) =>
                         </p>
                     </div>
                     <Badge variant="secondary" class="shrink-0">
-                        {{ roleLabels[invitation.role] }}
+                        {{ levelLabels[invitation.level] }}
                     </Badge>
                     <Button
                         variant="ghost"

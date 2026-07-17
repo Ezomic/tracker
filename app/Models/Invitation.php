@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -15,13 +15,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $project_id
  * @property string $email
- * @property ProjectRole $role
+ * @property ProjectLevel $level
  * @property string $token
  * @property int|null $invited_by_id
  * @property Carbon $expires_at
  * @property Carbon|null $accepted_at
  */
-#[Fillable(['project_id', 'email', 'role', 'token', 'invited_by_id', 'expires_at', 'accepted_at'])]
+#[Fillable(['project_id', 'email', 'level', 'token', 'invited_by_id', 'expires_at', 'accepted_at'])]
 class Invitation extends Model
 {
     public static function hashToken(string $plainToken): string
@@ -70,7 +70,7 @@ class Invitation extends Model
     protected function casts(): array
     {
         return [
-            'role' => ProjectRole::class,
+            'level' => ProjectLevel::class,
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
         ];

@@ -33,7 +33,7 @@ class ProjectInvitationMail extends Mailable
             view: 'emails.project-invitation',
             with: [
                 'projectName' => $this->invitation->project->name,
-                'roleLabel' => $this->invitation->role->label(),
+                'roleLabel' => $this->invitation->level->label(),
                 'inviterName' => $this->invitation->invitedBy?->name,
                 'acceptUrl' => $this->acceptUrl,
             ],

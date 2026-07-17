@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\OrganizationRole;
-use App\Enums\ProjectRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -45,10 +45,15 @@ return new class extends Migration
             'updated_at' => $now,
         ]);
 
+        // Runs before the role->level rename in the normal chain, but the test
+        // suite invokes it against a fully-migrated schema, so detect which.
+        $levelColumn = Schema::hasColumn('project_user', 'level') ? 'level' : 'role';
+        $levelValue = $levelColumn === 'level' ? 'admin' : 'owner';
+
         DB::table('project_user')->insert([
             'project_id' => $projectId,
             'user_id' => $founder->id,
-            'role' => ProjectRole::Owner->value,
+            $levelColumn => $levelValue,
             'is_favorite' => true,
             'created_at' => $now,
             'updated_at' => $now,

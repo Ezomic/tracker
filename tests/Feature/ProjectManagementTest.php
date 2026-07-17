@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Project;
 use App\Models\User;
 
@@ -58,7 +58,7 @@ it('makes the creator the owner of a new project', function () {
     $this->actingAs($user)->post('/projects', ['key' => 'BILLR', 'name' => 'Billr']);
 
     $project = Project::query()->where('key', 'BILLR')->first();
-    expect($project->roleFor($user))->toBe(ProjectRole::Owner);
+    expect($project->grantFor($user))->toBe(ProjectLevel::Admin);
 });
 
 it('creates a project with a color', function () {

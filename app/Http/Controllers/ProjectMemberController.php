@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ProjectRole;
 use App\Http\Requests\UpdateProjectMemberRequest;
 use App\Models\Invitation;
 use App\Models\Project;
@@ -29,7 +28,7 @@ class ProjectMemberController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => (string) $pivot->getAttribute('role'),
+                'level' => (string) $pivot->getAttribute('level'),
             ];
         });
 
@@ -51,10 +50,10 @@ class ProjectMemberController extends Controller
     public function update(UpdateProjectMemberRequest $request, Project $project, User $user): RedirectResponse
     {
         $this->authorize('manageMembers', $project);
-        $this->guardOwner($project, $user);
+        $this->guardMember($project, $user);
 
         $project->members()->updateExistingPivot($user->id, [
-            'role' => $request->validated('role'),
+            'level' => $request->validated('level'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member updated.')]);
@@ -65,7 +64,7 @@ class ProjectMemberController extends Controller
     public function destroy(Project $project, User $user): RedirectResponse
     {
         $this->authorize('manageMembers', $project);
-        $this->guardOwner($project, $user);
+        $this->guardMember($project, $user);
 
         $project->members()->detach($user->id);
 
@@ -86,15 +85,14 @@ class ProjectMemberController extends Controller
             ->map(fn (Invitation $invitation): array => [
                 'id' => $invitation->id,
                 'email' => $invitation->email,
-                'role' => $invitation->role->value,
+                'level' => $invitation->level->value,
                 'expiresAt' => $invitation->expires_at->toIso8601String(),
             ])
             ->all());
     }
 
-    private function guardOwner(Project $project, User $user): void
+    private function guardMember(Project $project, User $user): void
     {
         abort_unless($project->hasMember($user), 404);
-        abort_if($project->roleFor($user) === ProjectRole::Owner, 403, 'The project owner cannot be changed.');
     }
 }

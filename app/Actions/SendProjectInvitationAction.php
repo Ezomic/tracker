@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Mail\ProjectInvitationMail;
 use App\Models\Invitation;
 use App\Models\Project;
@@ -21,14 +21,14 @@ class SendProjectInvitationAction
      * existing invitation for the same project and email is refreshed with a
      * new token and expiry, so re-inviting invalidates the previous link.
      */
-    public function handle(Project $project, string $email, ProjectRole $role, ?User $invitedBy = null): Invitation
+    public function handle(Project $project, string $email, ProjectLevel $level, ?User $invitedBy = null): Invitation
     {
         $plainToken = Str::random(40);
 
         $invitation = Invitation::updateOrCreate(
             ['project_id' => $project->id, 'email' => Str::lower($email)],
             [
-                'role' => $role,
+                'level' => $level,
                 'token' => Invitation::hashToken($plainToken),
                 'invited_by_id' => $invitedBy?->id,
                 'expires_at' => now()->addDays(self::EXPIRES_DAYS),

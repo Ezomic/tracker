@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Project;
 use App\Models\User;
 
@@ -10,8 +10,8 @@ it('lists the projects the user belongs to with favorite state', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
     $cms = Project::factory()->create(['key' => 'CMS']);
-    $thi->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => true]);
-    $cms->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => false]);
+    $thi->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => true]);
+    $cms->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => false]);
 
     $this->actingAs($user)
         ->get('/projects')
@@ -37,7 +37,7 @@ it('does not list projects the user is not a member of', function () {
 it('toggles a project favorite for the current user', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
-    $project->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => true]);
+    $project->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => true]);
 
     $favorite = fn () => (bool) $user->projects()->find($project->id)->getAttribute('pivot')->getAttribute('is_favorite');
 
@@ -52,8 +52,8 @@ it('only shares favorited projects to the sidebar', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
     $cms = Project::factory()->create(['key' => 'CMS']);
-    $thi->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => true]);
-    $cms->members()->attach($user->id, ['role' => ProjectRole::Owner->value, 'is_favorite' => false]);
+    $thi->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => true]);
+    $cms->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => false]);
 
     $this->actingAs($user)
         ->get('/issues')

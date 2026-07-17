@@ -2,18 +2,17 @@
 
 declare(strict_types=1);
 
-use App\Enums\ProjectRole;
+use App\Enums\ProjectLevel;
 use App\Models\Project;
 use App\Models\User;
 
-it('lists members with their roles for a member of the project', function () {
-    $owner = User::factory()->create(['name' => 'Olivia Owner']);
-    $dev = User::factory()->create(['name' => 'Dave Dev']);
+it('lists members with their levels for anyone with access', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($dev, $project, ProjectRole::Member);
+    $admin = member($project, ProjectLevel::Admin);
+    $dev = User::factory()->create(['name' => 'Dave Dev']);
+    joinProjects($dev, $project, ProjectLevel::Write);
 
-    $this->actingAs($owner)
+    $this->actingAs($admin)
         ->get('/projects/THI/members')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -21,142 +20,102 @@ it('lists members with their roles for a member of the project', function () {
             ->where('canManage', true)
             ->has('members', 2)
             ->where('members.0.name', 'Dave Dev')
-            ->where('members.0.role', 'member')
-            ->where('members.1.role', 'owner')
+            ->where('members.0.level', 'write')
+            ->where('members.1.level', 'admin')
         );
 });
 
-it('marks a plain member as unable to manage', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
+it('marks someone with only read as unable to manage', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($member, $project, ProjectRole::Member);
+    member($project, ProjectLevel::Admin);
+    $reader = User::factory()->create();
+    joinProjects($reader, $project, ProjectLevel::Read);
 
-    $this->actingAs($member)
+    $this->actingAs($reader)
         ->get('/projects/THI/members')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('canManage', false));
 });
 
 it('forbids a non-member from viewing the members page', function () {
-    $owner = User::factory()->create();
-    $outsider = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
+    member($project, ProjectLevel::Admin);
 
-    $this->actingAs($outsider)->get('/projects/THI/members')->assertForbidden();
+    $this->actingAs(User::factory()->create())->get('/projects/THI/members')->assertForbidden();
 });
 
-it('lets an owner change a member role', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
+it('lets an admin change a member level', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($member, $project, ProjectRole::Member);
-
-    $this->actingAs($owner)
-        ->patch("/projects/THI/members/{$member->id}", ['role' => 'admin'])
-        ->assertRedirect();
-
-    expect($project->roleFor($member))->toBe(ProjectRole::Admin);
-});
-
-it('lets an admin change another member role', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $member = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($admin, $project, ProjectRole::Admin);
-    joinProjects($member, $project, ProjectRole::Member);
+    $admin = member($project, ProjectLevel::Admin);
+    $dev = User::factory()->create();
+    joinProjects($dev, $project, ProjectLevel::Write);
 
     $this->actingAs($admin)
-        ->patch("/projects/THI/members/{$member->id}", ['role' => 'admin'])
+        ->patch("/projects/THI/members/{$dev->id}", ['level' => 'admin'])
         ->assertRedirect();
 
-    expect($project->roleFor($member))->toBe(ProjectRole::Admin);
+    expect($project->grantFor($dev))->toBe(ProjectLevel::Admin);
 });
 
-it('forbids a plain member from changing roles', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
+it('forbids a write member from changing levels', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    member($project, ProjectLevel::Admin);
+    $dev = User::factory()->create();
+    joinProjects($dev, $project, ProjectLevel::Write);
     $other = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($member, $project, ProjectRole::Member);
-    joinProjects($other, $project, ProjectRole::Member);
+    joinProjects($other, $project, ProjectLevel::Write);
 
-    $this->actingAs($member)
-        ->patch("/projects/THI/members/{$other->id}", ['role' => 'admin'])
+    $this->actingAs($dev)
+        ->patch("/projects/THI/members/{$other->id}", ['level' => 'admin'])
         ->assertForbidden();
 
-    expect($project->roleFor($other))->toBe(ProjectRole::Member);
+    expect($project->grantFor($other))->toBe(ProjectLevel::Write);
 });
 
-it('forbids changing the owner role', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
+it('rejects an unknown level', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($admin, $project, ProjectRole::Admin);
+    $admin = member($project, ProjectLevel::Admin);
+    $dev = User::factory()->create();
+    joinProjects($dev, $project, ProjectLevel::Write);
 
     $this->actingAs($admin)
-        ->patch("/projects/THI/members/{$owner->id}", ['role' => 'member'])
-        ->assertForbidden();
+        ->patch("/projects/THI/members/{$dev->id}", ['level' => 'owner'])
+        ->assertSessionHasErrors('level');
 
-    expect($project->roleFor($owner))->toBe(ProjectRole::Owner);
+    expect($project->grantFor($dev))->toBe(ProjectLevel::Write);
 });
 
-it('rejects promoting a member to owner via the members endpoint', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
+it('lets an admin remove a member', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($member, $project, ProjectRole::Member);
+    $admin = member($project, ProjectLevel::Admin);
+    $dev = User::factory()->create();
+    joinProjects($dev, $project, ProjectLevel::Write);
 
-    $this->actingAs($owner)
-        ->patch("/projects/THI/members/{$member->id}", ['role' => 'owner'])
-        ->assertSessionHasErrors('role');
-
-    expect($project->roleFor($member))->toBe(ProjectRole::Member);
-});
-
-it('lets an owner remove a member', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($member, $project, ProjectRole::Member);
-
-    $this->actingAs($owner)
-        ->delete("/projects/THI/members/{$member->id}")
+    $this->actingAs($admin)
+        ->delete("/projects/THI/members/{$dev->id}")
         ->assertRedirect();
 
-    expect($project->hasMember($member))->toBeFalse();
+    expect($project->grantFor($dev))->toBeNull();
 });
 
-it('forbids removing the owner', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
+it('404s when acting on a user who has no grant on the project', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-    joinProjects($admin, $project, ProjectRole::Admin);
+    $admin = member($project, ProjectLevel::Admin);
+    $stranger = User::factory()->create();
 
     $this->actingAs($admin)
-        ->delete("/projects/THI/members/{$owner->id}")
-        ->assertForbidden();
-
-    expect($project->hasMember($owner))->toBeTrue();
-});
-
-it('returns 404 when acting on a user who is not a member', function () {
-    $owner = User::factory()->create();
-    $stranger = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    joinProjects($owner, $project, ProjectRole::Owner);
-
-    $this->actingAs($owner)
         ->delete("/projects/THI/members/{$stranger->id}")
         ->assertNotFound();
+});
+
+it('grants an organization owner admin without a direct project grant', function () {
+    [$org, $orgOwner] = organizationWith();
+    $project = Project::factory()->create(['key' => 'THI', 'organization_id' => $org->id]);
+
+    // No project_user row for the org owner, yet they can manage it.
+    expect($project->grantFor($orgOwner))->toBeNull()
+        ->and($project->effectiveLevel($orgOwner))->toBe(ProjectLevel::Admin);
+
+    $this->actingAs($orgOwner)->get('/projects/THI/members')
+        ->assertInertia(fn ($page) => $page->where('canManage', true));
 });
