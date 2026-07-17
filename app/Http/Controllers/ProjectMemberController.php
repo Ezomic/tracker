@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProjectRole;
 use App\Http\Requests\UpdateProjectMemberRequest;
+use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Pivot;
@@ -32,13 +33,17 @@ class ProjectMemberController extends Controller
             ];
         });
 
+        $canManage = $request->user()->can('manageMembers', $project);
+
         return Inertia::render('projects/Members', [
             'project' => [
                 'key' => $project->key,
                 'name' => $project->name,
             ],
             'members' => $members,
-            'canManage' => $request->user()->can('manageMembers', $project),
+            // Pending invitations are only the managers' business.
+            'invitations' => $canManage ? $this->pendingInvitations($project) : [],
+            'canManage' => $canManage,
             'currentUserId' => $request->user()->id,
         ]);
     }
@@ -67,6 +72,24 @@ class ProjectMemberController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member removed.')]);
 
         return back();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function pendingInvitations(Project $project): array
+    {
+        return array_values($project->invitations()
+            ->pending()
+            ->orderBy('email')
+            ->get()
+            ->map(fn (Invitation $invitation): array => [
+                'id' => $invitation->id,
+                'email' => $invitation->email,
+                'role' => $invitation->role->value,
+                'expiresAt' => $invitation->expires_at->toIso8601String(),
+            ])
+            ->all());
     }
 
     private function guardOwner(Project $project, User $user): void

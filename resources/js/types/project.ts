@@ -33,6 +33,13 @@ export interface ProjectMember {
     role: ProjectRole;
 }
 
+export interface PendingInvitation {
+    id: number;
+    email: string;
+    role: ProjectRole;
+    expiresAt: string;
+}
+
 export interface Project {
     id: number;
     key: string;

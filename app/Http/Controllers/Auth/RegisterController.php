@@ -10,6 +10,7 @@ use App\Mail\LoginCodeMail;
 use App\Models\User;
 use App\Services\OneTimeCodeService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -19,9 +20,12 @@ class RegisterController extends Controller
 {
     public function __construct(private readonly OneTimeCodeService $codes) {}
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('auth/Register');
+        return Inertia::render('auth/Register', [
+            // Prefilled when arriving from a project invitation link.
+            'email' => $request->query('email'),
+        ]);
     }
 
     public function store(StoreRegistrationRequest $request): RedirectResponse
