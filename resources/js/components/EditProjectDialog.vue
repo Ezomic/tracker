@@ -28,6 +28,10 @@ const props = defineProps<{
 }>();
 
 const color = ref(props.project.color);
+// A raw <textarea> ignores :default-value (Vue doesn't map it to the
+// defaultValue DOM property), so bind the initial value via v-model to keep
+// the field populated — otherwise saving would submit a blank description.
+const description = ref(props.project.description ?? '');
 </script>
 
 <template>
@@ -68,9 +72,9 @@ const color = ref(props.project.color);
                     >
                     <textarea
                         :id="`description-${project.id}`"
+                        v-model="description"
                         name="description"
                         rows="2"
-                        :default-value="project.description ?? ''"
                         placeholder="What is this project?"
                         class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                     />

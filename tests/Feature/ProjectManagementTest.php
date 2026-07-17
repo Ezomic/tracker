@@ -31,6 +31,27 @@ it('creates a project', function () {
     expect(Project::query()->where('key', 'BILLR')->exists())->toBeTrue();
 });
 
+it('keeps the description when it is resubmitted with an unrelated change', function () {
+    $team = Project::factory()->create([
+        'key' => 'THI',
+        'name' => 'Thijssen Software',
+        'description' => 'A meaningful description',
+    ]);
+
+    $this->actingAs(member($team))
+        ->patch("/projects/{$team->id}", [
+            'key' => 'THI',
+            'name' => 'Thijssen Software',
+            'description' => 'A meaningful description',
+            'archive_after_days' => 7,
+        ])
+        ->assertRedirect(route('projects.index'));
+
+    expect($team->fresh())
+        ->description->toBe('A meaningful description')
+        ->archive_after_days->toBe(7);
+});
+
 it('makes the creator the owner of a new project', function () {
     $user = User::factory()->create();
 
