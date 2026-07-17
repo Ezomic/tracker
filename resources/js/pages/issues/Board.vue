@@ -5,13 +5,23 @@ import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { board, show, updateStatus } from '@/routes/issues';
 import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
 
 const props = defineProps<{
     issues: Issue[];
     project?: { key: string; name: string; links: ProjectLinksType } | null;
+    showArchived: boolean;
 }>();
+
+function toggleArchived(value: boolean) {
+    router.reload({
+        data: { archived: value ? 1 : 0 },
+        only: ['issues', 'showArchived'],
+    });
+}
 
 const heading = computed(() =>
     props.project ? `${props.project.key} · Board` : 'Board',
@@ -89,6 +99,15 @@ function onDrop(event: DragEvent, status: Issue['status']) {
             <h1 class="text-lg font-medium">{{ heading }}</h1>
             <IssueViewToggle active="board" :project-key="project?.key" />
             <ProjectLinks v-if="project" :links="project.links" />
+            <Label
+                class="ml-auto flex items-center gap-2 text-sm font-normal text-muted-foreground"
+            >
+                <Switch
+                    :model-value="showArchived"
+                    @update:model-value="toggleArchived"
+                />
+                Show archived
+            </Label>
         </div>
 
         <div
@@ -122,11 +141,12 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                     :href="show({ issue: issue.identifier })"
                     draggable="true"
                     class="flex cursor-grab flex-col gap-2 rounded-lg border bg-card p-3 text-sm shadow-xs transition-colors hover:bg-accent active:cursor-grabbing"
-                    :class="
+                    :class="[
                         draggingId === issue.identifier
                             ? 'border-primary opacity-60'
-                            : 'border-sidebar-border/70 dark:border-sidebar-border'
-                    "
+                            : 'border-sidebar-border/70 dark:border-sidebar-border',
+                        issue.archivedAt ? 'opacity-60' : '',
+                    ]"
                     @dragstart="onDragStart($event, issue)"
                     @dragend="onDragEnd"
                 >
@@ -155,6 +175,13 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                         />
                         <Badge variant="outline" class="w-fit font-normal">
                             {{ issue.type }}
+                        </Badge>
+                        <Badge
+                            v-if="issue.archivedAt"
+                            variant="secondary"
+                            class="w-fit font-normal"
+                        >
+                            Archived
                         </Badge>
                     </div>
                 </Link>
