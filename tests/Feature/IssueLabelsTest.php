@@ -9,11 +9,12 @@ use App\Models\Project;
 
 it('attaches labels to an issue on update', function () {
     $team = Project::factory()->create(['key' => 'THI']);
+    $owner = member($team);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
-    $bug = Label::factory()->create(['name' => 'bug']);
-    $urgent = Label::factory()->create(['name' => 'urgent']);
+    $bug = Label::factory()->for($owner)->create(['name' => 'bug']);
+    $urgent = Label::factory()->for($owner)->create(['name' => 'urgent']);
 
-    $this->actingAs(member($team))
+    $this->actingAs($owner)
         ->patch("/issues/{$issue->identifier}", [
             'title' => $issue->title,
             'type' => 'feature',

@@ -70,6 +70,16 @@ class Project extends Model
         return $this->members()->wherePivot('role', ProjectRole::Owner->value)->first();
     }
 
+    /**
+     * The owning member's id, without hydrating the user.
+     */
+    public function ownerId(): ?int
+    {
+        $id = $this->members()->wherePivot('role', ProjectRole::Owner->value)->value('users.id');
+
+        return $id === null ? null : (int) $id;
+    }
+
     public function roleFor(User $user): ?ProjectRole
     {
         $member = $this->members()->find($user->id);
