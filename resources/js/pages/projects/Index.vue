@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Archive, Plus, Star } from '@lucide/vue';
+import { Archive, Plus, Star, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
 import ColorSwatches from '@/components/ColorSwatches.vue';
@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { board, favorite, index } from '@/routes/projects';
+import { index as membersIndex } from '@/routes/projects/members';
 import type { Project } from '@/types';
 
 const props = defineProps<{
@@ -261,6 +262,12 @@ function toggleFavorite(project: Project) {
                 >
                     {{ project.openCount }} open
                 </span>
+                <Button variant="outline" size="sm" as-child>
+                    <Link :href="membersIndex({ project: project.key })">
+                        <Users class="size-4" />
+                        <span class="sr-only">Members</span>
+                    </Link>
+                </Button>
                 <EditProjectDialog
                     :project="project"
                     :palette="palette"
