@@ -9,6 +9,10 @@ import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
+defineProps<{
+    email?: string | null;
+}>();
+
 defineOptions({
     layout: {
         title: 'Create your account',
@@ -43,6 +47,7 @@ defineOptions({
                         id="email"
                         type="email"
                         name="email"
+                        :default-value="email ?? ''"
                         required
                         autocomplete="email"
                         placeholder="email@example.com"
