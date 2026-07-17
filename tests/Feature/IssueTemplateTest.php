@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Enums\ProjectRole;
+use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
@@ -178,4 +179,77 @@ it('cascades templates when the project is deleted', function () {
     $project->delete();
 
     expect(IssueTemplate::query()->count())->toBe(0);
+});
+
+it('serves a project templates as json to a member', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    IssueTemplate::factory()->for($project)->create(['name' => 'Bug report']);
+
+    $this->actingAs(member($project, ProjectRole::Member))
+        ->getJson('/projects/THI/template-options')
+        ->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonPath('0.name', 'Bug report');
+});
+
+it('forbids a non-member from fetching template options', function () {
+    Project::factory()->create(['key' => 'THI']);
+
+    $this->actingAs(User::factory()->create())
+        ->getJson('/projects/THI/template-options')
+        ->assertForbidden();
+});
+
+it('applies a template priority and labels when filing an issue', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $label = Label::factory()->create();
+    $template = IssueTemplate::factory()->for($project)->create([
+        'type' => IssueType::Fix,
+        'priority' => IssuePriority::High,
+    ]);
+    $template->labels()->attach($label);
+
+    $this->actingAs(member($project))->post('/issues', [
+        'project_id' => $project->id,
+        'title' => 'Filed from a template',
+        'type' => 'fix',
+        'description' => "## Steps\nEdited by the user",
+        'template_id' => $template->id,
+    ])->assertRedirect('/issues/THI-1');
+
+    $issue = Issue::query()->firstOrFail();
+    expect($issue->priority)->toBe(IssuePriority::High)
+        ->and($issue->type)->toBe(IssueType::Fix)
+        ->and($issue->description)->toBe("## Steps\nEdited by the user")
+        ->and($issue->labels->pluck('id')->all())->toBe([$label->id]);
+});
+
+it('files a blank issue with no template', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+
+    $this->actingAs(member($project))->post('/issues', [
+        'project_id' => $project->id,
+        'title' => 'Blank one',
+        'type' => 'feature',
+        'template_id' => '',
+    ])->assertRedirect('/issues/THI-1');
+
+    $issue = Issue::query()->firstOrFail();
+    expect($issue->priority)->toBe(IssuePriority::None)
+        ->and($issue->labels)->toBeEmpty();
+});
+
+it('rejects a template belonging to a different project', function () {
+    $thi = Project::factory()->create(['key' => 'THI']);
+    $cms = Project::factory()->create(['key' => 'CMS']);
+    $template = IssueTemplate::factory()->for($cms)->create();
+
+    $this->actingAs(member([$thi, $cms]))->post('/issues', [
+        'project_id' => $thi->id,
+        'title' => 'Nope',
+        'type' => 'feature',
+        'template_id' => $template->id,
+    ])->assertSessionHasErrors('template_id');
+
+    expect(Issue::query()->count())->toBe(0);
 });

@@ -24,6 +24,10 @@ class StoreIssueWebRequest extends FormRequest
         if ($this->input('parent_id') === '') {
             $this->merge(['parent_id' => null]);
         }
+
+        if ($this->input('template_id') === '') {
+            $this->merge(['template_id' => null]);
+        }
     }
 
     /**
@@ -42,6 +46,12 @@ class StoreIssueWebRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::exists('issues', 'id')->where('parent_id', null),
+            ],
+            'template_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('issue_templates', 'id')
+                    ->where('project_id', $this->input('project_id')),
             ],
         ];
     }

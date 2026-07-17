@@ -12,6 +12,7 @@ use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
+use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
 use App\Models\User;
@@ -73,6 +74,10 @@ class IssueController extends Controller
         $this->authorize('createIssue', $project);
 
         $parent = $this->findParent($request->validated('parent_id'));
+        // Title, type and description are prefilled client-side and editable;
+        // priority and labels have no field on the form, so they come straight
+        // off the template here.
+        $template = $this->findTemplate($request->validated('template_id'));
 
         $issue = $action->handle(
             project: $project,
@@ -81,7 +86,12 @@ class IssueController extends Controller
             description: $request->validated('description'),
             parent: $parent,
             owner: $request->user(),
+            priority: $template?->priority,
         );
+
+        if ($template !== null) {
+            $issue->labels()->sync($template->labels->pluck('id')->all());
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue created.')]);
 
@@ -150,6 +160,13 @@ class IssueController extends Controller
         ])->save();
 
         return back();
+    }
+
+    private function findTemplate(mixed $templateId): ?IssueTemplate
+    {
+        return $templateId === null
+            ? null
+            : IssueTemplate::query()->with('labels')->whereKey((int) $templateId)->first();
     }
 
     private function findParent(mixed $parentId): ?Issue
