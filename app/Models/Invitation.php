@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\OrganizationRole;
 use App\Enums\ProjectLevel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,20 +14,30 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $project_id
+ * @property int $organization_id
  * @property string $email
- * @property ProjectLevel $level
+ * @property OrganizationRole $role
+ * @property int|null $project_id
+ * @property ProjectLevel|null $level
  * @property string $token
  * @property int|null $invited_by_id
  * @property Carbon $expires_at
  * @property Carbon|null $accepted_at
  */
-#[Fillable(['project_id', 'email', 'level', 'token', 'invited_by_id', 'expires_at', 'accepted_at'])]
+#[Fillable(['organization_id', 'email', 'role', 'project_id', 'level', 'token', 'invited_by_id', 'expires_at', 'accepted_at'])]
 class Invitation extends Model
 {
     public static function hashToken(string $plainToken): string
     {
         return hash('sha256', $plainToken);
+    }
+
+    /**
+     * @return BelongsTo<Organization, $this>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**
@@ -70,6 +81,7 @@ class Invitation extends Model
     protected function casts(): array
     {
         return [
+            'role' => OrganizationRole::class,
             'level' => ProjectLevel::class,
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, router } from '@inertiajs/vue3';
-import { Mail, UserPlus } from '@lucide/vue';
-import { ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { UserPlus } from '@lucide/vue';
+import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -17,7 +17,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -27,45 +26,16 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { index as projectsIndex } from '@/routes/projects';
-import {
-    destroy as revokeInvitation,
-    resend as resendInvitation,
-    store as storeInvitation,
-} from '@/routes/projects/invitations';
-import { destroy, update } from '@/routes/projects/members';
-import type { PendingInvitation, ProjectLevel, ProjectMember } from '@/types';
+import { destroy, store, update } from '@/routes/projects/members';
+import type { AssignableMember, ProjectLevel, ProjectMember } from '@/types';
 
 const props = defineProps<{
     project: { key: string; name: string };
     members: ProjectMember[];
-    invitations: PendingInvitation[];
+    assignable: AssignableMember[];
     canManage: boolean;
     currentUserId: number;
 }>();
-
-const inviteOpen = ref(false);
-const inviteLevel = ref<ProjectLevel>('write');
-
-function resend(invitation: PendingInvitation) {
-    router.post(
-        resendInvitation({
-            project: props.project.key,
-            invitation: invitation.id,
-        }).url,
-        {},
-        { preserveScroll: true },
-    );
-}
-
-function revoke(invitation: PendingInvitation) {
-    router.delete(
-        revokeInvitation({
-            project: props.project.key,
-            invitation: invitation.id,
-        }).url,
-        { preserveScroll: true },
-    );
-}
 
 defineOptions({
     layout: {
@@ -73,6 +43,10 @@ defineOptions({
     },
 });
 
+const addOpen = ref(false);
+const addUserId = ref<string>('');
+const addLevel = ref<ProjectLevel>('write');
+const addError = ref<string | null>(null);
 const removing = ref<ProjectMember | null>(null);
 
 const levelLabels: Record<ProjectLevel, string> = {
@@ -81,13 +55,7 @@ const levelLabels: Record<ProjectLevel, string> = {
     read: 'Read',
 };
 
-function formatExpiry(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-}
+const hasAssignable = computed(() => props.assignable.length > 0);
 
 function initials(name: string): string {
     return name
@@ -96,6 +64,31 @@ function initials(name: string): string {
         .slice(0, 2)
         .join('')
         .toUpperCase();
+}
+
+function add() {
+    if (addUserId.value === '') {
+        addError.value = 'Pick someone to add.';
+
+        return;
+    }
+
+    router.post(
+        store({ project: props.project.key }).url,
+        { user_id: Number(addUserId.value), level: addLevel.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                addOpen.value = false;
+                addUserId.value = '';
+                addLevel.value = 'write';
+                addError.value = null;
+            },
+            onError: (errors) => {
+                addError.value = errors.user_id ?? errors.level ?? null;
+            },
+        },
+    );
 }
 
 function changeLevel(member: ProjectMember, level: string) {
@@ -141,51 +134,48 @@ const canManageMember = (member: ProjectMember) =>
                 description="People with access to this project and their level"
             />
 
-            <Dialog v-if="canManage" v-model:open="inviteOpen">
+            <Dialog v-if="canManage" v-model:open="addOpen">
                 <DialogTrigger as-child>
-                    <Button size="sm" class="shrink-0">
+                    <Button size="sm" class="shrink-0" :disabled="!hasAssignable">
                         <UserPlus />
-                        Invite
+                        Add member
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <Form
-                        v-bind="storeInvitation.form({ project: project.key })"
-                        reset-on-success
-                        class="space-y-6"
-                        @success="inviteOpen = false"
-                        v-slot="{ errors, processing }"
-                    >
-                        <DialogHeader>
-                            <DialogTitle
-                                >Invite to {{ project.name }}</DialogTitle
-                            >
-                            <DialogDescription>
-                                We'll email them a link to join. It expires in 7
-                                days.
-                            </DialogDescription>
-                        </DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>Add to {{ project.name }}</DialogTitle>
+                        <DialogDescription>
+                            Grant an organization member access to this project.
+                            Invite new people from
+                            <span class="font-medium">Settings &rarr; Members</span>.
+                        </DialogDescription>
+                    </DialogHeader>
 
+                    <div class="space-y-6">
                         <div class="grid gap-2">
-                            <Label for="invite-email">Email address</Label>
-                            <Input
-                                id="invite-email"
-                                name="email"
-                                type="email"
-                                required
-                                placeholder="email@example.com"
-                            />
-                            <InputError :message="errors.email" />
+                            <Label>Member</Label>
+                            <Select v-model="addUserId">
+                                <SelectTrigger class="w-full">
+                                    <SelectValue placeholder="Select a member" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="candidate in assignable"
+                                        :key="candidate.id"
+                                        :value="String(candidate.id)"
+                                    >
+                                        {{ candidate.name }} ({{
+                                            candidate.email
+                                        }})
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="addError ?? undefined" />
                         </div>
 
                         <div class="grid gap-2">
                             <Label>Level</Label>
-                            <input
-                                type="hidden"
-                                name="level"
-                                :value="inviteLevel"
-                            />
-                            <Select v-model="inviteLevel">
+                            <Select v-model="addLevel">
                                 <SelectTrigger class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -195,18 +185,15 @@ const canManageMember = (member: ProjectMember) =>
                                     <SelectItem value="read">Read</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <InputError :message="errors.level" />
                         </div>
+                    </div>
 
-                        <DialogFooter class="gap-2">
-                            <DialogClose as-child>
-                                <Button variant="secondary">Cancel</Button>
-                            </DialogClose>
-                            <Button type="submit" :disabled="processing">
-                                Send invitation
-                            </Button>
-                        </DialogFooter>
-                    </Form>
+                    <DialogFooter class="gap-2">
+                        <DialogClose as-child>
+                            <Button variant="secondary">Cancel</Button>
+                        </DialogClose>
+                        <Button type="button" @click="add">Add member</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
@@ -269,53 +256,6 @@ const canManageMember = (member: ProjectMember) =>
                 </Badge>
             </div>
         </div>
-
-        <template v-if="canManage && invitations.length > 0">
-            <Heading
-                variant="small"
-                title="Pending invitations"
-                description="Invited but not yet accepted"
-            />
-            <div
-                class="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <div
-                    v-for="invitation in invitations"
-                    :key="invitation.id"
-                    class="flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-3 first:border-t-0 dark:border-sidebar-border"
-                >
-                    <Avatar class="size-8 shrink-0">
-                        <AvatarFallback class="text-xs text-muted-foreground">
-                            <Mail class="size-3.5" />
-                        </AvatarFallback>
-                    </Avatar>
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm">{{ invitation.email }}</p>
-                        <p class="truncate text-xs text-muted-foreground">
-                            Expires {{ formatExpiry(invitation.expiresAt) }}
-                        </p>
-                    </div>
-                    <Badge variant="secondary" class="shrink-0">
-                        {{ levelLabels[invitation.level] }}
-                    </Badge>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        @click="resend(invitation)"
-                    >
-                        Resend
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        class="text-destructive hover:text-destructive"
-                        @click="revoke(invitation)"
-                    >
-                        Revoke
-                    </Button>
-                </div>
-            </div>
-        </template>
     </div>
 
     <Dialog
@@ -327,7 +267,7 @@ const canManageMember = (member: ProjectMember) =>
                 <DialogTitle>Remove member</DialogTitle>
                 <DialogDescription>
                     Remove {{ removing?.name }} from {{ project.name }}? They'll
-                    lose access to the project until invited again.
+                    lose access to the project until added again.
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter class="gap-2">

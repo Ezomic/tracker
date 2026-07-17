@@ -26,6 +26,8 @@ export interface ProjectLinks {
 
 export type ProjectLevel = 'read' | 'write' | 'admin';
 
+export type OrganizationRole = 'owner' | 'admin' | 'member' | 'guest';
+
 export interface ProjectMember {
     id: number;
     name: string;
@@ -33,10 +35,25 @@ export interface ProjectMember {
     level: ProjectLevel;
 }
 
-export interface PendingInvitation {
+export interface AssignableMember {
+    id: number;
+    name: string;
+    email: string;
+}
+
+export interface OrganizationMember {
+    id: number;
+    name: string;
+    email: string;
+    role: OrganizationRole;
+}
+
+export interface OrganizationInvitation {
     id: number;
     email: string;
-    level: ProjectLevel;
+    role: OrganizationRole;
+    projectName: string | null;
+    level: ProjectLevel | null;
     expiresAt: string;
 }
 
@@ -61,4 +78,5 @@ export interface OrganizationSummary {
     id: number;
     name: string;
     slug: string;
+    canManage: boolean;
 }

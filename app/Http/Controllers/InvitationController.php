@@ -17,7 +17,7 @@ class InvitationController extends Controller
     public function show(Request $request, string $token, AcceptInvitationAction $action): Response|RedirectResponse
     {
         $invitation = Invitation::query()
-            ->with(['project', 'invitedBy'])
+            ->with(['organization', 'project', 'invitedBy'])
             ->where('token', Invitation::hashToken($token))
             ->first();
 
@@ -54,10 +54,12 @@ class InvitationController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('You joined :project.', ['project' => $invitation->project->name]),
+            'message' => __('You joined :organization.', ['organization' => $invitation->organization->name]),
         ]);
 
-        return to_route('projects.board', $invitation->project->key);
+        return $invitation->project === null
+            ? to_route('dashboard')
+            : to_route('projects.board', $invitation->project->key);
     }
 
     /**
@@ -69,9 +71,9 @@ class InvitationController extends Controller
             'state' => $state,
             'invitation' => $invitation === null ? null : [
                 'email' => $invitation->email,
-                'level' => $invitation->level->value,
-                'roleLabel' => $invitation->level->label(),
-                'projectName' => $invitation->project->name,
+                'roleLabel' => $invitation->role->label(),
+                'organizationName' => $invitation->organization->name,
+                'projectName' => $invitation->project?->name,
                 'inviterName' => $invitation->invitedBy?->name,
             ],
             ...$extra,
