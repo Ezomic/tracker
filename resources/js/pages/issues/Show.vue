@@ -3,6 +3,7 @@ import { Form, Head, Link, router } from '@inertiajs/vue3';
 import {
     Archive,
     ArchiveRestore,
+    Clock,
     GitBranch,
     GitCommit,
     GitPullRequest,
@@ -35,6 +36,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import { formatDuration } from '@/lib/duration';
 import { archive, index, show, unarchive } from '@/routes/issues';
 import {
@@ -68,6 +76,7 @@ const props = defineProps<{
 
 const archiveOpen = ref(false);
 const archiveReason = ref('');
+const timeOpen = ref(false);
 
 function archiveIssue() {
     router.post(
@@ -276,27 +285,45 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 Archived
             </span>
 
-            <div v-if="canArchive" class="ml-auto flex items-center gap-2">
+            <div class="ml-auto flex items-center gap-2">
                 <Button
-                    v-if="issue.archivedAt"
                     type="button"
                     variant="outline"
                     size="sm"
-                    @click="unarchiveIssue"
+                    @click="timeOpen = true"
                 >
-                    <ArchiveRestore class="size-4" />
-                    Unarchive
+                    <Clock class="size-4" />
+                    Time
+                    <span
+                        v-if="issue.loggedMinutes > 0"
+                        class="text-muted-foreground"
+                    >
+                        · {{ formatDuration(issue.loggedMinutes) }}
+                    </span>
                 </Button>
-                <Button
-                    v-else
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    @click="archiveOpen = true"
-                >
-                    <Archive class="size-4" />
-                    Archive
-                </Button>
+
+                <template v-if="canArchive">
+                    <Button
+                        v-if="issue.archivedAt"
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        @click="unarchiveIssue"
+                    >
+                        <ArchiveRestore class="size-4" />
+                        Unarchive
+                    </Button>
+                    <Button
+                        v-else
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        @click="archiveOpen = true"
+                    >
+                        <Archive class="size-4" />
+                        Archive
+                    </Button>
+                </template>
             </div>
         </div>
 
@@ -571,19 +598,16 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
         </div>
     </Form>
 
-    <section class="p-4 pt-0">
-        <div
-            class="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 lg:max-w-2xl dark:border-sidebar-border"
+    <Sheet v-model:open="timeOpen">
+        <SheetContent
+            class="flex w-full flex-col gap-5 overflow-y-auto sm:max-w-md"
         >
-            <div class="flex items-baseline justify-between gap-3">
-                <h2 class="text-sm font-medium">Time</h2>
-                <p class="text-sm text-muted-foreground">
+            <SheetHeader class="gap-1">
+                <SheetTitle>Time · {{ issue.identifier }}</SheetTitle>
+                <SheetDescription>
                     <span
-                        class="font-medium"
                         :class="
-                            overEstimate
-                                ? 'text-destructive'
-                                : 'text-foreground'
+                            overEstimate ? 'font-medium text-destructive' : ''
                         "
                     >
                         {{ formatDuration(issue.loggedMinutes) }}
@@ -592,8 +616,8 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         of {{ formatDuration(issue.estimateMinutes) }}
                     </template>
                     logged
-                </p>
-            </div>
+                </SheetDescription>
+            </SheetHeader>
 
             <div
                 v-if="issue.estimateMinutes"
@@ -645,7 +669,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
 
             <div
                 v-if="canLogTime"
-                class="flex flex-wrap items-end gap-2 border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border"
+                class="flex flex-col gap-3 border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border"
             >
                 <div class="grid gap-1.5">
                     <Label
@@ -657,7 +681,6 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     <Input
                         id="log-duration"
                         v-model="duration"
-                        class="w-28"
                         placeholder="1h 30m"
                         @keydown.enter.prevent="logTime"
                     />
@@ -666,14 +689,9 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     <Label for="log-date" class="text-xs text-muted-foreground">
                         Date
                     </Label>
-                    <Input
-                        id="log-date"
-                        v-model="spentOn"
-                        type="date"
-                        class="w-40"
-                    />
+                    <Input id="log-date" v-model="spentOn" type="date" />
                 </div>
-                <div class="grid flex-1 gap-1.5">
+                <div class="grid gap-1.5">
                     <Label for="log-note" class="text-xs text-muted-foreground">
                         Note (optional)
                     </Label>
@@ -684,11 +702,11 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         @keydown.enter.prevent="logTime"
                     />
                 </div>
+                <InputError v-if="timeError" :message="timeError" />
                 <Button type="button" @click="logTime">Log time</Button>
             </div>
-            <InputError v-if="timeError" :message="timeError" />
-        </div>
-    </section>
+        </SheetContent>
+    </Sheet>
 
     <section class="p-4 pt-0">
         <div class="flex flex-col gap-4 lg:max-w-2xl">
