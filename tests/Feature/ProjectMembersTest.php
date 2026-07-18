@@ -9,7 +9,9 @@ use App\Models\User;
 
 it('lists members with their levels for anyone with access', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    $admin = member($project, ProjectLevel::Admin);
+    // Deterministic names so the name-ordered listing is stable across seeds.
+    $admin = User::factory()->create(['name' => 'Zoe Admin']);
+    joinProjects($admin, $project, ProjectLevel::Admin);
     $dev = User::factory()->create(['name' => 'Dave Dev']);
     joinProjects($dev, $project, ProjectLevel::Write);
 
