@@ -15,6 +15,7 @@ use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Activity;
 use App\Models\Comment;
+use App\Models\Commit;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
@@ -119,6 +120,7 @@ class IssueController extends Controller
             'timeEntries' => fn ($query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
             'comments' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
             'activities' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
+            'commits' => fn ($query) => $query->orderBy('committed_at')->orderBy('id'),
         ]);
         $issue->loadSum('timeEntries', 'minutes');
 
@@ -137,7 +139,7 @@ class IssueController extends Controller
     }
 
     /**
-     * The issue's comments and activity events, merged in chronological order.
+     * The issue's comments, activity events and commits, merged chronologically.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -160,7 +162,18 @@ class IssueController extends Controller
             'data' => $activity->data,
         ]);
 
-        return $comments->concat($activities)
+        $commits = $issue->commits->map(fn (Commit $commit): array => [
+            'kind' => 'commit',
+            'id' => $commit->id,
+            'createdAt' => $commit->committed_at->toIso8601String(),
+            'sha' => $commit->sha,
+            'shortSha' => substr($commit->sha, 0, 7),
+            'message' => $commit->message,
+            'url' => $commit->url,
+            'authorName' => $commit->author_name,
+        ]);
+
+        return $comments->concat($activities)->concat($commits)
             ->sortBy('createdAt')
             ->values()
             ->all();

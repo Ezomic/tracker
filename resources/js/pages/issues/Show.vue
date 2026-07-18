@@ -783,6 +783,34 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     </div>
 
                     <div
+                        v-else-if="item.kind === 'commit'"
+                        class="flex items-center gap-2 pl-1 text-xs text-muted-foreground"
+                    >
+                        <GitCommit class="size-3.5 shrink-0" />
+                        <span class="min-w-0 truncate">
+                            <a
+                                v-if="item.url"
+                                :href="item.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="font-mono text-foreground hover:underline"
+                            >
+                                {{ item.shortSha }}
+                            </a>
+                            <span v-else class="font-mono text-foreground">
+                                {{ item.shortSha }}
+                            </span>
+                            {{ item.message.split('\n')[0] }}
+                            <span v-if="item.authorName">
+                                — {{ item.authorName }}
+                            </span>
+                        </span>
+                        <span class="shrink-0">
+                            · {{ formatTimestamp(item.createdAt) }}
+                        </span>
+                    </div>
+
+                    <div
                         v-else
                         class="flex items-center gap-2 pl-1 text-xs text-muted-foreground"
                     >
