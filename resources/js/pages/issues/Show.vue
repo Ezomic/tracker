@@ -13,6 +13,7 @@ import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import MarkdownEditor from '@/components/MarkdownEditor.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -339,13 +340,11 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     >
                         Description
                     </Label>
-                    <AutoTextarea
-                        id="description"
+                    <MarkdownEditor
                         v-model="description"
                         name="description"
-                        rows="3"
+                        :rows="3"
                         placeholder="Add a description…"
-                        class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                     />
                     <InputError :message="errors.description" />
                 </div>
