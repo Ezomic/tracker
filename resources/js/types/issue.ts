@@ -34,6 +34,16 @@ export type TimelineItem =
           user: IssueUser | null;
           type: string;
           data: Record<string, string | number | null> | null;
+      }
+    | {
+          kind: 'commit';
+          id: number;
+          createdAt: string;
+          sha: string;
+          shortSha: string;
+          message: string;
+          url: string | null;
+          authorName: string | null;
       };
 
 export interface Issue {

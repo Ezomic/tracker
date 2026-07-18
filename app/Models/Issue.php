@@ -124,6 +124,14 @@ class Issue extends Model
     }
 
     /**
+     * @return HasMany<Commit, $this>
+     */
+    public function commits(): HasMany
+    {
+        return $this->hasMany(Commit::class);
+    }
+
+    /**
      * Record a timeline event against this issue, attributed to the current user.
      *
      * @param  array<string, mixed>  $data
