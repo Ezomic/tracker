@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
@@ -44,6 +45,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('issues/{issue:identifier}/time', [TimeEntryController::class, 'store'])->name('issues.time.store');
     Route::delete('issues/{issue:identifier}/time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('issues.time.destroy');
+
+    Route::post('issues/{issue:identifier}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
+    Route::delete('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'destroy'])->name('issues.comments.destroy');
 
     // Project-scoped views. The uppercase-key constraint keeps these from shadowing
     // lowercase paths like /issues, /dashboard, or /settings.
