@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { GitBranch, GitCommit, GitPullRequest, Trash2 } from '@lucide/vue';
+import {
+    Archive,
+    ArchiveRestore,
+    GitBranch,
+    GitCommit,
+    GitPullRequest,
+    Trash2,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
@@ -9,6 +16,15 @@ import LabelBadge from '@/components/LabelBadge.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -19,7 +35,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { formatDuration } from '@/lib/duration';
-import { index, show } from '@/routes/issues';
+import { archive, index, show, unarchive } from '@/routes/issues';
 import {
     destroy as destroyComment,
     store as storeComment,
@@ -45,8 +61,34 @@ const props = defineProps<{
     canLogTime: boolean;
     canManageTime: boolean;
     canModerateComments: boolean;
+    canArchive: boolean;
     currentUserId: number;
 }>();
+
+const archiveOpen = ref(false);
+const archiveReason = ref('');
+
+function archiveIssue() {
+    router.post(
+        archive({ issue: props.issue.identifier }).url,
+        { reason: archiveReason.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                archiveOpen.value = false;
+                archiveReason.value = '';
+            },
+        },
+    );
+}
+
+function unarchiveIssue() {
+    router.post(
+        unarchive({ issue: props.issue.identifier }).url,
+        {},
+        { preserveScroll: true },
+    );
+}
 
 const estimateDefault = props.issue.estimateMinutes
     ? formatDuration(props.issue.estimateMinutes)
@@ -226,11 +268,44 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             </span>
             <span
                 v-if="issue.archivedAt"
-                class="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"
+                class="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"
+                :title="issue.archiveReason ?? undefined"
             >
+                <Archive class="size-3" />
                 Archived
             </span>
+
+            <div v-if="canArchive" class="ml-auto flex items-center gap-2">
+                <Button
+                    v-if="issue.archivedAt"
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    @click="unarchiveIssue"
+                >
+                    <ArchiveRestore class="size-4" />
+                    Unarchive
+                </Button>
+                <Button
+                    v-else
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    @click="archiveOpen = true"
+                >
+                    <Archive class="size-4" />
+                    Archive
+                </Button>
+            </div>
         </div>
+
+        <p
+            v-if="issue.archivedAt && issue.archiveReason"
+            class="mb-4 text-sm text-muted-foreground"
+        >
+            <span class="font-medium text-foreground">Archived:</span>
+            {{ issue.archiveReason }}
+        </p>
 
         <div class="grid flex-1 gap-8 lg:grid-cols-[minmax(0,1fr)_264px]">
             <div class="flex min-w-0 flex-col gap-5">
@@ -687,4 +762,38 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             </div>
         </div>
     </section>
+
+    <Dialog v-model:open="archiveOpen">
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Archive {{ issue.identifier }}</DialogTitle>
+                <DialogDescription>
+                    Archiving hides the issue from the board and lists. Add a
+                    reason so it's clear why later. You can unarchive it any
+                    time.
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="grid gap-2">
+                <Label for="archive-reason">
+                    Reason
+                    <span class="text-muted-foreground">(optional)</span>
+                </Label>
+                <AutoTextarea
+                    id="archive-reason"
+                    v-model="archiveReason"
+                    rows="2"
+                    placeholder="e.g. Superseded by THI-58"
+                    class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                />
+            </div>
+
+            <DialogFooter class="gap-2">
+                <DialogClose as-child>
+                    <Button type="button" variant="secondary">Cancel</Button>
+                </DialogClose>
+                <Button type="button" @click="archiveIssue">Archive</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

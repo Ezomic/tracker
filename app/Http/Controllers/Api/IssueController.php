@@ -88,18 +88,24 @@ class IssueController extends Controller
         return response()->json($this->payload($issue->fresh()));
     }
 
-    public function destroy(Issue $issue): JsonResponse
+    public function destroy(Request $request, Issue $issue): JsonResponse
     {
         $this->authorize('delete', $issue);
 
+        $reason = $request->string('reason')->trim()->limit(500)->value();
+
         if ($issue->archived_at === null) {
-            $issue->forceFill(['archived_at' => now()])->save();
+            $issue->forceFill([
+                'archived_at' => now(),
+                'archive_reason' => $reason !== '' ? $reason : null,
+            ])->save();
         }
 
         return response()->json([
             'identifier' => $issue->identifier,
             'url' => url("/issues/{$issue->identifier}"),
             'archived_at' => $issue->archived_at?->toIso8601String(),
+            'archive_reason' => $issue->archive_reason,
         ]);
     }
 
