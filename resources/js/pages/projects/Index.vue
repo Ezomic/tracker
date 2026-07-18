@@ -119,6 +119,10 @@ const groups = computed(() => {
     return result;
 });
 
+function tint(hex: string): string {
+    return `${hex}22`;
+}
+
 function archiveLabel(days: number | null): string {
     if (days === null) {
         return 'Never';
@@ -297,15 +301,15 @@ function toggleFavorite(project: Project) {
                 <div
                     v-for="project in group.items"
                     :key="project.id"
-                    class="group flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-2.5 transition-colors first:border-t-0 hover:bg-accent/40 dark:border-sidebar-border"
+                    class="group flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-2 transition-colors first:border-t-0 hover:bg-accent/40 dark:border-sidebar-border"
                 >
-                    <span
-                        class="size-2.5 shrink-0 rounded-full"
-                        :style="{ backgroundColor: project.color }"
-                    />
                     <Link
                         :href="board(project.key)"
-                        class="shrink-0 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+                        class="shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-medium transition-opacity hover:opacity-80"
+                        :style="{
+                            backgroundColor: tint(project.color),
+                            color: project.color,
+                        }"
                     >
                         {{ project.key }}
                     </Link>
