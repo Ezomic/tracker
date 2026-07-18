@@ -11,6 +11,7 @@ use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
+use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
@@ -113,6 +114,7 @@ class IssueController extends Controller
             'project', 'owner', 'assignee', 'parent', 'labels',
             'children' => fn ($query) => $query->orderBy('number'),
             'timeEntries' => fn ($query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
+            'comments' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
         ]);
         $issue->loadSum('timeEntries', 'minutes');
 
@@ -123,6 +125,7 @@ class IssueController extends Controller
             'labels' => Label::query()->forProject($issue->project)->orderBy('name')->get(['id', 'name', 'color']),
             'canLogTime' => $request->user()->can('update', $issue),
             'canManageTime' => $request->user()->can('delete', $issue),
+            'canModerateComments' => $request->user()->can('delete', $issue),
             'currentUserId' => $request->user()->id,
         ]);
     }
@@ -311,6 +314,12 @@ class IssueController extends Controller
                 'note' => $entry->note,
                 'spentOn' => $entry->spent_on->toDateString(),
                 'user' => $this->serializeUser($entry->relationLoaded('user') ? $entry->user : null),
+            ])->all() : [],
+            'comments' => $issue->relationLoaded('comments') ? $issue->comments->map(fn (Comment $comment) => [
+                'id' => $comment->id,
+                'body' => $comment->body,
+                'createdAt' => $comment->created_at->toIso8601String(),
+                'user' => $this->serializeUser($comment->relationLoaded('user') ? $comment->user : null),
             ])->all() : [],
         ];
     }
