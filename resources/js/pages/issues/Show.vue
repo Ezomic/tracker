@@ -60,10 +60,12 @@ import type {
     IssueLabel,
     IssueUser,
     TimeEntry,
+    TimelineItem,
 } from '@/types';
 
 const props = defineProps<{
     issue: Issue;
+    timeline: TimelineItem[];
     epics: EpicOption[];
     labels: IssueLabel[];
     members: IssueUser[];
@@ -73,6 +75,38 @@ const props = defineProps<{
     canArchive: boolean;
     currentUserId: number;
 }>();
+
+const statusLabels: Record<Issue['status'], string> = {
+    backlog: 'Backlog',
+    in_progress: 'In progress',
+    in_review: 'In review',
+    done: 'Done',
+};
+
+function describeActivity(
+    item: Extract<TimelineItem, { kind: 'activity' }>,
+): string {
+    const data = item.data ?? {};
+
+    switch (item.type) {
+        case 'created':
+            return 'created this issue';
+        case 'status_changed':
+            return `changed status to ${statusLabels[data.to as Issue['status']] ?? data.to}`;
+        case 'assigned':
+            return data.to ? `assigned this to ${data.to}` : 'unassigned this';
+        case 'archived':
+            return data.reason
+                ? `archived this: ${data.reason}`
+                : 'archived this issue';
+        case 'unarchived':
+            return 'unarchived this issue';
+        case 'time_logged':
+            return `logged ${formatDuration(Number(data.minutes))}`;
+        default:
+            return item.type.replace(/_/g, ' ');
+    }
+}
 
 const archiveOpen = ref(false);
 const archiveReason = ref('');
@@ -710,53 +744,64 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
 
     <section class="p-4 pt-0">
         <div class="flex flex-col gap-4 lg:max-w-2xl">
-            <h2 class="text-sm font-medium">
-                Comments
-                <span
-                    v-if="issue.comments.length > 0"
-                    class="text-muted-foreground"
-                >
-                    ({{ issue.comments.length }})
-                </span>
-            </h2>
+            <h2 class="text-sm font-medium">Activity</h2>
 
-            <div v-if="issue.comments.length > 0" class="flex flex-col gap-4">
-                <div
-                    v-for="comment in issue.comments"
-                    :key="comment.id"
-                    class="flex gap-3"
+            <div v-if="timeline.length > 0" class="flex flex-col gap-4">
+                <template
+                    v-for="item in timeline"
+                    :key="`${item.kind}-${item.id}`"
                 >
-                    <Avatar class="size-8 shrink-0">
-                        <AvatarFallback class="text-xs">
-                            {{ initials(comment.user?.name ?? '?') }}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium">
-                                {{ comment.user?.name ?? 'Unknown' }}
-                            </span>
-                            <span class="text-xs text-muted-foreground">
-                                {{ formatTimestamp(comment.createdAt) }}
-                            </span>
-                            <Button
-                                v-if="canRemoveComment(comment)"
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                class="ml-auto size-7 shrink-0 text-muted-foreground hover:text-destructive"
-                                @click="removeComment(comment)"
-                            >
-                                <Trash2 class="size-3.5" />
-                            </Button>
+                    <div v-if="item.kind === 'comment'" class="flex gap-3">
+                        <Avatar class="size-8 shrink-0">
+                            <AvatarFallback class="text-xs">
+                                {{ initials(item.user?.name ?? '?') }}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium">
+                                    {{ item.user?.name ?? 'Unknown' }}
+                                </span>
+                                <span class="text-xs text-muted-foreground">
+                                    {{ formatTimestamp(item.createdAt) }}
+                                </span>
+                                <Button
+                                    v-if="canRemoveComment(item)"
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="ml-auto size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                    @click="removeComment(item)"
+                                >
+                                    <Trash2 class="size-3.5" />
+                                </Button>
+                            </div>
+                            <p class="mt-0.5 text-sm whitespace-pre-wrap">
+                                {{ item.body }}
+                            </p>
                         </div>
-                        <p class="mt-0.5 text-sm whitespace-pre-wrap">
-                            {{ comment.body }}
-                        </p>
                     </div>
-                </div>
+
+                    <div
+                        v-else
+                        class="flex items-center gap-2 pl-1 text-xs text-muted-foreground"
+                    >
+                        <span
+                            class="size-1.5 shrink-0 rounded-full bg-muted-foreground/40"
+                        />
+                        <span>
+                            <span class="font-medium text-foreground">
+                                {{ item.user?.name ?? 'Someone' }}
+                            </span>
+                            {{ describeActivity(item) }}
+                        </span>
+                        <span class="shrink-0">
+                            · {{ formatTimestamp(item.createdAt) }}
+                        </span>
+                    </div>
+                </template>
             </div>
-            <p v-else class="text-sm text-muted-foreground">No comments yet.</p>
+            <p v-else class="text-sm text-muted-foreground">No activity yet.</p>
 
             <div class="flex flex-col gap-2 pt-2">
                 <AutoTextarea
