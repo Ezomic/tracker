@@ -14,32 +14,41 @@ import { edit as editSecurity } from '@/routes/security';
 import { index as indexTemplates } from '@/routes/templates';
 import type { NavItem } from '@/types';
 
+interface NavGroup {
+    title: string;
+    items: NavItem[];
+}
+
 const page = usePage();
 
-const sidebarNavItems = computed<NavItem[]>(() => [
-    {
-        title: 'Profile',
-        href: editProfile(),
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-    },
-    // Templates and labels are the org's shared library, hidden from guests.
-    ...(page.props.currentOrganization?.canViewLibrary
-        ? [
-              { title: 'Labels', href: indexLabels() },
-              { title: 'Templates', href: indexTemplates() },
-          ]
-        : []),
-    ...(page.props.currentOrganization?.canManage
-        ? [{ title: 'Members', href: indexMembers() }]
-        : []),
-]);
+const navGroups = computed<NavGroup[]>(() =>
+    [
+        {
+            title: 'Account',
+            items: [
+                { title: 'Profile', href: editProfile() },
+                { title: 'Security', href: editSecurity() },
+                { title: 'Appearance', href: editAppearance() },
+            ],
+        },
+        {
+            title: 'Organization',
+            items: [
+                ...(page.props.currentOrganization?.canManage
+                    ? [{ title: 'Members', href: indexMembers() }]
+                    : []),
+                // Templates and labels are the org's shared library, hidden
+                // from guests.
+                ...(page.props.currentOrganization?.canViewLibrary
+                    ? [
+                          { title: 'Labels', href: indexLabels() },
+                          { title: 'Templates', href: indexTemplates() },
+                      ]
+                    : []),
+            ],
+        },
+    ].filter((group) => group.items.length > 0),
+);
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
 </script>
@@ -48,30 +57,38 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
     <div class="px-4 py-6">
         <Heading
             title="Settings"
-            description="Manage your profile and account settings"
+            description="Manage your account and organization settings"
         />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">
-                <nav
-                    class="flex flex-col space-y-1 space-x-0"
-                    aria-label="Settings"
-                >
-                    <Button
-                        v-for="item in sidebarNavItems"
-                        :key="toUrl(item.href)"
-                        variant="ghost"
-                        :class="[
-                            'w-full justify-start',
-                            { 'bg-muted': isCurrentOrParentUrl(item.href) },
-                        ]"
-                        as-child
+                <nav class="flex flex-col space-y-4" aria-label="Settings">
+                    <div
+                        v-for="group in navGroups"
+                        :key="group.title"
+                        class="flex flex-col space-y-1"
                     >
-                        <Link :href="item.href">
-                            <component :is="item.icon" class="h-4 w-4" />
-                            {{ item.title }}
-                        </Link>
-                    </Button>
+                        <p
+                            class="px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                        >
+                            {{ group.title }}
+                        </p>
+                        <Button
+                            v-for="item in group.items"
+                            :key="toUrl(item.href)"
+                            variant="ghost"
+                            :class="[
+                                'w-full justify-start',
+                                { 'bg-muted': isCurrentOrParentUrl(item.href) },
+                            ]"
+                            as-child
+                        >
+                            <Link :href="item.href">
+                                <component :is="item.icon" class="h-4 w-4" />
+                                {{ item.title }}
+                            </Link>
+                        </Button>
+                    </div>
                 </nav>
             </aside>
 
