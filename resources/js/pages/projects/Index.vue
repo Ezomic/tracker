@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Archive, Plus, Star, Users } from '@lucide/vue';
+import { Archive, Clock, Plus, Star, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
 import ColorSwatches from '@/components/ColorSwatches.vue';
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatDuration } from '@/lib/duration';
 import { board, favorite, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
 import type { Project } from '@/types';
@@ -257,6 +258,15 @@ function toggleFavorite(project: Project) {
                 <div class="flex w-24 shrink-0 justify-end">
                     <ProjectLinks :links="project.links" />
                 </div>
+                <span
+                    v-if="project.loggedMinutes > 0"
+                    class="flex w-20 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums"
+                    :title="`${formatDuration(project.loggedMinutes)} logged`"
+                >
+                    <Clock class="size-3.5" />
+                    {{ formatDuration(project.loggedMinutes) }}
+                </span>
+                <span v-else class="w-20 shrink-0" />
                 <span
                     class="w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
                 >
