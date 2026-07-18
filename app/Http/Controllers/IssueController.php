@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\ArchiveIssueAction;
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Http\Requests\ArchiveIssueRequest;
 use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
@@ -126,6 +128,7 @@ class IssueController extends Controller
             'canLogTime' => $request->user()->can('update', $issue),
             'canManageTime' => $request->user()->can('delete', $issue),
             'canModerateComments' => $request->user()->can('delete', $issue),
+            'canArchive' => $request->user()->can('update', $issue),
             'currentUserId' => $request->user()->id,
         ]);
     }
@@ -185,6 +188,28 @@ class IssueController extends Controller
             'status' => $status,
             'closed_at' => $status === IssueStatus::Done ? now() : null,
         ])->save();
+
+        return back();
+    }
+
+    public function archive(ArchiveIssueRequest $request, Issue $issue, ArchiveIssueAction $action): RedirectResponse
+    {
+        $this->authorize('update', $issue);
+
+        $action->handle($issue, $request->validated('reason'));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue archived.')]);
+
+        return back();
+    }
+
+    public function unarchive(Issue $issue, ArchiveIssueAction $action): RedirectResponse
+    {
+        $this->authorize('update', $issue);
+
+        $action->unarchive($issue);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue unarchived.')]);
 
         return back();
     }
@@ -291,6 +316,7 @@ class IssueController extends Controller
             'assignee' => $this->serializeUser($issue->relationLoaded('assignee') ? $issue->assignee : null),
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),
+            'archiveReason' => $issue->archive_reason,
             'childrenCount' => $issue->children_count
                 ?? ($issue->relationLoaded('children') ? $issue->children->count() : 0),
             'parent' => $issue->relationLoaded('parent') && $issue->parent !== null ? [

@@ -184,6 +184,12 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                             Archived
                         </Badge>
                     </div>
+                    <p
+                        v-if="issue.archivedAt && issue.archiveReason"
+                        class="line-clamp-2 text-xs text-muted-foreground"
+                    >
+                        {{ issue.archiveReason }}
+                    </p>
                 </Link>
             </div>
         </div>
