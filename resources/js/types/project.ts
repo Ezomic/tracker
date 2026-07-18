@@ -79,4 +79,5 @@ export interface OrganizationSummary {
     name: string;
     slug: string;
     canManage: boolean;
+    canViewLibrary: boolean;
 }

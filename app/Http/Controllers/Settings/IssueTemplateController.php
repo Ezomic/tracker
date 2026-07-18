@@ -24,7 +24,7 @@ class IssueTemplateController extends Controller
     public function index(Request $request): Response
     {
         $organization = $this->current->for($request->user());
-        $this->authorize('view', $organization);
+        $this->authorize('viewLibrary', $organization);
 
         return Inertia::render('settings/Templates', [
             'templates' => $this->serializeMany($organization->issueTemplates()->with('labels')->orderBy('name')->get()),
@@ -39,7 +39,7 @@ class IssueTemplateController extends Controller
     public function options(Request $request): JsonResponse
     {
         $organization = $this->current->for($request->user());
-        $this->authorize('view', $organization);
+        $this->authorize('viewLibrary', $organization);
 
         return response()->json(
             $this->serializeMany($organization->issueTemplates()->with('labels')->orderBy('name')->get())

@@ -45,6 +45,12 @@ it('marks a plain member as unable to manage', function () {
         ->assertInertia(fn ($page) => $page->where('canManage', false));
 });
 
+it('forbids a guest from viewing the labels library', function () {
+    [$org, $guest] = organizationWith(OrganizationRole::Guest);
+
+    $this->actingAs($guest)->get('/settings/labels')->assertForbidden();
+});
+
 it('creates a label in the current organization', function () {
     [$org, $owner] = organizationWith();
 
