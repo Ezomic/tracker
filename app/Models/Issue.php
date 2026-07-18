@@ -8,8 +8,10 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Enums\OrganizationRole;
+use App\Observers\IssueObserver;
 use Database\Factories\IssueFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +42,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $archive_reason
  */
 // owner_id is deliberately not fillable: it is stamped once, at creation.
+#[ObservedBy([IssueObserver::class])]
 #[Fillable(['title', 'description', 'estimate_minutes', 'type', 'priority', 'parent_id', 'assignee_id'])]
 class Issue extends Model
 {
@@ -110,6 +113,28 @@ class Issue extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * @return HasMany<Activity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Record a timeline event against this issue, attributed to the current user.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function recordActivity(string $type, array $data = [], ?int $userId = null): void
+    {
+        $this->activities()->create([
+            'user_id' => $userId ?? auth()->id(),
+            'type' => $type,
+            'data' => $data === [] ? null : $data,
+        ]);
     }
 
     public function getRouteKeyName(): string

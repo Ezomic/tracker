@@ -13,6 +13,7 @@ use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
+use App\Models\Activity;
 use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
@@ -117,11 +118,13 @@ class IssueController extends Controller
             'children' => fn ($query) => $query->orderBy('number'),
             'timeEntries' => fn ($query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
             'comments' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
+            'activities' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
         ]);
         $issue->loadSum('timeEntries', 'minutes');
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
+            'timeline' => $this->serializeTimeline($issue),
             'members' => $this->projectMembers($issue->project),
             'epics' => $this->eligibleParents($request->user(), $issue),
             'labels' => Label::query()->forProject($issue->project)->orderBy('name')->get(['id', 'name', 'color']),
@@ -131,6 +134,36 @@ class IssueController extends Controller
             'canArchive' => $request->user()->can('update', $issue),
             'currentUserId' => $request->user()->id,
         ]);
+    }
+
+    /**
+     * The issue's comments and activity events, merged in chronological order.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function serializeTimeline(Issue $issue): array
+    {
+        $comments = $issue->comments->map(fn (Comment $comment): array => [
+            'kind' => 'comment',
+            'id' => $comment->id,
+            'createdAt' => $comment->created_at->toIso8601String(),
+            'user' => $this->serializeUser($comment->user),
+            'body' => $comment->body,
+        ]);
+
+        $activities = $issue->activities->map(fn (Activity $activity): array => [
+            'kind' => 'activity',
+            'id' => $activity->id,
+            'createdAt' => $activity->created_at->toIso8601String(),
+            'user' => $this->serializeUser($activity->user),
+            'type' => $activity->type,
+            'data' => $activity->data,
+        ]);
+
+        return $comments->concat($activities)
+            ->sortBy('createdAt')
+            ->values()
+            ->all();
     }
 
     public function update(UpdateIssueRequest $request, Issue $issue): RedirectResponse

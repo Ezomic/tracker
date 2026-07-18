@@ -19,6 +19,23 @@ export interface IssueComment {
     user: IssueUser | null;
 }
 
+export type TimelineItem =
+    | {
+          kind: 'comment';
+          id: number;
+          createdAt: string;
+          user: IssueUser | null;
+          body: string;
+      }
+    | {
+          kind: 'activity';
+          id: number;
+          createdAt: string;
+          user: IssueUser | null;
+          type: string;
+          data: Record<string, string | number | null> | null;
+      };
+
 export interface Issue {
     identifier: string;
     title: string;
