@@ -21,7 +21,7 @@ class LabelController extends Controller
     public function index(Request $request): Response
     {
         $organization = $this->current->for($request->user());
-        $this->authorize('view', $organization);
+        $this->authorize('viewLibrary', $organization);
 
         return Inertia::render('settings/Labels', [
             'labels' => Label::query()

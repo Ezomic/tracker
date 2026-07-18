@@ -29,14 +29,13 @@ const sidebarNavItems = computed<NavItem[]>(() => [
         title: 'Appearance',
         href: editAppearance(),
     },
-    {
-        title: 'Labels',
-        href: indexLabels(),
-    },
-    {
-        title: 'Templates',
-        href: indexTemplates(),
-    },
+    // Templates and labels are the org's shared library, hidden from guests.
+    ...(page.props.currentOrganization?.canViewLibrary
+        ? [
+              { title: 'Labels', href: indexLabels() },
+              { title: 'Templates', href: indexTemplates() },
+          ]
+        : []),
     ...(page.props.currentOrganization?.canManage
         ? [{ title: 'Members', href: indexMembers() }]
         : []),

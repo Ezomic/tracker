@@ -32,6 +32,13 @@ it('marks a plain member as unable to manage', function () {
         ->assertInertia(fn ($page) => $page->where('canManage', false));
 });
 
+it('forbids a guest from viewing templates or the options endpoint', function () {
+    [$org, $guest] = organizationWith(OrganizationRole::Guest);
+
+    $this->actingAs($guest)->get('/settings/templates')->assertForbidden();
+    $this->actingAs($guest)->getJson('/settings/template-options')->assertForbidden();
+});
+
 it('creates a template with defaults and labels', function () {
     [$org, $owner] = organizationWith();
     $label = Label::factory()->for($org)->create();
