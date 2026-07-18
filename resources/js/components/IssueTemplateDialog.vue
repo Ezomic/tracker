@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import MarkdownEditor from '@/components/MarkdownEditor.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -103,13 +103,11 @@ function toggleLabel(id: number, checked: boolean) {
 
                 <div class="grid gap-2">
                     <Label for="template-description">Description</Label>
-                    <AutoTextarea
-                        id="template-description"
+                    <MarkdownEditor
                         v-model="description"
                         name="description"
-                        rows="5"
-                        placeholder="## Steps to reproduce&#10;## Expected&#10;## Actual"
-                        class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                        :rows="5"
+                        :placeholder="'## Steps to reproduce\n## Expected\n## Actual'"
                     />
                     <InputError :message="errors.description" />
                 </div>

@@ -3,8 +3,8 @@ import { Form } from '@inertiajs/vue3';
 import { ArrowLeft, FilePlus2, FileText } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
-import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
+import MarkdownEditor from '@/components/MarkdownEditor.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -277,12 +277,10 @@ function choose(template: IssueTemplate | null) {
 
                 <div class="grid gap-2">
                     <Label for="new-description">Description</Label>
-                    <AutoTextarea
-                        id="new-description"
+                    <MarkdownEditor
                         v-model="description"
                         name="description"
-                        rows="3"
-                        class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                        :rows="3"
                     />
                     <InputError :message="errors.description" />
                 </div>
