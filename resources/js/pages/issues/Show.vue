@@ -19,11 +19,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { formatDuration } from '@/lib/duration';
+import { index, show } from '@/routes/issues';
 import {
     destroy as destroyComment,
     store as storeComment,
 } from '@/routes/issues/comments';
-import { index, show } from '@/routes/issues';
 import {
     destroy as destroyTime,
     store as storeTime,
