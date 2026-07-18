@@ -40,6 +40,7 @@ export interface Issue {
     assignee: IssueUser | null;
     createdAt: string;
     archivedAt: string | null;
+    archiveReason: string | null;
     childrenCount: number;
     parent: {
         id: number;

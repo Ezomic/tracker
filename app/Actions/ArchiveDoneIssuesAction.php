@@ -19,13 +19,18 @@ class ArchiveDoneIssuesAction
             ->whereNotNull('archive_after_days')
             ->get(['id', 'archive_after_days'])
             ->each(function (Project $project) use (&$count): void {
+                $days = $project->archive_after_days;
+
                 $count += Issue::query()
                     ->where('project_id', $project->id)
                     ->where('status', IssueStatus::Done)
                     ->whereNotNull('closed_at')
                     ->whereNull('archived_at')
-                    ->where('closed_at', '<=', now()->subDays($project->archive_after_days))
-                    ->update(['archived_at' => now()]);
+                    ->where('closed_at', '<=', now()->subDays($days))
+                    ->update([
+                        'archived_at' => now(),
+                        'archive_reason' => "Auto-archived {$days} ".($days === 1 ? 'day' : 'days').' after being done',
+                    ]);
             });
 
         return $count;

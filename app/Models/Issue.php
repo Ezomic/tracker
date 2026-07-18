@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $github_pr_url
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
+ * @property string|null $archive_reason
  */
 // owner_id is deliberately not fillable: it is stamped once, at creation.
 #[Fillable(['title', 'description', 'estimate_minutes', 'type', 'priority', 'parent_id', 'assignee_id'])]
