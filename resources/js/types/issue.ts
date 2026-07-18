@@ -4,10 +4,20 @@ export interface IssueUser {
     email: string;
 }
 
+export interface TimeEntry {
+    id: number;
+    minutes: number;
+    note: string | null;
+    spentOn: string;
+    user: IssueUser | null;
+}
+
 export interface Issue {
     identifier: string;
     title: string;
     description: string | null;
+    estimateMinutes: number | null;
+    loggedMinutes: number;
     type: 'feature' | 'fix';
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     status: 'backlog' | 'in_progress' | 'in_review' | 'done';
@@ -35,6 +45,7 @@ export interface Issue {
         status: Issue['status'];
     }[];
     labels: IssueLabel[];
+    timeEntries: TimeEntry[];
 }
 
 export interface EpicOption {

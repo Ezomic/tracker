@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
-import { GitBranch, GitCommit, GitPullRequest } from '@lucide/vue';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { GitBranch, GitCommit, GitPullRequest, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
@@ -17,15 +17,94 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatDuration } from '@/lib/duration';
 import { index, show } from '@/routes/issues';
-import type { EpicOption, Issue, IssueLabel, IssueUser } from '@/types';
+import {
+    destroy as destroyTime,
+    store as storeTime,
+} from '@/routes/issues/time';
+import type {
+    EpicOption,
+    Issue,
+    IssueLabel,
+    IssueUser,
+    TimeEntry,
+} from '@/types';
 
 const props = defineProps<{
     issue: Issue;
     epics: EpicOption[];
     labels: IssueLabel[];
     members: IssueUser[];
+    canLogTime: boolean;
+    canManageTime: boolean;
+    currentUserId: number;
 }>();
+
+const estimateDefault = props.issue.estimateMinutes
+    ? formatDuration(props.issue.estimateMinutes)
+    : '';
+
+const duration = ref('');
+const spentOn = ref(new Date().toISOString().slice(0, 10));
+const note = ref('');
+const timeError = ref<string | null>(null);
+
+const progressPercent = computed(() => {
+    if (!props.issue.estimateMinutes || props.issue.estimateMinutes <= 0) {
+        return 0;
+    }
+
+    return Math.min(
+        100,
+        Math.round(
+            (props.issue.loggedMinutes / props.issue.estimateMinutes) * 100,
+        ),
+    );
+});
+
+const overEstimate = computed(
+    () =>
+        props.issue.estimateMinutes != null &&
+        props.issue.loggedMinutes > props.issue.estimateMinutes,
+);
+
+function logTime() {
+    timeError.value = null;
+
+    router.post(
+        storeTime({ issue: props.issue.identifier }).url,
+        { duration: duration.value, spent_on: spentOn.value, note: note.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                duration.value = '';
+                note.value = '';
+            },
+            onError: (errors) => {
+                timeError.value = errors.duration ?? errors.spent_on ?? null;
+            },
+        },
+    );
+}
+
+function removeEntry(entry: TimeEntry) {
+    router.delete(
+        destroyTime({ issue: props.issue.identifier, timeEntry: entry.id }).url,
+        { preserveScroll: true },
+    );
+}
+
+const canRemove = (entry: TimeEntry) =>
+    props.canManageTime || entry.user?.id === props.currentUserId;
+
+function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
 
 defineOptions({
     layout: {
@@ -245,6 +324,19 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     <InputError :message="errors.priority" />
                 </div>
 
+                <div class="grid gap-1.5">
+                    <Label for="estimate" class="text-xs text-muted-foreground">
+                        Estimate
+                    </Label>
+                    <Input
+                        id="estimate"
+                        name="estimate"
+                        :default-value="estimateDefault"
+                        placeholder="e.g. 4h 30m"
+                    />
+                    <InputError :message="errors.estimate" />
+                </div>
+
                 <div v-if="issue.children.length === 0" class="grid gap-1.5">
                     <Label
                         for="parent_id"
@@ -342,4 +434,123 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             </aside>
         </div>
     </Form>
+
+    <section class="p-4 pt-0">
+        <div
+            class="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-4 lg:max-w-2xl dark:border-sidebar-border"
+        >
+            <div class="flex items-baseline justify-between gap-3">
+                <h2 class="text-sm font-medium">Time</h2>
+                <p class="text-sm text-muted-foreground">
+                    <span
+                        class="font-medium"
+                        :class="
+                            overEstimate
+                                ? 'text-destructive'
+                                : 'text-foreground'
+                        "
+                    >
+                        {{ formatDuration(issue.loggedMinutes) }}
+                    </span>
+                    <template v-if="issue.estimateMinutes">
+                        of {{ formatDuration(issue.estimateMinutes) }}
+                    </template>
+                    logged
+                </p>
+            </div>
+
+            <div
+                v-if="issue.estimateMinutes"
+                class="h-1.5 overflow-hidden rounded-full bg-muted"
+            >
+                <div
+                    class="h-full rounded-full transition-all"
+                    :class="overEstimate ? 'bg-destructive' : 'bg-primary'"
+                    :style="{ width: `${progressPercent}%` }"
+                />
+            </div>
+
+            <div
+                v-if="issue.timeEntries.length > 0"
+                class="flex flex-col divide-y divide-sidebar-border/70 dark:divide-sidebar-border"
+            >
+                <div
+                    v-for="entry in issue.timeEntries"
+                    :key="entry.id"
+                    class="flex items-center gap-3 py-2 text-sm"
+                >
+                    <span class="w-16 shrink-0 font-medium">
+                        {{ formatDuration(entry.minutes) }}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p v-if="entry.note" class="truncate">
+                            {{ entry.note }}
+                        </p>
+                        <p class="truncate text-xs text-muted-foreground">
+                            {{ entry.user?.name ?? 'Unknown' }} ·
+                            {{ formatDate(entry.spentOn) }}
+                        </p>
+                    </div>
+                    <Button
+                        v-if="canRemove(entry)"
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        class="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        @click="removeEntry(entry)"
+                    >
+                        <Trash2 class="size-4" />
+                    </Button>
+                </div>
+            </div>
+            <p v-else class="text-sm text-muted-foreground">
+                No time logged yet.
+            </p>
+
+            <div
+                v-if="canLogTime"
+                class="flex flex-wrap items-end gap-2 border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border"
+            >
+                <div class="grid gap-1.5">
+                    <Label
+                        for="log-duration"
+                        class="text-xs text-muted-foreground"
+                    >
+                        Duration
+                    </Label>
+                    <Input
+                        id="log-duration"
+                        v-model="duration"
+                        class="w-28"
+                        placeholder="1h 30m"
+                        @keydown.enter.prevent="logTime"
+                    />
+                </div>
+                <div class="grid gap-1.5">
+                    <Label for="log-date" class="text-xs text-muted-foreground">
+                        Date
+                    </Label>
+                    <Input
+                        id="log-date"
+                        v-model="spentOn"
+                        type="date"
+                        class="w-40"
+                    />
+                </div>
+                <div class="grid flex-1 gap-1.5">
+                    <Label for="log-note" class="text-xs text-muted-foreground">
+                        Note (optional)
+                    </Label>
+                    <Input
+                        id="log-note"
+                        v-model="note"
+                        placeholder="What did you work on?"
+                        @keydown.enter.prevent="logTime"
+                    />
+                </div>
+                <Button type="button" @click="logTime">Log time</Button>
+            </div>
+            <InputError v-if="timeError" :message="timeError" />
+        </div>
+    </section>
 </template>

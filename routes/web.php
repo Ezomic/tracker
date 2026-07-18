@@ -6,6 +6,7 @@ use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
+use App\Http\Controllers\TimeEntryController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Landing')->name('home');
@@ -40,6 +41,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('issues/{issue:identifier}', [IssueController::class, 'show'])->name('issues.show');
     Route::patch('issues/{issue:identifier}', [IssueController::class, 'update'])->name('issues.update');
     Route::patch('issues/{issue:identifier}/status', [IssueController::class, 'updateStatus'])->name('issues.updateStatus');
+
+    Route::post('issues/{issue:identifier}/time', [TimeEntryController::class, 'store'])->name('issues.time.store');
+    Route::delete('issues/{issue:identifier}/time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('issues.time.destroy');
 
     // Project-scoped views. The uppercase-key constraint keeps these from shadowing
     // lowercase paths like /issues, /dashboard, or /settings.

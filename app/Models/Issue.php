@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property string $title
  * @property string $slug
  * @property string|null $description
+ * @property int|null $estimate_minutes
  * @property IssueType $type
  * @property IssuePriority $priority
  * @property IssueStatus $status
@@ -38,7 +39,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $archived_at
  */
 // owner_id is deliberately not fillable: it is stamped once, at creation.
-#[Fillable(['title', 'description', 'type', 'priority', 'parent_id', 'assignee_id'])]
+#[Fillable(['title', 'description', 'estimate_minutes', 'type', 'priority', 'parent_id', 'assignee_id'])]
 class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
@@ -92,6 +93,14 @@ class Issue extends Model
     public function labels(): BelongsToMany
     {
         return $this->belongsToMany(Label::class);
+    }
+
+    /**
+     * @return HasMany<TimeEntry, $this>
+     */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class);
     }
 
     public function getRouteKeyName(): string
@@ -148,6 +157,7 @@ class Issue extends Model
             'type' => IssueType::class,
             'priority' => IssuePriority::class,
             'status' => IssueStatus::class,
+            'estimate_minutes' => 'integer',
             'closed_at' => 'datetime',
             'archived_at' => 'datetime',
         ];
