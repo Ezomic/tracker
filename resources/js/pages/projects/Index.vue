@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Archive, Clock, Plus, Star, Users } from '@lucide/vue';
+import { Archive, Clock, Plus, Search, Star, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
 import ColorSwatches from '@/components/ColorSwatches.vue';
@@ -22,6 +22,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { formatDuration } from '@/lib/duration';
 import { board, favorite, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
@@ -36,10 +43,6 @@ defineOptions({
         breadcrumbs: [{ title: 'Projects', href: index() }],
     },
 });
-
-const usedColors = computed(() =>
-    props.projects.map((project) => project.color),
-);
 
 const palette = [
     '#d85a30',
@@ -60,8 +63,61 @@ const palette = [
     '#6b7280',
 ];
 
+const usedColors = computed(() =>
+    props.projects.map((project) => project.color),
+);
+
 const newColor = ref(palette[0]);
 const createOpen = ref(false);
+
+const search = ref('');
+const sort = ref('open');
+
+const filtered = computed(() => {
+    const query = search.value.trim().toLowerCase();
+
+    const matches =
+        query === ''
+            ? [...props.projects]
+            : props.projects.filter(
+                  (project) =>
+                      project.key.toLowerCase().includes(query) ||
+                      project.name.toLowerCase().includes(query) ||
+                      (project.description ?? '').toLowerCase().includes(query),
+              );
+
+    return matches.sort((a, b) => {
+        if (sort.value === 'name') {
+            return a.name.localeCompare(b.name);
+        }
+
+        if (sort.value === 'logged') {
+            return b.loggedMinutes - a.loggedMinutes;
+        }
+
+        return b.openCount - a.openCount;
+    });
+});
+
+const groups = computed(() => {
+    const favorites = filtered.value.filter((project) => project.isFavorite);
+    const rest = filtered.value.filter((project) => !project.isFavorite);
+    const result: { key: string; label: string; items: Project[] }[] = [];
+
+    if (favorites.length > 0) {
+        result.push({ key: 'favorites', label: 'Favorites', items: favorites });
+    }
+
+    if (rest.length > 0) {
+        result.push({
+            key: 'all',
+            label: favorites.length > 0 ? 'All projects' : '',
+            items: rest,
+        });
+    }
+
+    return result;
+});
 
 function archiveLabel(days: number | null): string {
     if (days === null) {
@@ -204,90 +260,149 @@ function toggleFavorite(project: Project) {
             </Dialog>
         </div>
 
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="relative w-full sm:max-w-xs">
+                <Search
+                    class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                    v-model="search"
+                    placeholder="Search projects"
+                    class="pl-8"
+                />
+            </div>
+            <Select v-model="sort">
+                <SelectTrigger class="w-40 sm:ml-auto">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="open">Most open</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="logged">Most logged</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+
         <div
             class="overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
         >
-            <div
-                v-for="project in projects"
-                :key="project.id"
-                class="flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-3 first:border-t-0 dark:border-sidebar-border"
-            >
-                <button
-                    type="button"
-                    class="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent"
-                    :aria-label="project.isFavorite ? 'Unfavorite' : 'Favorite'"
-                    @click="toggleFavorite(project)"
+            <template v-for="group in groups" :key="group.key">
+                <div
+                    v-if="group.label"
+                    class="border-t border-sidebar-border/70 bg-muted/40 px-4 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase first:border-t-0 dark:border-sidebar-border"
                 >
-                    <Star
-                        class="size-4"
-                        :class="
-                            project.isFavorite
-                                ? 'fill-amber-400 text-amber-400'
-                                : ''
-                        "
+                    {{ group.label }}
+                </div>
+
+                <div
+                    v-for="project in group.items"
+                    :key="project.id"
+                    class="group flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-2.5 transition-colors first:border-t-0 hover:bg-accent/40 dark:border-sidebar-border"
+                >
+                    <span
+                        class="size-2.5 shrink-0 rounded-full"
+                        :style="{ backgroundColor: project.color }"
                     />
-                </button>
-                <span
-                    class="size-3 shrink-0 rounded-full"
-                    :style="{ backgroundColor: project.color }"
-                />
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-baseline gap-3">
-                        <Link
-                            :href="board(project.key)"
-                            class="shrink-0 font-mono text-sm hover:underline"
-                        >
-                            {{ project.key }}
-                        </Link>
-                        <span class="truncate text-sm">{{ project.name }}</span>
-                    </div>
-                    <p
-                        v-if="project.description"
-                        class="mt-0.5 line-clamp-2 text-xs text-muted-foreground"
+                    <Link
+                        :href="board(project.key)"
+                        class="shrink-0 font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
                     >
-                        {{ project.description }}
-                    </p>
-                </div>
-                <span
-                    class="flex w-28 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground"
-                    :title="`Auto-archives done issues: ${archiveLabel(project.archiveAfterDays).toLowerCase()}`"
-                >
-                    <Archive class="size-3.5" />
-                    {{ archiveLabel(project.archiveAfterDays) }}
-                </span>
-                <div class="flex w-24 shrink-0 justify-end">
-                    <ProjectLinks :links="project.links" />
-                </div>
-                <span
-                    v-if="project.loggedMinutes > 0"
-                    class="flex w-20 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums"
-                    :title="`${formatDuration(project.loggedMinutes)} logged`"
-                >
-                    <Clock class="size-3.5" />
-                    {{ formatDuration(project.loggedMinutes) }}
-                </span>
-                <span v-else class="w-20 shrink-0" />
-                <span
-                    class="w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
-                >
-                    {{ project.openCount }} open
-                </span>
-                <Button variant="outline" size="sm" as-child>
-                    <Link :href="membersIndex({ project: project.key })">
-                        <Users class="size-4" />
-                        <span class="sr-only">Members</span>
+                        {{ project.key }}
                     </Link>
-                </Button>
-                <EditProjectDialog
-                    :project="project"
-                    :palette="palette"
-                    :used-colors="
-                        projects
-                            .filter((other) => other.id !== project.id)
-                            .map((other) => other.color)
-                    "
-                />
-            </div>
+                    <span
+                        class="min-w-0 flex-1 truncate text-sm"
+                        :title="project.description ?? undefined"
+                    >
+                        {{ project.name }}
+                    </span>
+
+                    <span
+                        class="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:block"
+                    >
+                        {{ project.openCount }} open
+                    </span>
+                    <span
+                        class="hidden w-16 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums sm:flex"
+                        :title="`${formatDuration(project.loggedMinutes)} logged`"
+                    >
+                        <template v-if="project.loggedMinutes > 0">
+                            <Clock class="size-3.5" />
+                            {{ formatDuration(project.loggedMinutes) }}
+                        </template>
+                    </span>
+                    <span
+                        class="hidden w-24 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground md:flex"
+                        :title="`Auto-archives done issues: ${archiveLabel(project.archiveAfterDays).toLowerCase()}`"
+                    >
+                        <Archive class="size-3.5" />
+                        {{ archiveLabel(project.archiveAfterDays) }}
+                    </span>
+                    <div class="hidden w-16 shrink-0 justify-end md:flex">
+                        <ProjectLinks :links="project.links" />
+                    </div>
+
+                    <div class="flex shrink-0 items-center gap-1">
+                        <button
+                            type="button"
+                            class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent"
+                            :aria-label="
+                                project.isFavorite ? 'Unfavorite' : 'Favorite'
+                            "
+                            @click="toggleFavorite(project)"
+                        >
+                            <Star
+                                class="size-4"
+                                :class="
+                                    project.isFavorite
+                                        ? 'fill-amber-400 text-amber-400'
+                                        : ''
+                                "
+                            />
+                        </button>
+                        <div
+                            class="flex items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100"
+                        >
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="size-8"
+                                as-child
+                            >
+                                <Link
+                                    :href="
+                                        membersIndex({ project: project.key })
+                                    "
+                                >
+                                    <Users class="size-4" />
+                                    <span class="sr-only">Members</span>
+                                </Link>
+                            </Button>
+                            <EditProjectDialog
+                                :project="project"
+                                :palette="palette"
+                                :used-colors="
+                                    projects
+                                        .filter(
+                                            (other) => other.id !== project.id,
+                                        )
+                                        .map((other) => other.color)
+                                "
+                            />
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <p
+                v-if="filtered.length === 0"
+                class="px-4 py-10 text-center text-sm text-muted-foreground"
+            >
+                {{
+                    projects.length === 0
+                        ? 'No projects yet. Create your first one.'
+                        : `No projects match “${search}”.`
+                }}
+            </p>
         </div>
     </div>
 </template>
