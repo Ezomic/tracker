@@ -12,6 +12,13 @@ export interface TimeEntry {
     user: IssueUser | null;
 }
 
+export interface IssueComment {
+    id: number;
+    body: string;
+    createdAt: string;
+    user: IssueUser | null;
+}
+
 export interface Issue {
     identifier: string;
     title: string;
@@ -46,6 +53,7 @@ export interface Issue {
     }[];
     labels: IssueLabel[];
     timeEntries: TimeEntry[];
+    comments: IssueComment[];
 }
 
 export interface EpicOption {

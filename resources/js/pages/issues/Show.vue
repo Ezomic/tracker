@@ -6,6 +6,7 @@ import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { formatDuration } from '@/lib/duration';
+import {
+    destroy as destroyComment,
+    store as storeComment,
+} from '@/routes/issues/comments';
 import { index, show } from '@/routes/issues';
 import {
     destroy as destroyTime,
@@ -26,6 +31,7 @@ import {
 import type {
     EpicOption,
     Issue,
+    IssueComment,
     IssueLabel,
     IssueUser,
     TimeEntry,
@@ -38,6 +44,7 @@ const props = defineProps<{
     members: IssueUser[];
     canLogTime: boolean;
     canManageTime: boolean;
+    canModerateComments: boolean;
     currentUserId: number;
 }>();
 
@@ -49,6 +56,9 @@ const duration = ref('');
 const spentOn = ref(new Date().toISOString().slice(0, 10));
 const note = ref('');
 const timeError = ref<string | null>(null);
+
+const commentBody = ref('');
+const commentError = ref<string | null>(null);
 
 const progressPercent = computed(() => {
     if (!props.issue.estimateMinutes || props.issue.estimateMinutes <= 0) {
@@ -88,9 +98,39 @@ function logTime() {
     );
 }
 
+function postComment() {
+    if (commentBody.value.trim() === '') {
+        return;
+    }
+
+    commentError.value = null;
+
+    router.post(
+        storeComment({ issue: props.issue.identifier }).url,
+        { body: commentBody.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                commentBody.value = '';
+            },
+            onError: (errors) => {
+                commentError.value = errors.body ?? null;
+            },
+        },
+    );
+}
+
 function removeEntry(entry: TimeEntry) {
     router.delete(
         destroyTime({ issue: props.issue.identifier, timeEntry: entry.id }).url,
+        { preserveScroll: true },
+    );
+}
+
+function removeComment(comment: IssueComment) {
+    router.delete(
+        destroyComment({ issue: props.issue.identifier, comment: comment.id })
+            .url,
         { preserveScroll: true },
     );
 }
@@ -103,6 +143,28 @@ function formatDate(iso: string): string {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
+    });
+}
+
+const canRemoveComment = (comment: IssueComment) =>
+    props.canModerateComments || comment.user?.id === props.currentUserId;
+
+function initials(name: string): string {
+    return name
+        .split(' ')
+        .map((part) => part[0] ?? '')
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+}
+
+function formatTimestamp(iso: string): string {
+    return new Date(iso).toLocaleString(undefined, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
     });
 }
 
@@ -551,6 +613,78 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 <Button type="button" @click="logTime">Log time</Button>
             </div>
             <InputError v-if="timeError" :message="timeError" />
+        </div>
+    </section>
+
+    <section class="p-4 pt-0">
+        <div class="flex flex-col gap-4 lg:max-w-2xl">
+            <h2 class="text-sm font-medium">
+                Comments
+                <span
+                    v-if="issue.comments.length > 0"
+                    class="text-muted-foreground"
+                >
+                    ({{ issue.comments.length }})
+                </span>
+            </h2>
+
+            <div v-if="issue.comments.length > 0" class="flex flex-col gap-4">
+                <div
+                    v-for="comment in issue.comments"
+                    :key="comment.id"
+                    class="flex gap-3"
+                >
+                    <Avatar class="size-8 shrink-0">
+                        <AvatarFallback class="text-xs">
+                            {{ initials(comment.user?.name ?? '?') }}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">
+                                {{ comment.user?.name ?? 'Unknown' }}
+                            </span>
+                            <span class="text-xs text-muted-foreground">
+                                {{ formatTimestamp(comment.createdAt) }}
+                            </span>
+                            <Button
+                                v-if="canRemoveComment(comment)"
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                class="ml-auto size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                @click="removeComment(comment)"
+                            >
+                                <Trash2 class="size-3.5" />
+                            </Button>
+                        </div>
+                        <p class="mt-0.5 text-sm whitespace-pre-wrap">
+                            {{ comment.body }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <p v-else class="text-sm text-muted-foreground">No comments yet.</p>
+
+            <div class="flex flex-col gap-2 pt-2">
+                <AutoTextarea
+                    v-model="commentBody"
+                    rows="2"
+                    placeholder="Leave a comment…"
+                    class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                />
+                <InputError v-if="commentError" :message="commentError" />
+                <div>
+                    <Button
+                        type="button"
+                        size="sm"
+                        :disabled="commentBody.trim() === ''"
+                        @click="postComment"
+                    >
+                        Comment
+                    </Button>
+                </div>
+            </div>
         </div>
     </section>
 </template>

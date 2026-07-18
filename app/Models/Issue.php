@@ -103,6 +103,14 @@ class Issue extends Model
         return $this->hasMany(TimeEntry::class);
     }
 
+    /**
+     * @return HasMany<Comment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
     public function getRouteKeyName(): string
     {
         return 'identifier';
