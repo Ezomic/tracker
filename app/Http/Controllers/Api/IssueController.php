@@ -67,9 +67,21 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $parent = $this->resolveParent($request->validated('parent'));
+        $attributes = [];
 
-        $issue->forceFill(['parent_id' => $parent?->id])->save();
+        if ($request->has('title')) {
+            $attributes['title'] = $request->validated('title');
+        }
+
+        if ($request->has('description')) {
+            $attributes['description'] = $request->validated('description');
+        }
+
+        if ($request->has('parent')) {
+            $attributes['parent_id'] = $this->resolveParent($request->validated('parent'))?->id;
+        }
+
+        $issue->forceFill($attributes)->save();
 
         return response()->json($this->payload($issue->fresh()));
     }
@@ -131,6 +143,8 @@ class IssueController extends Controller
         return [
             'identifier' => $issue->identifier,
             'url' => url("/issues/{$issue->identifier}"),
+            'title' => $issue->title,
+            'description' => $issue->description,
             'branch_name' => $issue->branch_name,
             'parent' => $issue->parent?->identifier,
             'owner' => $issue->owner?->email,
