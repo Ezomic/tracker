@@ -46,15 +46,15 @@ function remove(label: IssueLabel) {
 </script>
 
 <template>
-    <Head title="Labels" />
+    <Head :title="$t('labels.title')" />
 
-    <h1 class="sr-only">Labels</h1>
+    <h1 class="sr-only">{{ $t('labels.title') }}</h1>
 
     <div class="flex flex-col space-y-6">
         <Heading
             variant="small"
-            title="Labels"
-            description="Labels tag issues across the organization's projects and epics"
+            :title="$t('labels.title')"
+            :description="$t('labels.description')"
         />
 
         <Form
@@ -65,19 +65,19 @@ function remove(label: IssueLabel) {
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
-                <Label for="name">Name</Label>
+                <Label for="name">{{ $t('common.name') }}</Label>
                 <Input
                     id="name"
                     name="name"
                     class="w-56"
-                    placeholder="bug"
+                    :placeholder="$t('labels.namePlaceholder')"
                     required
                 />
                 <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="color">Color</Label>
+                <Label for="color">{{ $t('common.color') }}</Label>
                 <Select name="color" default-value="gray">
                     <SelectTrigger id="color" class="w-40">
                         <SelectValue />
@@ -95,7 +95,9 @@ function remove(label: IssueLabel) {
                 <InputError :message="errors.color" />
             </div>
 
-            <Button type="submit" :disabled="processing">Add label</Button>
+            <Button type="submit" :disabled="processing">{{
+                $t('labels.addLabel')
+            }}</Button>
         </Form>
 
         <div
@@ -105,7 +107,7 @@ function remove(label: IssueLabel) {
                 v-if="labels.length === 0"
                 class="p-8 text-center text-sm text-muted-foreground"
             >
-                No labels yet.
+                {{ $t('labels.empty') }}
             </p>
             <div
                 v-for="label in labels"
@@ -114,13 +116,12 @@ function remove(label: IssueLabel) {
             >
                 <LabelBadge :name="label.name" :color="label.color" />
                 <span class="ml-auto text-xs text-muted-foreground">
-                    {{ label.issuesCount }}
-                    {{ label.issuesCount === 1 ? 'issue' : 'issues' }}
+                    {{ $t('labels.issueCount', label.issuesCount) }}
                 </span>
                 <template v-if="canManage">
                     <EditLabelDialog :label="label" />
                     <Button variant="outline" size="sm" @click="remove(label)">
-                        Delete
+                        {{ $t('common.delete') }}
                     </Button>
                 </template>
             </div>

@@ -25,7 +25,7 @@ defineOptions({
 
     <div class="space-y-6">
         <p class="text-center text-sm text-muted-foreground">
-            Sent to
+            {{ $t('auth.sentTo') }}
             <span class="font-medium text-foreground">{{ props.email }}</span>
         </p>
 
@@ -35,7 +35,7 @@ defineOptions({
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
-                <Label for="code">Login code</Label>
+                <Label for="code">{{ $t('auth.loginCode') }}</Label>
                 <Input
                     id="code"
                     name="code"
@@ -52,14 +52,14 @@ defineOptions({
             <div class="my-6 flex items-center justify-start">
                 <Button class="w-full" :disabled="processing">
                     <Spinner v-if="processing" />
-                    Log in
+                    {{ $t('auth.logIn') }}
                 </Button>
             </div>
         </Form>
 
         <div class="space-x-1 text-center text-sm text-muted-foreground">
-            <span>Didn't get a code?</span>
-            <TextLink :href="create()">Try again</TextLink>
+            <span>{{ $t('auth.didntGetCode') }}</span>
+            <TextLink :href="create()">{{ $t('common.tryAgain') }}</TextLink>
         </div>
     </div>
 </template>

@@ -50,12 +50,6 @@ const addLevel = ref<ProjectLevel>('write');
 const addError = ref<string | null>(null);
 const removing = ref<ProjectMember | null>(null);
 
-const levelLabels: Record<ProjectLevel, string> = {
-    admin: 'Admin',
-    write: 'Write',
-    read: 'Read',
-};
-
 const hasAssignable = computed(() => props.assignable.length > 0);
 
 function initials(name: string): string {
@@ -133,14 +127,14 @@ const canManageMember = (member: ProjectMember) =>
 </script>
 
 <template>
-    <Head :title="`${project.name} members`" />
+    <Head :title="$t('members.title', { project: project.name })" />
 
     <div class="flex flex-col gap-4 p-4">
         <div class="flex items-start justify-between gap-4">
             <Heading
                 variant="small"
-                :title="`${project.name} members`"
-                description="People with access to this project and their level"
+                :title="$t('members.title', { project: project.name })"
+                :description="$t('members.description')"
             />
 
             <Dialog v-if="canManage" v-model:open="addOpen">
@@ -151,28 +145,34 @@ const canManageMember = (member: ProjectMember) =>
                         :disabled="!hasAssignable"
                     >
                         <UserPlus />
-                        Add member
+                        {{ $t('members.addMember') }}
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add to {{ project.name }}</DialogTitle>
+                        <DialogTitle>{{
+                            $t('members.addToProject', {
+                                project: project.name,
+                            })
+                        }}</DialogTitle>
                         <DialogDescription>
-                            Grant an organization member access to this project.
-                            Invite new people from
-                            <span class="font-medium"
-                                >Settings &rarr; Members</span
+                            {{ $t('members.addDescription') }}
+                            <span class="font-medium">{{
+                                $t('members.settingsMembers')
+                            }}</span
                             >.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div class="space-y-6">
                         <div class="grid gap-2">
-                            <Label>Member</Label>
+                            <Label>{{ $t('members.member') }}</Label>
                             <Select v-model="addUserId">
                                 <SelectTrigger class="w-full">
                                     <SelectValue
-                                        placeholder="Select a member"
+                                        :placeholder="
+                                            $t('members.selectMember')
+                                        "
                                     />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -191,15 +191,21 @@ const canManageMember = (member: ProjectMember) =>
                         </div>
 
                         <div class="grid gap-2">
-                            <Label>Level</Label>
+                            <Label>{{ $t('members.level') }}</Label>
                             <Select v-model="addLevel">
                                 <SelectTrigger class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                    <SelectItem value="write">Write</SelectItem>
-                                    <SelectItem value="read">Read</SelectItem>
+                                    <SelectItem value="admin">{{
+                                        $t('level.admin')
+                                    }}</SelectItem>
+                                    <SelectItem value="write">{{
+                                        $t('level.write')
+                                    }}</SelectItem>
+                                    <SelectItem value="read">{{
+                                        $t('level.read')
+                                    }}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -207,9 +213,13 @@ const canManageMember = (member: ProjectMember) =>
 
                     <DialogFooter class="gap-2">
                         <DialogClose as-child>
-                            <Button variant="secondary">Cancel</Button>
+                            <Button variant="secondary">{{
+                                $t('common.cancel')
+                            }}</Button>
                         </DialogClose>
-                        <Button type="button" @click="add">Add member</Button>
+                        <Button type="button" @click="add">{{
+                            $t('members.addMember')
+                        }}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -235,7 +245,7 @@ const canManageMember = (member: ProjectMember) =>
                             v-if="member.id === currentUserId"
                             class="text-muted-foreground"
                         >
-                            (you)
+                            ({{ $t('members.you') }})
                         </span>
                     </p>
                     <p class="truncate text-xs text-muted-foreground">
@@ -249,8 +259,8 @@ const canManageMember = (member: ProjectMember) =>
                         class="flex items-center gap-2 text-xs text-muted-foreground"
                         :title="
                             member.ownIssuesOnly
-                                ? 'Sees only issues they report or are assigned'
-                                : 'Sees every issue in the project'
+                                ? $t('members.onlyOwnIssuesOn')
+                                : $t('members.onlyOwnIssuesOff')
                         "
                     >
                         <Switch
@@ -259,7 +269,7 @@ const canManageMember = (member: ProjectMember) =>
                                 (value) => toggleRestricted(member, value)
                             "
                         />
-                        Only own issues
+                        {{ $t('members.onlyOwnIssues') }}
                     </label>
                     <Select
                         :model-value="member.level"
@@ -271,9 +281,15 @@ const canManageMember = (member: ProjectMember) =>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="write">Write</SelectItem>
-                            <SelectItem value="read">Read</SelectItem>
+                            <SelectItem value="admin">{{
+                                $t('level.admin')
+                            }}</SelectItem>
+                            <SelectItem value="write">{{
+                                $t('level.write')
+                            }}</SelectItem>
+                            <SelectItem value="read">{{
+                                $t('level.read')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <Button
@@ -282,11 +298,11 @@ const canManageMember = (member: ProjectMember) =>
                         class="text-destructive hover:text-destructive"
                         @click="removing = member"
                     >
-                        Remove
+                        {{ $t('members.remove') }}
                     </Button>
                 </template>
                 <Badge v-else variant="secondary" class="shrink-0">
-                    {{ levelLabels[member.level] }}
+                    {{ $t(`level.${member.level}`) }}
                 </Badge>
             </div>
         </div>
@@ -298,17 +314,25 @@ const canManageMember = (member: ProjectMember) =>
     >
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Remove member</DialogTitle>
+                <DialogTitle>{{ $t('members.removeMember') }}</DialogTitle>
                 <DialogDescription>
-                    Remove {{ removing?.name }} from {{ project.name }}? They'll
-                    lose access to the project until added again.
+                    {{
+                        $t('members.removeConfirm', {
+                            name: removing?.name,
+                            project: project.name,
+                        })
+                    }}
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter class="gap-2">
                 <DialogClose as-child>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{{
+                        $t('common.cancel')
+                    }}</Button>
                 </DialogClose>
-                <Button variant="destructive" @click="remove">Remove</Button>
+                <Button variant="destructive" @click="remove">{{
+                    $t('members.remove')
+                }}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

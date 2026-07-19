@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -16,28 +17,31 @@ defineProps<{
 }>();
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
+const { t } = useI18n();
 
 const statuses: {
     key: keyof SidebarProjectCounts;
-    label: string;
     dot: string;
 }[] = [
-    { key: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
-    { key: 'in_progress', label: 'In progress', dot: 'bg-primary' },
-    { key: 'in_review', label: 'In review', dot: 'bg-sky-500' },
-    { key: 'done', label: 'Done', dot: 'bg-emerald-500' },
+    { key: 'backlog', dot: 'bg-muted-foreground/50' },
+    { key: 'in_progress', dot: 'bg-primary' },
+    { key: 'in_review', dot: 'bg-sky-500' },
+    { key: 'done', dot: 'bg-emerald-500' },
 ];
 
 function countsTitle(counts: SidebarProjectCounts): string {
     return statuses
-        .map((status) => `${counts[status.key]} ${status.label.toLowerCase()}`)
+        .map(
+            (status) =>
+                `${counts[status.key]} ${t(`status.${status.key}`).toLowerCase()}`,
+        )
         .join(' · ');
 }
 </script>
 
 <template>
     <SidebarGroup v-if="projects.length" class="px-2 py-0">
-        <SidebarGroupLabel>Favorites</SidebarGroupLabel>
+        <SidebarGroupLabel>{{ $t('nav.favorites') }}</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="project in projects" :key="project.id">
                 <SidebarMenuButton
