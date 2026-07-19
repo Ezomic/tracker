@@ -23,7 +23,7 @@ defineOptions({
     <div class="space-y-6">
         <Form v-bind="store.form()" v-slot="{ errors, processing }">
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">{{ $t('common.emailAddress') }}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -39,14 +39,16 @@ defineOptions({
             <div class="my-6 flex items-center justify-start">
                 <Button class="w-full" :disabled="processing">
                     <Spinner v-if="processing" />
-                    Send login code
+                    {{ $t('auth.sendCode') }}
                 </Button>
             </div>
         </Form>
 
         <div class="space-x-1 text-center text-sm text-muted-foreground">
-            <span>Or, return to</span>
-            <TextLink :href="login()">log in with a password</TextLink>
+            <span>{{ $t('auth.or') }}</span>
+            <TextLink :href="login()">{{
+                $t('auth.logInWithPassword')
+            }}</TextLink>
         </div>
     </div>
 </template>

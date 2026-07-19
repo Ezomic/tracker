@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -9,6 +10,7 @@ import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as indexCategories } from '@/routes/categories';
 import { index as indexLabels } from '@/routes/labels';
+import { edit as editLanguage } from '@/routes/language';
 import { index as indexMembers } from '@/routes/members';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
@@ -21,30 +23,46 @@ interface NavGroup {
 }
 
 const page = usePage();
+const { t } = useI18n();
 
 const navGroups = computed<NavGroup[]>(() =>
     [
         {
-            title: 'Account',
+            title: t('settingsNav.account'),
             items: [
-                { title: 'Profile', href: editProfile() },
-                { title: 'Security', href: editSecurity() },
-                { title: 'Appearance', href: editAppearance() },
+                { title: t('settingsNav.profile'), href: editProfile() },
+                { title: t('settingsNav.security'), href: editSecurity() },
+                { title: t('settingsNav.appearance'), href: editAppearance() },
+                { title: t('settingsNav.language'), href: editLanguage() },
             ],
         },
         {
-            title: 'Organization',
+            title: t('settingsNav.organization'),
             items: [
                 ...(page.props.currentOrganization?.canManage
-                    ? [{ title: 'Members', href: indexMembers() }]
+                    ? [
+                          {
+                              title: t('settingsNav.members'),
+                              href: indexMembers(),
+                          },
+                      ]
                     : []),
                 // Templates and labels are the org's shared library, hidden
                 // from guests.
                 ...(page.props.currentOrganization?.canViewLibrary
                     ? [
-                          { title: 'Categories', href: indexCategories() },
-                          { title: 'Labels', href: indexLabels() },
-                          { title: 'Templates', href: indexTemplates() },
+                          {
+                              title: t('settingsNav.categories'),
+                              href: indexCategories(),
+                          },
+                          {
+                              title: t('settingsNav.labels'),
+                              href: indexLabels(),
+                          },
+                          {
+                              title: t('settingsNav.templates'),
+                              href: indexTemplates(),
+                          },
                       ]
                     : []),
             ],
@@ -58,8 +76,8 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 <template>
     <div class="px-4 py-6">
         <Heading
-            title="Settings"
-            description="Manage your account and organization settings"
+            :title="$t('settingsNav.settings')"
+            :description="$t('settingsNav.settingsDescription')"
         />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">

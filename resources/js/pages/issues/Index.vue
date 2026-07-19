@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Plus, Search } from '@lucide/vue';
 import { refDebounced } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import NewIssueDialog from '@/components/NewIssueDialog.vue';
@@ -52,10 +53,12 @@ const scopedProject = computed(() =>
         : undefined,
 );
 
+const { t } = useI18n();
+
 const heading = computed(() =>
     isScoped.value && scopedProject.value
-        ? `${scopedProject.value.key} · Tickets`
-        : 'Issues',
+        ? `${scopedProject.value.key} · ${t('list.title')}`
+        : t('nav.allIssues'),
 );
 
 const search = ref(props.filters.search ?? '');
@@ -121,13 +124,12 @@ const priorityDot: Record<Issue['priority'], string> = {
 
 const statusMeta: {
     value: Issue['status'];
-    label: string;
     dot: string;
 }[] = [
-    { value: 'in_progress', label: 'In progress', dot: 'bg-primary' },
-    { value: 'in_review', label: 'In review', dot: 'bg-sky-500' },
-    { value: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
-    { value: 'done', label: 'Done', dot: 'bg-emerald-500' },
+    { value: 'in_progress', dot: 'bg-primary' },
+    { value: 'in_review', dot: 'bg-sky-500' },
+    { value: 'backlog', dot: 'bg-muted-foreground/50' },
+    { value: 'done', dot: 'bg-emerald-500' },
 ];
 
 const groups = computed(() =>
@@ -143,7 +145,7 @@ const createOpen = ref(false);
 </script>
 
 <template>
-    <Head title="Issues" />
+    <Head :title="$t('nav.allIssues')" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -171,14 +173,14 @@ const createOpen = ref(false);
                     />
                     <Input
                         v-model="search"
-                        placeholder="Search"
+                        :placeholder="$t('common.search')"
                         class="h-9 w-44 pl-8"
                     />
                 </div>
 
                 <Button size="sm" @click="createOpen = true">
                     <Plus />
-                    New issue
+                    {{ $t('nav.newIssue') }}
                 </Button>
             </div>
         </div>
@@ -186,10 +188,12 @@ const createOpen = ref(false);
         <div class="flex flex-wrap items-center gap-2">
             <Select v-if="!isScoped" v-model="projectId">
                 <SelectTrigger class="h-8 w-auto gap-1.5">
-                    <SelectValue placeholder="Project" />
+                    <SelectValue :placeholder="$t('list.project')" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All projects</SelectItem>
+                    <SelectItem value="all">{{
+                        $t('list.allProjects')
+                    }}</SelectItem>
                     <SelectItem
                         v-for="project in projects"
                         :key="project.id"
@@ -205,11 +209,21 @@ const createOpen = ref(false);
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="backlog">Backlog</SelectItem>
-                    <SelectItem value="in_progress">In progress</SelectItem>
-                    <SelectItem value="in_review">In review</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
+                    <SelectItem value="all">{{
+                        $t('list.allStatuses')
+                    }}</SelectItem>
+                    <SelectItem value="backlog">{{
+                        $t('status.backlog')
+                    }}</SelectItem>
+                    <SelectItem value="in_progress">{{
+                        $t('status.in_progress')
+                    }}</SelectItem>
+                    <SelectItem value="in_review">{{
+                        $t('status.in_review')
+                    }}</SelectItem>
+                    <SelectItem value="done">{{
+                        $t('status.done')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
 
@@ -218,9 +232,15 @@ const createOpen = ref(false);
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All types</SelectItem>
-                    <SelectItem value="feature">Feature</SelectItem>
-                    <SelectItem value="fix">Fix</SelectItem>
+                    <SelectItem value="all">{{
+                        $t('list.allTypes')
+                    }}</SelectItem>
+                    <SelectItem value="feature">{{
+                        $t('issueType.feature')
+                    }}</SelectItem>
+                    <SelectItem value="fix">{{
+                        $t('issueType.fix')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
 
@@ -229,21 +249,35 @@ const createOpen = ref(false);
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All priorities</SelectItem>
-                    <SelectItem value="none">No priority</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="all">{{
+                        $t('list.allPriorities')
+                    }}</SelectItem>
+                    <SelectItem value="none">{{
+                        $t('priority.none')
+                    }}</SelectItem>
+                    <SelectItem value="low">{{
+                        $t('priority.low')
+                    }}</SelectItem>
+                    <SelectItem value="medium">{{
+                        $t('priority.medium')
+                    }}</SelectItem>
+                    <SelectItem value="high">{{
+                        $t('priority.high')
+                    }}</SelectItem>
+                    <SelectItem value="urgent">{{
+                        $t('priority.urgent')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
 
             <Select v-if="labels.length > 0" v-model="labelId">
                 <SelectTrigger class="h-8 w-auto gap-1.5">
-                    <SelectValue placeholder="Label" />
+                    <SelectValue :placeholder="$t('list.label')" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All labels</SelectItem>
+                    <SelectItem value="all">{{
+                        $t('list.allLabels')
+                    }}</SelectItem>
                     <SelectItem
                         v-for="label in labels"
                         :key="label.id"
@@ -260,7 +294,7 @@ const createOpen = ref(false);
                 size="sm"
                 @click="clearFilters"
             >
-                Clear
+                {{ $t('list.clear') }}
             </Button>
         </div>
 
@@ -273,8 +307,8 @@ const createOpen = ref(false);
             >
                 {{
                     hasActiveFilters
-                        ? 'No issues match these filters.'
-                        : 'No issues yet — create one with the New issue button.'
+                        ? $t('list.emptyFiltered')
+                        : $t('list.emptyNone')
                 }}
             </div>
 
@@ -283,7 +317,7 @@ const createOpen = ref(false);
                     class="flex items-center gap-2 bg-muted/50 px-4 py-2 text-xs font-medium text-muted-foreground"
                 >
                     <span class="size-2 rounded-full" :class="group.dot" />
-                    {{ group.label }}
+                    {{ $t(`status.${group.value}`) }}
                     <span class="text-muted-foreground/70">
                         {{ group.issues.length }}
                     </span>
@@ -319,7 +353,7 @@ const createOpen = ref(false);
                             :color="label.color"
                         />
                         <Badge variant="outline" class="font-normal">
-                            {{ issue.type }}
+                            {{ $t(`issueType.${issue.type}`) }}
                         </Badge>
                     </div>
                 </Link>

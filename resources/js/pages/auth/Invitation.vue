@@ -25,9 +25,9 @@ defineOptions({
 });
 
 const messages: Record<string, string> = {
-    expired: 'This invitation has expired. Ask for a new one.',
-    accepted: 'This invitation has already been used.',
-    invalid: "This invitation link isn't valid.",
+    expired: 'invitation.expired',
+    accepted: 'invitation.accepted',
+    invalid: 'invitation.invalid',
 };
 </script>
 
@@ -37,35 +37,33 @@ const messages: Record<string, string> = {
     <div class="space-y-6">
         <template v-if="state === 'guest' && invitation">
             <p class="text-center text-sm text-muted-foreground">
-                <span v-if="invitation.inviterName" class="font-medium">
-                    {{ invitation.inviterName }}
-                </span>
-                <span v-else class="font-medium">Someone</span>
-                invited
-                <span class="font-medium text-foreground">
-                    {{ invitation.email }}
-                </span>
-                to join
-                <span class="font-medium text-foreground">
-                    {{ invitation.organizationName }}
-                </span>
-                as {{ invitation.roleLabel }}.
+                {{
+                    $t('invitation.invitedSentence', {
+                        inviter:
+                            invitation.inviterName ?? $t('invitation.someone'),
+                        email: invitation.email,
+                        organization: invitation.organizationName,
+                        role: invitation.roleLabel,
+                    })
+                }}
             </p>
 
             <p
                 v-if="invitation.projectName"
                 class="text-center text-sm text-muted-foreground"
             >
-                You'll get access to
-                <span class="font-medium text-foreground">
-                    {{ invitation.projectName }}
-                </span>
-                right away.
+                {{
+                    $t('invitation.projectAccess', {
+                        project: invitation.projectName,
+                    })
+                }}
             </p>
 
             <div class="grid gap-2">
                 <Button v-if="hasAccount" class="w-full" as-child>
-                    <a :href="login().url">Log in to accept</a>
+                    <a :href="login().url">{{
+                        $t('invitation.logInToAccept')
+                    }}</a>
                 </Button>
                 <Button v-else class="w-full" as-child>
                     <a
@@ -73,40 +71,42 @@ const messages: Record<string, string> = {
                             register({ query: { email: invitation.email } }).url
                         "
                     >
-                        Create your account to accept
+                        {{ $t('invitation.createToAccept') }}
                     </a>
                 </Button>
             </div>
 
             <p class="text-center text-xs text-muted-foreground">
-                You'll come straight back here once you're signed in.
+                {{ $t('invitation.comeBack') }}
             </p>
         </template>
 
         <template v-else-if="state === 'mismatch' && invitation">
             <p class="text-center text-sm text-muted-foreground">
-                This invitation is for
-                <span class="font-medium text-foreground">
-                    {{ invitation.email }}
-                </span>
-                , but you're signed in as
-                <span class="font-medium text-foreground">
-                    {{ currentEmail }}
-                </span>
-                .
+                {{
+                    $t('invitation.mismatch', {
+                        invited: invitation.email,
+                        current: currentEmail,
+                    })
+                }}
             </p>
             <p class="text-center text-sm text-muted-foreground">
-                Sign in with the invited address to join
-                {{ invitation.organizationName }}.
+                {{
+                    $t('invitation.mismatchSignIn', {
+                        organization: invitation.organizationName,
+                    })
+                }}
             </p>
         </template>
 
         <template v-else>
             <p class="text-center text-sm text-muted-foreground">
-                {{ messages[state] }}
+                {{ $t(messages[state]) }}
             </p>
             <div class="text-center text-sm">
-                <TextLink :href="login()">Go to log in</TextLink>
+                <TextLink :href="login()">{{
+                    $t('invitation.goToLogIn')
+                }}</TextLink>
             </div>
         </template>
     </div>

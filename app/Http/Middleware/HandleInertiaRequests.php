@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => $request->user() === null ? app()->getLocale() : $request->user()->locale,
             'auth' => [
                 'user' => $request->user(),
             ],

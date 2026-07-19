@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { FolderPlus } from '@lucide/vue';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import DashboardTicketList from '@/components/DashboardTicketList.vue';
 import DonutChart from '@/components/DonutChart.vue';
 import { Button } from '@/components/ui/button';
@@ -31,12 +32,26 @@ defineOptions({
     },
 });
 
+const { t } = useI18n();
+
 const statTiles = computed(() => [
-    { label: 'Open', value: props.stats.open, accent: false },
-    { label: 'In progress', value: props.stats.in_progress, accent: true },
-    { label: 'In review', value: props.stats.in_review, accent: false },
-    { label: 'Done', value: props.stats.done, accent: false },
-    { label: 'Archived', value: props.stats.archived, accent: false },
+    { label: t('dashboard.statOpen'), value: props.stats.open, accent: false },
+    {
+        label: t('dashboard.statInProgress'),
+        value: props.stats.in_progress,
+        accent: true,
+    },
+    {
+        label: t('dashboard.statInReview'),
+        value: props.stats.in_review,
+        accent: false,
+    },
+    { label: t('dashboard.statDone'), value: props.stats.done, accent: false },
+    {
+        label: t('dashboard.statArchived'),
+        value: props.stats.archived,
+        accent: false,
+    },
 ]);
 
 const donutSegments = computed(() =>
@@ -50,13 +65,12 @@ const activeTotal = computed(() =>
     props.activeByProject.reduce((sum, project) => sum + project.count, 0),
 );
 
-const statusMeta: { key: keyof StatusBreakdown; label: string; dot: string }[] =
-    [
-        { key: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
-        { key: 'in_progress', label: 'In progress', dot: 'bg-primary' },
-        { key: 'in_review', label: 'In review', dot: 'bg-sky-500' },
-        { key: 'done', label: 'Done', dot: 'bg-emerald-500' },
-    ];
+const statusMeta: { key: keyof StatusBreakdown; dot: string }[] = [
+    { key: 'backlog', dot: 'bg-muted-foreground/50' },
+    { key: 'in_progress', dot: 'bg-primary' },
+    { key: 'in_review', dot: 'bg-sky-500' },
+    { key: 'done', dot: 'bg-emerald-500' },
+];
 
 const statusMax = computed(() =>
     Math.max(1, ...statusMeta.map((meta) => props.statusBreakdown[meta.key])),
@@ -64,7 +78,7 @@ const statusMax = computed(() =>
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="$t('dashboard.title')" />
 
     <div
         v-if="!hasProjects"
@@ -74,16 +88,17 @@ const statusMax = computed(() =>
             <FolderPlus class="size-8 text-muted-foreground" />
         </div>
         <div class="space-y-1">
-            <h2 class="text-lg font-medium">Welcome aboard</h2>
+            <h2 class="text-lg font-medium">
+                {{ $t('dashboard.welcomeTitle') }}
+            </h2>
             <p class="max-w-sm text-sm text-muted-foreground">
-                Create your first project to start tracking issues. You can
-                invite people to it once it exists.
+                {{ $t('dashboard.welcomeBody') }}
             </p>
         </div>
         <Button as-child>
             <Link :href="projectsIndex()">
                 <FolderPlus class="size-4" />
-                Create your first project
+                {{ $t('dashboard.createFirstProject') }}
             </Link>
         </Button>
     </div>
@@ -110,13 +125,13 @@ const statusMax = computed(() =>
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
                 <h2 class="mb-3 text-sm font-medium">
-                    Active tickets by project
+                    {{ $t('dashboard.activeByProject') }}
                 </h2>
                 <div
                     v-if="activeTotal === 0"
                     class="py-8 text-center text-sm text-muted-foreground"
                 >
-                    No active tickets.
+                    {{ $t('dashboard.noActiveTickets') }}
                 </div>
                 <div v-else class="flex items-center gap-6">
                     <div class="relative size-32 shrink-0">
@@ -128,7 +143,7 @@ const statusMax = computed(() =>
                                 {{ activeTotal }}
                             </span>
                             <span class="text-xs text-muted-foreground">
-                                active
+                                {{ $t('dashboard.active') }}
                             </span>
                         </div>
                     </div>
@@ -158,7 +173,9 @@ const statusMax = computed(() =>
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
-                <h2 class="mb-4 text-sm font-medium">Status breakdown</h2>
+                <h2 class="mb-4 text-sm font-medium">
+                    {{ $t('dashboard.statusBreakdown') }}
+                </h2>
                 <div class="grid gap-3">
                     <div
                         v-for="meta in statusMeta"
@@ -166,7 +183,7 @@ const statusMax = computed(() =>
                         class="flex items-center gap-3 text-sm"
                     >
                         <span class="w-24 shrink-0 text-muted-foreground">
-                            {{ meta.label }}
+                            {{ $t(`status.${meta.key}`) }}
                         </span>
                         <div
                             class="h-2 flex-1 overflow-hidden rounded-full bg-muted"
@@ -191,25 +208,25 @@ const statusMax = computed(() =>
 
         <div class="grid gap-4 lg:grid-cols-2">
             <DashboardTicketList
-                title="Most recent"
+                :title="$t('dashboard.mostRecent')"
                 :rows="recent"
-                empty-text="No tickets yet."
+                :empty-text="$t('dashboard.emptyNoTickets')"
             />
             <DashboardTicketList
-                title="Most stale"
+                :title="$t('dashboard.mostStale')"
                 :rows="stale"
-                empty-text="No open tickets."
+                :empty-text="$t('dashboard.emptyNoOpen')"
                 highlight-age
             />
             <DashboardTicketList
-                title="In review"
+                :title="$t('dashboard.inReview')"
                 :rows="inReview"
-                empty-text="Nothing in review."
+                :empty-text="$t('dashboard.emptyNothingReview')"
             />
             <DashboardTicketList
-                title="Completed this week"
+                :title="$t('dashboard.completedThisWeek')"
                 :rows="recentlyCompleted"
-                empty-text="Nothing completed in the last 7 days."
+                :empty-text="$t('dashboard.emptyNothingCompleted')"
             />
         </div>
     </div>

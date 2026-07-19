@@ -4,6 +4,7 @@ import { Kanban, LayoutGrid, Plus, Search, Ticket } from '@lucide/vue';
 import type { LucideIcon } from '@lucide/vue';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { Component } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
@@ -20,6 +21,7 @@ type Command = {
 };
 
 const { open, close, toggle } = useCommandPalette();
+const { t } = useI18n();
 const page = usePage();
 const projects = computed<SidebarProject[]>(
     () => page.props.sidebarProjects ?? [],
@@ -32,26 +34,26 @@ const inputEl = ref<HTMLInputElement | null>(null);
 const commands = computed<Command[]>(() => {
     const base: Command[] = [
         {
-            group: 'Actions',
-            label: 'Create issue',
+            group: t('commandPalette.groupActions'),
+            label: t('commandPalette.createIssue'),
             href: issuesIndex().url,
             icon: Plus,
         },
         {
-            group: 'Go to',
-            label: 'All issues',
+            group: t('commandPalette.groupGoTo'),
+            label: t('commandPalette.allIssues'),
             href: issuesIndex().url,
             icon: Ticket,
         },
         {
-            group: 'Go to',
-            label: 'Board',
+            group: t('commandPalette.groupGoTo'),
+            label: t('commandPalette.board'),
             href: issuesBoard().url,
             icon: Kanban,
         },
         {
-            group: 'Go to',
-            label: 'Dashboard',
+            group: t('commandPalette.groupGoTo'),
+            label: t('commandPalette.dashboard'),
             href: dashboard().url,
             icon: LayoutGrid,
         },
@@ -59,15 +61,15 @@ const commands = computed<Command[]>(() => {
 
     const projectCommands = projects.value.flatMap((project): Command[] => [
         {
-            group: 'Projects',
-            label: `${project.key} tickets`,
+            group: t('commandPalette.groupProjects'),
+            label: t('commandPalette.projectTickets', { key: project.key }),
             hint: project.name,
             href: `/${project.key}/tickets`,
             dot: project.color,
         },
         {
-            group: 'Projects',
-            label: `${project.key} board`,
+            group: t('commandPalette.groupProjects'),
+            label: t('commandPalette.projectBoard', { key: project.key }),
             hint: project.name,
             href: `/${project.key}/board`,
             dot: project.color,
@@ -172,7 +174,7 @@ onUnmounted(() => window.removeEventListener('keydown', onGlobalKeydown));
                 <input
                     ref="inputEl"
                     v-model="query"
-                    placeholder="Type a command or search…"
+                    :placeholder="$t('commandPalette.placeholder')"
                     class="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
             </div>
@@ -182,7 +184,7 @@ onUnmounted(() => window.removeEventListener('keydown', onGlobalKeydown));
                     v-if="filtered.length === 0"
                     class="px-3 py-6 text-center text-sm text-muted-foreground"
                 >
-                    No results.
+                    {{ $t('commandPalette.noResults') }}
                 </p>
 
                 <div v-for="section in groupedFiltered" :key="section.group">

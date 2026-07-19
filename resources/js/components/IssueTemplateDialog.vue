@@ -81,40 +81,47 @@ function toggleLabel(id: number, checked: boolean) {
             >
                 <DialogHeader>
                     <DialogTitle>
-                        {{ template ? 'Edit template' : 'New template' }}
+                        {{
+                            template
+                                ? $t('templates.editTemplate')
+                                : $t('templates.newTemplate')
+                        }}
                     </DialogTitle>
                     <DialogDescription>
-                        A starting point for new issues, available across every
-                        project in this organization.
+                        {{ $t('templates.dialogDescription') }}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="grid gap-2">
-                    <Label for="template-name">Name</Label>
+                    <Label for="template-name">{{ $t('common.name') }}</Label>
                     <Input
                         id="template-name"
                         v-model="name"
                         name="name"
                         required
-                        placeholder="Bug report"
+                        :placeholder="$t('templates.namePlaceholder')"
                     />
                     <InputError :message="errors.name" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="template-description">Description</Label>
+                    <Label for="template-description">{{
+                        $t('common.description')
+                    }}</Label>
                     <MarkdownEditor
                         v-model="description"
                         name="description"
                         :rows="5"
-                        :placeholder="'## Steps to reproduce\n## Expected\n## Actual'"
+                        :placeholder="$t('templates.descriptionPlaceholder')"
                     />
                     <InputError :message="errors.description" />
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="grid gap-2">
-                        <Label for="template-type">Default type</Label>
+                        <Label for="template-type">{{
+                            $t('templates.defaultType')
+                        }}</Label>
                         <input
                             type="hidden"
                             name="type"
@@ -125,16 +132,24 @@ function toggleLabel(id: number, checked: boolean) {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">No default</SelectItem>
-                                <SelectItem value="feature">Feature</SelectItem>
-                                <SelectItem value="fix">Fix</SelectItem>
+                                <SelectItem value="none">{{
+                                    $t('templates.noDefault')
+                                }}</SelectItem>
+                                <SelectItem value="feature">{{
+                                    $t('issueType.feature')
+                                }}</SelectItem>
+                                <SelectItem value="fix">{{
+                                    $t('issueType.fix')
+                                }}</SelectItem>
                             </SelectContent>
                         </Select>
                         <InputError :message="errors.type" />
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="template-priority">Default priority</Label>
+                        <Label for="template-priority">{{
+                            $t('templates.defaultPriority')
+                        }}</Label>
                         <input
                             type="hidden"
                             name="priority"
@@ -148,11 +163,21 @@ function toggleLabel(id: number, checked: boolean) {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">No default</SelectItem>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
+                                <SelectItem value="none">{{
+                                    $t('templates.noDefault')
+                                }}</SelectItem>
+                                <SelectItem value="low">{{
+                                    $t('priority.low')
+                                }}</SelectItem>
+                                <SelectItem value="medium">{{
+                                    $t('priority.medium')
+                                }}</SelectItem>
+                                <SelectItem value="high">{{
+                                    $t('priority.high')
+                                }}</SelectItem>
+                                <SelectItem value="urgent">{{
+                                    $t('priority.urgent')
+                                }}</SelectItem>
                             </SelectContent>
                         </Select>
                         <InputError :message="errors.priority" />
@@ -160,7 +185,7 @@ function toggleLabel(id: number, checked: boolean) {
                 </div>
 
                 <div v-if="labels.length > 0" class="grid gap-2">
-                    <Label>Default labels</Label>
+                    <Label>{{ $t('templates.defaultLabels') }}</Label>
                     <input
                         v-for="id in labelIds"
                         :key="id"
@@ -191,10 +216,16 @@ function toggleLabel(id: number, checked: boolean) {
 
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button variant="secondary">Cancel</Button>
+                        <Button variant="secondary">{{
+                            $t('common.cancel')
+                        }}</Button>
                     </DialogClose>
                     <Button type="submit" :disabled="processing">
-                        {{ template ? 'Save' : 'Create template' }}
+                        {{
+                            template
+                                ? $t('common.save')
+                                : $t('templates.createTemplate')
+                        }}
                     </Button>
                 </DialogFooter>
             </Form>
