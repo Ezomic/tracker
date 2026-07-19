@@ -38,6 +38,10 @@ class StoreIssueRequest extends FormRequest
         if ($this->input('assignee') === '') {
             $this->merge(['assignee' => null]);
         }
+
+        if ($this->input('template') === '') {
+            $this->merge(['template' => null]);
+        }
     }
 
     /**
@@ -52,6 +56,26 @@ class StoreIssueRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
+            'template' => [
+                'nullable',
+                'string',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $project = Project::query()->where('key', $this->input('project'))->first();
+
+                    if ($project === null) {
+                        return;
+                    }
+
+                    $exists = $project->organization
+                        ->issueTemplates()
+                        ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
+                        ->exists();
+
+                    if (! $exists) {
+                        $fail('The selected template does not exist for this project.');
+                    }
+                },
+            ],
             'assignee' => [
                 'nullable',
                 'email',

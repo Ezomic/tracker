@@ -12,6 +12,7 @@ use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\UpdateIssueParentRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
+use App\Models\IssueTemplate;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -50,17 +51,37 @@ class IssueController extends Controller
 
         $this->authorize('createIssue', $project);
 
+        $template = $this->resolveTemplate($project, $request->validated('template'));
+
         $issue = $action->handle(
             project: $project,
             title: $request->validated('title'),
             type: IssueType::from($request->validated('type')),
-            description: $request->validated('description'),
+            description: $request->validated('description') ?? $template?->description,
             parent: $this->resolveParent($request->validated('parent')),
             owner: $request->user(),
             assignee: $this->resolveAssignee($request->validated('assignee')),
+            priority: $template?->priority,
         );
 
+        if ($template !== null) {
+            $issue->labels()->sync($template->labels->pluck('id')->all());
+        }
+
         return response()->json($this->payload($issue), 201);
+    }
+
+    private function resolveTemplate(Project $project, ?string $name): ?IssueTemplate
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        return $project->organization
+            ->issueTemplates()
+            ->with('labels')
+            ->whereRaw('lower(name) = ?', [Str::lower($name)])
+            ->first();
     }
 
     public function update(UpdateIssueParentRequest $request, Issue $issue): JsonResponse
