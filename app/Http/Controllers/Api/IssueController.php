@@ -30,7 +30,7 @@ class IssueController extends Controller
             'project' => ['sometimes', 'string', 'exists:projects,key'],
         ]);
 
-        $query = Issue::query()->visibleTo($request->user())->notArchived()->with(['project', 'parent', 'owner', 'assignee']);
+        $query = Issue::query()->visibleTo($request->user())->notArchived()->with(['project', 'parent', 'owner', 'assignee', 'labels']);
 
         if (isset($validated['project'])) {
             $query->whereRelation('project', 'key', $validated['project']);
@@ -45,7 +45,7 @@ class IssueController extends Controller
     {
         $this->authorize('view', $issue);
 
-        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee'])));
+        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee', 'labels'])));
     }
 
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
@@ -209,7 +209,7 @@ class IssueController extends Controller
     /**
      * Compact shape for list responses.
      *
-     * @return array<string, string|null>
+     * @return array<string, mixed>
      */
     private function summary(Issue $issue): array
     {
@@ -220,6 +220,7 @@ class IssueController extends Controller
             'status' => $issue->status->value,
             'project' => $issue->project->key,
             'parent' => $issue->parent?->identifier,
+            'labels' => $issue->labels->pluck('name')->all(),
             'url' => url("/issues/{$issue->identifier}"),
         ];
     }
@@ -227,7 +228,7 @@ class IssueController extends Controller
     /**
      * Full shape for single-issue responses.
      *
-     * @return array<string, string|int|null>
+     * @return array<string, mixed>
      */
     private function detail(Issue $issue): array
     {
@@ -239,6 +240,8 @@ class IssueController extends Controller
             'type' => $issue->type->value,
             'priority' => $issue->priority->value,
             'status' => $issue->status->value,
+            'estimate_minutes' => $issue->estimate_minutes,
+            'labels' => $issue->labels->pluck('name')->all(),
             'branch_name' => $issue->branch_name,
             'github_pr_url' => $issue->github_pr_url,
             'project' => $issue->project->key,
