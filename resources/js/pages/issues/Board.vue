@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { Clock, GitBranch } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { formatDuration } from '@/lib/duration';
 import { board, show, updateStatus } from '@/routes/issues';
 import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
 
@@ -38,15 +41,19 @@ defineOptions({
     },
 });
 
-const columns: { status: Issue['status']; dot: string }[] = [
-    { status: 'backlog', dot: 'bg-muted-foreground/50' },
-    { status: 'in_progress', dot: 'bg-primary' },
-    { status: 'in_review', dot: 'bg-sky-500' },
-    { status: 'done', dot: 'bg-emerald-500' },
+const columns: { status: Issue['status']; dot: string; accent: string }[] = [
+    {
+        status: 'backlog',
+        dot: 'bg-muted-foreground/50',
+        accent: 'bg-muted-foreground/30',
+    },
+    { status: 'in_progress', dot: 'bg-primary', accent: 'bg-primary' },
+    { status: 'in_review', dot: 'bg-sky-500', accent: 'bg-sky-500' },
+    { status: 'done', dot: 'bg-emerald-500', accent: 'bg-emerald-500' },
 ];
 
-const priorityDot: Record<Issue['priority'], string> = {
-    none: 'border border-muted-foreground/40',
+const priorityEdge: Record<Issue['priority'], string> = {
+    none: 'bg-transparent',
     low: 'bg-sky-400',
     medium: 'bg-amber-400',
     high: 'bg-orange-500',
@@ -65,6 +72,15 @@ const issuesByStatus = computed(() => {
 
     return grouped;
 });
+
+function initials(name: string): string {
+    return name
+        .split(' ')
+        .map((part) => part[0] ?? '')
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+}
 
 const draggingId = ref<string | null>(null);
 const dragOverStatus = ref<Issue['status'] | null>(null);
@@ -101,7 +117,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <div class="flex flex-wrap items-center gap-3">
-            <h1 class="text-lg font-medium">{{ heading }}</h1>
+            <h1 class="text-lg font-medium tracking-tight">{{ heading }}</h1>
             <IssueViewToggle active="board" :project-key="project?.key" />
             <ProjectLinks v-if="project" :links="project.links" />
             <Label
@@ -116,86 +132,168 @@ function onDrop(event: DragEvent, status: Issue['status']) {
         </div>
 
         <div
-            class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            class="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
         >
             <div
                 v-for="column in columns"
                 :key="column.status"
-                class="flex flex-col gap-2 rounded-xl border p-2 transition-colors"
+                class="flex min-h-0 flex-col overflow-hidden rounded-xl border transition-colors"
                 :class="
                     dragOverStatus === column.status
-                        ? 'border-primary/50 bg-accent/40'
+                        ? 'border-primary/50 ring-2 ring-primary/30'
                         : 'border-sidebar-border/70 dark:border-sidebar-border'
                 "
                 @dragover.prevent="dragOverStatus = column.status"
+                @dragleave="dragOverStatus = null"
                 @drop="onDrop($event, column.status)"
             >
+                <div class="h-1 w-full shrink-0" :class="column.accent" />
+
                 <h2
-                    class="flex items-center gap-2 px-1.5 py-1 text-xs font-medium text-muted-foreground"
+                    class="flex shrink-0 items-center gap-2 px-3 py-2.5 text-xs font-medium"
                 >
                     <span class="size-2 rounded-full" :class="column.dot" />
-                    {{ $t(`status.${column.status}`) }}
-                    <span class="text-muted-foreground/70">
+                    <span class="tracking-tight">
+                        {{ $t(`status.${column.status}`) }}
+                    </span>
+                    <span
+                        class="ml-auto inline-flex min-w-5 justify-center rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums"
+                    >
                         {{ issuesByStatus.get(column.status)?.length }}
                     </span>
                 </h2>
 
-                <Link
-                    v-for="issue in issuesByStatus.get(column.status)"
-                    :key="issue.identifier"
-                    :href="show({ issue: issue.identifier })"
-                    draggable="true"
-                    class="flex cursor-grab flex-col gap-2 rounded-lg border bg-card p-3 text-sm shadow-xs transition-colors hover:bg-accent active:cursor-grabbing"
-                    :class="[
-                        draggingId === issue.identifier
-                            ? 'border-primary opacity-60'
-                            : 'border-sidebar-border/70 dark:border-sidebar-border',
-                        issue.archivedAt ? 'opacity-60' : '',
-                    ]"
-                    @dragstart="onDragStart($event, issue)"
-                    @dragend="onDragEnd"
+                <div
+                    class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-muted/30 p-2 transition-colors"
+                    :class="
+                        dragOverStatus === column.status ? 'bg-accent/40' : ''
+                    "
                 >
-                    <div class="flex items-center gap-2">
-                        <span
-                            class="size-2 shrink-0 rounded-full"
-                            :class="priorityDot[issue.priority]"
-                        />
-                        <span class="font-mono text-xs text-muted-foreground">
-                            {{ issue.identifier }}
-                        </span>
-                        <span
-                            v-if="issue.childrenCount > 0"
-                            class="ml-auto text-xs text-muted-foreground"
-                        >
-                            {{ issue.childrenCount }} sub
-                        </span>
-                    </div>
-                    <span class="line-clamp-2">{{ issue.title }}</span>
-                    <div class="flex flex-wrap items-center gap-1">
-                        <LabelBadge
-                            v-for="label in issue.labels"
-                            :key="label.id"
-                            :name="label.name"
-                            :color="label.color"
-                        />
-                        <Badge variant="outline" class="w-fit font-normal">
-                            {{ $t(`issueType.${issue.type}`) }}
-                        </Badge>
-                        <Badge
-                            v-if="issue.archivedAt"
-                            variant="secondary"
-                            class="w-fit font-normal"
-                        >
-                            {{ $t('issue.archived') }}
-                        </Badge>
-                    </div>
-                    <p
-                        v-if="issue.archivedAt && issue.archiveReason"
-                        class="line-clamp-2 text-xs text-muted-foreground"
+                    <Link
+                        v-for="issue in issuesByStatus.get(column.status)"
+                        :key="issue.identifier"
+                        :href="show({ issue: issue.identifier })"
+                        draggable="true"
+                        class="group relative flex cursor-grab flex-col gap-2 overflow-hidden rounded-lg border bg-card p-3 pl-3.5 text-sm shadow-xs transition-all hover:-translate-y-px hover:shadow-md active:cursor-grabbing"
+                        :class="[
+                            draggingId === issue.identifier
+                                ? 'border-primary opacity-60'
+                                : 'border-sidebar-border/70 dark:border-sidebar-border',
+                            issue.archivedAt ? 'opacity-60' : '',
+                        ]"
+                        @dragstart="onDragStart($event, issue)"
+                        @dragend="onDragEnd"
                     >
-                        {{ issue.archiveReason }}
+                        <span
+                            class="absolute inset-y-0 left-0 w-1"
+                            :class="priorityEdge[issue.priority]"
+                            :title="$t(`priority.${issue.priority}`)"
+                        />
+
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="font-mono text-xs text-muted-foreground"
+                            >
+                                {{ issue.identifier }}
+                            </span>
+                            <Badge
+                                variant="outline"
+                                class="ml-auto h-5 px-1.5 text-[10px] font-normal"
+                            >
+                                {{ $t(`issueType.${issue.type}`) }}
+                            </Badge>
+                        </div>
+
+                        <span class="line-clamp-2 font-medium tracking-tight">
+                            {{ issue.title }}
+                        </span>
+
+                        <div
+                            v-if="issue.labels.length"
+                            class="flex flex-wrap items-center gap-1"
+                        >
+                            <LabelBadge
+                                v-for="label in issue.labels"
+                                :key="label.id"
+                                :name="label.name"
+                                :color="label.color"
+                            />
+                        </div>
+
+                        <p
+                            v-if="issue.archivedAt && issue.archiveReason"
+                            class="line-clamp-2 text-xs text-muted-foreground"
+                        >
+                            {{ issue.archiveReason }}
+                        </p>
+
+                        <div class="flex items-center gap-2 pt-0.5">
+                            <Avatar
+                                v-if="issue.assignee"
+                                class="size-6 shrink-0"
+                                :title="issue.assignee.name"
+                            >
+                                <AvatarFallback class="text-[10px]">
+                                    {{ initials(issue.assignee.name) }}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span
+                                v-else
+                                class="size-6 shrink-0 rounded-full border border-dashed border-muted-foreground/40"
+                                :title="$t('issue.unassigned')"
+                            />
+
+                            <Badge
+                                v-if="issue.archivedAt"
+                                variant="secondary"
+                                class="h-5 px-1.5 text-[10px] font-normal"
+                            >
+                                {{ $t('issue.archived') }}
+                            </Badge>
+
+                            <div
+                                class="ml-auto flex items-center gap-2.5 text-xs text-muted-foreground"
+                            >
+                                <span
+                                    v-if="
+                                        issue.loggedMinutes > 0 ||
+                                        issue.estimateMinutes
+                                    "
+                                    class="flex items-center gap-1 tabular-nums"
+                                    :title="$t('issue.estimate')"
+                                >
+                                    <Clock class="size-3.5" />
+                                    {{ formatDuration(issue.loggedMinutes) }}
+                                    <template v-if="issue.estimateMinutes">
+                                        <span class="text-muted-foreground/50">
+                                            /
+                                        </span>
+                                        {{
+                                            formatDuration(
+                                                issue.estimateMinutes,
+                                            )
+                                        }}
+                                    </template>
+                                </span>
+                                <span
+                                    v-if="issue.childrenCount > 0"
+                                    class="flex items-center gap-1 tabular-nums"
+                                    :title="$t('issue.subIssues')"
+                                >
+                                    <GitBranch class="size-3.5" />
+                                    {{ issue.childrenCount }}
+                                </span>
+                            </div>
+                        </div>
+                    </Link>
+
+                    <p
+                        v-if="issuesByStatus.get(column.status)?.length === 0"
+                        class="px-2 py-6 text-center text-xs text-muted-foreground/60"
+                    >
+                        {{ $t('board.emptyColumn') }}
                     </p>
-                </Link>
+                </div>
             </div>
         </div>
     </div>

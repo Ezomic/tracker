@@ -125,6 +125,7 @@
         "showArchived": "Gearchiveerd tonen",
         "newIssue": "Nieuw ticket",
         "empty": "Nog geen tickets.",
+        "emptyColumn": "Geen tickets",
         "noProject": "Geen project"
     },
     "list": {
