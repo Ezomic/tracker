@@ -33,6 +33,7 @@ export interface ProjectMember {
     name: string;
     email: string;
     level: ProjectLevel;
+    ownIssuesOnly: boolean;
 }
 
 export interface AssignableMember {
