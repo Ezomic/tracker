@@ -125,6 +125,7 @@
         "showArchived": "Show archived",
         "newIssue": "New issue",
         "empty": "No issues yet.",
+        "emptyColumn": "No issues",
         "noProject": "No project"
     },
     "list": {
