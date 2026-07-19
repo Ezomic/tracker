@@ -340,12 +340,17 @@
         "description": "Voer de code in die we hebben gestuurd om deze actie te bevestigen"
     },
     "commandPalette": {
-        "placeholder": "Zoek tickets, projecten…",
+        "placeholder": "Typ een opdracht of zoek…",
         "noResults": "Geen resultaten.",
-        "issues": "Tickets",
-        "projects": "Projecten",
-        "openTracker": "Tracker openen",
-        "seeWorkflow": "Bekijk de workflow"
+        "groupActions": "Acties",
+        "groupGoTo": "Ga naar",
+        "groupProjects": "Projecten",
+        "createIssue": "Ticket aanmaken",
+        "allIssues": "Alle tickets",
+        "board": "Bord",
+        "dashboard": "Dashboard",
+        "projectTickets": "{key} tickets",
+        "projectBoard": "{key} bord"
     },
     "markdown": {
         "write": "Schrijven",

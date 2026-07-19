@@ -340,12 +340,17 @@
         "description": "Enter the code we sent to confirm this action"
     },
     "commandPalette": {
-        "placeholder": "Search issues, projects…",
+        "placeholder": "Type a command or search…",
         "noResults": "No results.",
-        "issues": "Issues",
-        "projects": "Projects",
-        "openTracker": "Open tracker",
-        "seeWorkflow": "See the workflow"
+        "groupActions": "Actions",
+        "groupGoTo": "Go to",
+        "groupProjects": "Projects",
+        "createIssue": "Create issue",
+        "allIssues": "All issues",
+        "board": "Board",
+        "dashboard": "Dashboard",
+        "projectTickets": "{key} tickets",
+        "projectBoard": "{key} board"
     },
     "markdown": {
         "write": "Write",
