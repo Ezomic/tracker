@@ -392,6 +392,20 @@
         "confirm": "Confirm",
         "resend": "Resend code"
     },
+    "invitation": {
+        "invitedSentence": "{inviter} invited {email} to join {organization} as {role}.",
+        "someone": "Someone",
+        "projectAccess": "You'll get access to {project} right away.",
+        "logInToAccept": "Log in to accept",
+        "createToAccept": "Create your account to accept",
+        "comeBack": "You'll come straight back here once you're signed in.",
+        "mismatch": "This invitation is for {invited}, but you're signed in as {current}.",
+        "mismatchSignIn": "Sign in with the invited address to join {organization}.",
+        "expired": "This invitation has expired. Ask for a new one.",
+        "accepted": "This invitation has already been used.",
+        "invalid": "This invitation link isn't valid.",
+        "goToLogIn": "Go to log in"
+    },
     "commandPalette": {
         "placeholder": "Type a command or search…",
         "noResults": "No results.",

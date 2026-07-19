@@ -392,6 +392,20 @@
         "confirm": "Bevestigen",
         "resend": "Code opnieuw versturen"
     },
+    "invitation": {
+        "invitedSentence": "{inviter} heeft {email} uitgenodigd voor {organization} als {role}.",
+        "someone": "Iemand",
+        "projectAccess": "Je krijgt direct toegang tot {project}.",
+        "logInToAccept": "Log in om te accepteren",
+        "createToAccept": "Maak je account aan om te accepteren",
+        "comeBack": "Je komt hier meteen terug zodra je bent ingelogd.",
+        "mismatch": "Deze uitnodiging is voor {invited}, maar je bent ingelogd als {current}.",
+        "mismatchSignIn": "Log in met het uitgenodigde adres om deel te nemen aan {organization}.",
+        "expired": "Deze uitnodiging is verlopen. Vraag een nieuwe aan.",
+        "accepted": "Deze uitnodiging is al gebruikt.",
+        "invalid": "Deze uitnodigingslink is niet geldig.",
+        "goToLogIn": "Ga naar inloggen"
+    },
     "commandPalette": {
         "placeholder": "Typ een opdracht of zoek…",
         "noResults": "Geen resultaten.",
