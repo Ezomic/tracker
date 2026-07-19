@@ -313,15 +313,19 @@
     },
     "templates": {
         "title": "Sjablonen",
-        "description": "Herbruikbare startpunten voor nieuwe tickets",
+        "description": "Startpunten voor nieuwe tickets, gedeeld over alle projecten in deze organisatie",
         "newTemplate": "Nieuw sjabloon",
         "editTemplate": "Sjabloon bewerken",
         "deleteTemplate": "Sjabloon verwijderen",
+        "deleteConfirm": "“{name}” verwijderen? Tickets die er al mee zijn aangemaakt blijven ongewijzigd.",
         "defaultType": "Standaardtype",
         "defaultPriority": "Standaardprioriteit",
         "defaultLabels": "Standaardlabels",
         "noDefault": "Geen standaard",
-        "empty": "Nog geen sjablonen."
+        "empty": "Nog geen sjablonen",
+        "emptyBody": "Sjablonen vullen de omschrijving en standaardwaarden van een ticket vooraf in, zodat terugkerend werk elke keer dezelfde vorm heeft.",
+        "name": "Naam",
+        "namePlaceholder": "Bugrapport"
     },
     "profile": {
         "title": "Profielinstellingen",
