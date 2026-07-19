@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\IssueController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\GithubWebhookController;
 use App\Http\Middleware\VerifyGithubWebhookSignature;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ Route::get('/user', function (Request $request) {
 Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues', [IssueController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues/{issue}', [IssueController::class, 'show'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
