@@ -27,6 +27,16 @@ class IssuePolicy
 
     private function atLeast(User $user, Issue $issue, ProjectLevel $level): bool
     {
-        return $issue->project->effectiveLevel($user)?->atLeast($level) ?? false;
+        if (! ($issue->project->effectiveLevel($user)?->atLeast($level) ?? false)) {
+            return false;
+        }
+
+        if ($issue->project->restrictsToOwnIssues($user)
+            && $issue->owner_id !== $user->id
+            && $issue->assignee_id !== $user->id) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -22,6 +22,7 @@ class UpdateProjectMemberRequest extends FormRequest
     {
         return [
             'level' => ['required', new Enum(ProjectLevel::class)],
+            'own_issues_only' => ['sometimes', 'boolean'],
         ];
     }
 }

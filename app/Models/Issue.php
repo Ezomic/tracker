@@ -170,7 +170,21 @@ class Issue extends Model
         // Grouped so the OR does not leak into sibling conditions on the query.
         return $query->where(function (Builder $query) use ($user): void {
             $query
-                ->whereHas('project.members', fn (Builder $members) => $members->whereKey($user->id))
+                // Unrestricted direct member: every issue in the project.
+                ->whereHas('project.members', fn (Builder $members) => $members
+                    ->whereKey($user->id)
+                    ->where('project_user.own_issues_only', false))
+                // Restricted direct member: only issues they report or are assigned.
+                ->orWhere(function (Builder $query) use ($user): void {
+                    $query
+                        ->whereHas('project.members', fn (Builder $members) => $members
+                            ->whereKey($user->id)
+                            ->where('project_user.own_issues_only', true))
+                        ->where(fn (Builder $own) => $own
+                            ->where('issues.owner_id', $user->id)
+                            ->orWhere('issues.assignee_id', $user->id));
+                })
+                // Owner/admin of the project's organization: implied admin, unrestricted.
                 ->orWhereHas('project.organization.members', fn (Builder $members) => $members
                     ->whereKey($user->id)
                     ->whereIn('organization_user.role', [OrganizationRole::Owner->value, OrganizationRole::Admin->value]));

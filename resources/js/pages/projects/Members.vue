@@ -25,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { index as projectsIndex } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/projects/members';
 import type { AssignableMember, ProjectLevel, ProjectMember } from '@/types';
@@ -99,6 +100,14 @@ function changeLevel(member: ProjectMember, level: string) {
     router.patch(
         update({ project: props.project.key, user: member.id }).url,
         { level },
+        { preserveScroll: true },
+    );
+}
+
+function toggleRestricted(member: ProjectMember, value: boolean) {
+    router.patch(
+        update({ project: props.project.key, user: member.id }).url,
+        { level: member.level, own_issues_only: value },
         { preserveScroll: true },
     );
 }
@@ -235,6 +244,22 @@ const canManageMember = (member: ProjectMember) =>
                 </div>
 
                 <template v-if="canManageMember(member)">
+                    <label
+                        class="flex items-center gap-2 text-xs text-muted-foreground"
+                        :title="
+                            member.ownIssuesOnly
+                                ? 'Sees only issues they report or are assigned'
+                                : 'Sees every issue in the project'
+                        "
+                    >
+                        <Switch
+                            :model-value="member.ownIssuesOnly"
+                            @update:model-value="
+                                (value) => toggleRestricted(member, value)
+                            "
+                        />
+                        Only own issues
+                    </label>
                     <Select
                         :model-value="member.level"
                         @update:model-value="
