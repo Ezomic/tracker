@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
@@ -23,8 +24,12 @@ function toggleArchived(value: boolean) {
     });
 }
 
+const { t } = useI18n();
+
 const heading = computed(() =>
-    props.project ? `${props.project.key} · Board` : 'Board',
+    props.project
+        ? `${props.project.key} · ${t('board.title')}`
+        : t('board.title'),
 );
 
 defineOptions({
@@ -33,11 +38,11 @@ defineOptions({
     },
 });
 
-const columns: { status: Issue['status']; label: string; dot: string }[] = [
-    { status: 'backlog', label: 'Backlog', dot: 'bg-muted-foreground/50' },
-    { status: 'in_progress', label: 'In progress', dot: 'bg-primary' },
-    { status: 'in_review', label: 'In review', dot: 'bg-sky-500' },
-    { status: 'done', label: 'Done', dot: 'bg-emerald-500' },
+const columns: { status: Issue['status']; dot: string }[] = [
+    { status: 'backlog', dot: 'bg-muted-foreground/50' },
+    { status: 'in_progress', dot: 'bg-primary' },
+    { status: 'in_review', dot: 'bg-sky-500' },
+    { status: 'done', dot: 'bg-emerald-500' },
 ];
 
 const priorityDot: Record<Issue['priority'], string> = {
@@ -92,7 +97,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
 </script>
 
 <template>
-    <Head title="Board" />
+    <Head :title="$t('board.title')" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <div class="flex flex-wrap items-center gap-3">
@@ -106,7 +111,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                     :model-value="showArchived"
                     @update:model-value="toggleArchived"
                 />
-                Show archived
+                {{ $t('board.showArchived') }}
             </Label>
         </div>
 
@@ -129,7 +134,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                     class="flex items-center gap-2 px-1.5 py-1 text-xs font-medium text-muted-foreground"
                 >
                     <span class="size-2 rounded-full" :class="column.dot" />
-                    {{ column.label }}
+                    {{ $t(`status.${column.status}`) }}
                     <span class="text-muted-foreground/70">
                         {{ issuesByStatus.get(column.status)?.length }}
                     </span>
@@ -174,14 +179,14 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                             :color="label.color"
                         />
                         <Badge variant="outline" class="w-fit font-normal">
-                            {{ issue.type }}
+                            {{ $t(`issueType.${issue.type}`) }}
                         </Badge>
                         <Badge
                             v-if="issue.archivedAt"
                             variant="secondary"
                             class="w-fit font-normal"
                         >
-                            Archived
+                            {{ $t('issue.archived') }}
                         </Badge>
                     </div>
                     <p

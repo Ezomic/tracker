@@ -55,7 +55,7 @@ class ProjectMemberController extends Controller
         $user = $this->guardOrganizationMember($project, (int) $request->validated('user_id'));
 
         if ($project->hasMember($user)) {
-            return back()->withErrors(['user_id' => 'They already have access to this project.']);
+            return back()->withErrors(['user_id' => __('They already have access to this project.')]);
         }
 
         $project->members()->attach($user->id, [

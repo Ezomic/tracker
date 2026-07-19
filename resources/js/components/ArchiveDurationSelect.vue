@@ -53,12 +53,24 @@ const submitted = computed(() => {
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="never">Never</SelectItem>
-                <SelectItem value="1">After 1 day</SelectItem>
-                <SelectItem value="7">After 1 week</SelectItem>
-                <SelectItem value="14">After 2 weeks</SelectItem>
-                <SelectItem value="30">After 1 month</SelectItem>
-                <SelectItem value="custom">Custom…</SelectItem>
+                <SelectItem value="never">{{
+                    $t('archiveDuration.never')
+                }}</SelectItem>
+                <SelectItem value="1">{{
+                    $t('archiveDuration.afterDay')
+                }}</SelectItem>
+                <SelectItem value="7">{{
+                    $t('archiveDuration.afterWeek')
+                }}</SelectItem>
+                <SelectItem value="14">{{
+                    $t('archiveDuration.afterTwoWeeks')
+                }}</SelectItem>
+                <SelectItem value="30">{{
+                    $t('archiveDuration.afterMonth')
+                }}</SelectItem>
+                <SelectItem value="custom">{{
+                    $t('archiveDuration.custom')
+                }}</SelectItem>
             </SelectContent>
         </Select>
         <div v-if="mode === 'custom'" class="flex items-center gap-2">
@@ -68,7 +80,9 @@ const submitted = computed(() => {
                 min="1"
                 class="w-24"
             />
-            <span class="text-sm text-muted-foreground">days</span>
+            <span class="text-sm text-muted-foreground">{{
+                $t('archiveDuration.daysUnit')
+            }}</span>
         </div>
     </div>
 </template>

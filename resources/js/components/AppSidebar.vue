@@ -9,6 +9,7 @@ import {
     Ticket,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavProjects from '@/components/NavProjects.vue';
@@ -31,6 +32,7 @@ import { index as projectsIndex } from '@/routes/projects';
 import type { NavItem, Project, SidebarProject } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
+const { t } = useI18n();
 const page = usePage();
 const projects = computed<SidebarProject[]>(
     () => page.props.sidebarProjects ?? [],
@@ -44,28 +46,28 @@ const currentProjectId = computed<number | null>(
     () => page.props.currentProjectId ?? null,
 );
 
-const mainNavItems: NavItem[] = [
+const mainNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Dashboard',
+        title: t('nav.dashboard'),
         href: dashboard(),
         icon: LayoutGrid,
     },
     {
-        title: 'All issues',
+        title: t('nav.allIssues'),
         href: issuesIndex(),
         icon: Ticket,
     },
     {
-        title: 'Board',
+        title: t('nav.board'),
         href: issuesBoard(),
         icon: Kanban,
     },
     {
-        title: 'Projects',
+        title: t('nav.projects'),
         href: projectsIndex(),
         icon: FolderKanban,
     },
-];
+]);
 </script>
 
 <template>
@@ -88,7 +90,7 @@ const mainNavItems: NavItem[] = [
                         @click="newIssueOpen = true"
                     >
                         <Plus />
-                        <span>New issue</span>
+                        <span>{{ $t('nav.newIssue') }}</span>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
@@ -97,7 +99,7 @@ const mainNavItems: NavItem[] = [
                         @click="showCommandPalette()"
                     >
                         <Search />
-                        <span>Search</span>
+                        <span>{{ $t('nav.search') }}</span>
                         <kbd
                             class="ml-auto text-xs tracking-widest text-muted-foreground group-data-[collapsible=icon]:hidden"
                         >

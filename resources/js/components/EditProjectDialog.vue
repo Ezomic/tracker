@@ -45,7 +45,7 @@ const description = ref(props.project.description ?? '');
 <template>
     <Dialog>
         <DialogTrigger as-child>
-            <Button variant="outline" size="sm">Edit</Button>
+            <Button variant="outline" size="sm">{{ $t('common.edit') }}</Button>
         </DialogTrigger>
         <DialogContent>
             <Form
@@ -55,16 +55,22 @@ const description = ref(props.project.description ?? '');
                 v-slot="{ errors, processing }"
             >
                 <DialogHeader>
-                    <DialogTitle>Edit project</DialogTitle>
+                    <DialogTitle>{{ $t('projects.editProject') }}</DialogTitle>
                     <DialogDescription>
-                        Update the project's name, color{{
-                            project.keyLocked ? '' : ', or key'
-                        }}.
+                        {{
+                            $t('projects.editProjectDescription', {
+                                key: project.keyLocked
+                                    ? ''
+                                    : $t('projects.orKey'),
+                            })
+                        }}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="grid gap-2">
-                    <Label :for="`name-${project.id}`">Name</Label>
+                    <Label :for="`name-${project.id}`">{{
+                        $t('common.name')
+                    }}</Label>
                     <Input
                         :id="`name-${project.id}`"
                         name="name"
@@ -75,22 +81,22 @@ const description = ref(props.project.description ?? '');
                 </div>
 
                 <div class="grid gap-2">
-                    <Label :for="`description-${project.id}`"
-                        >Description</Label
-                    >
+                    <Label :for="`description-${project.id}`">{{
+                        $t('common.description')
+                    }}</Label>
                     <textarea
                         :id="`description-${project.id}`"
                         v-model="description"
                         name="description"
                         rows="2"
-                        placeholder="What is this project?"
+                        :placeholder="$t('newIssue.descriptionPlaceholder')"
                         class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                     />
                     <InputError :message="errors.description" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label>GitHub repos</Label>
+                    <Label>{{ $t('projects.githubRepos') }}</Label>
                     <RepoInputs
                         :key="project.id"
                         :model-value="project.githubRepos"
@@ -100,7 +106,7 @@ const description = ref(props.project.description ?? '');
 
                 <div class="grid gap-2">
                     <Label :for="`production_url-${project.id}`">
-                        Production URL
+                        {{ $t('projects.productionUrl') }}
                     </Label>
                     <Input
                         :id="`production_url-${project.id}`"
@@ -116,7 +122,9 @@ const description = ref(props.project.description ?? '');
                     v-if="categories && categories.length > 0"
                     class="grid gap-2"
                 >
-                    <Label :for="`category-${project.id}`">Category</Label>
+                    <Label :for="`category-${project.id}`">{{
+                        $t('projects.category')
+                    }}</Label>
                     <Select
                         name="category_id"
                         :default-value="
@@ -129,10 +137,12 @@ const description = ref(props.project.description ?? '');
                             :id="`category-${project.id}`"
                             class="w-full"
                         >
-                            <SelectValue placeholder="None" />
+                            <SelectValue :placeholder="$t('common.none')" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="">{{
+                                $t('common.none')
+                            }}</SelectItem>
                             <SelectItem
                                 v-for="category in categories"
                                 :key="category.id"
@@ -147,7 +157,7 @@ const description = ref(props.project.description ?? '');
                 </div>
 
                 <div class="grid gap-2">
-                    <Label>Auto-archive done issues</Label>
+                    <Label>{{ $t('projects.autoArchive') }}</Label>
                     <ArchiveDurationSelect
                         :key="project.id"
                         :model-value="project.archiveAfterDays"
@@ -156,7 +166,7 @@ const description = ref(props.project.description ?? '');
                 </div>
 
                 <div class="grid gap-2">
-                    <Label>Color</Label>
+                    <Label>{{ $t('common.color') }}</Label>
                     <input type="hidden" name="color" :value="color" />
                     <ColorSwatches
                         v-model="color"
@@ -167,7 +177,9 @@ const description = ref(props.project.description ?? '');
                 </div>
 
                 <div class="grid gap-2">
-                    <Label :for="`key-${project.id}`">Key</Label>
+                    <Label :for="`key-${project.id}`">{{
+                        $t('projects.key')
+                    }}</Label>
                     <Input
                         :id="`key-${project.id}`"
                         name="key"
@@ -182,15 +194,19 @@ const description = ref(props.project.description ?? '');
                         v-if="project.keyLocked"
                         class="text-sm text-muted-foreground"
                     >
-                        The key can't change once a project has issues.
+                        {{ $t('projects.keyLocked') }}
                     </p>
                 </div>
 
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button variant="secondary">Cancel</Button>
+                        <Button variant="secondary">{{
+                            $t('common.cancel')
+                        }}</Button>
                     </DialogClose>
-                    <Button type="submit" :disabled="processing"> Save </Button>
+                    <Button type="submit" :disabled="processing">
+                        {{ $t('common.save') }}
+                    </Button>
                 </DialogFooter>
             </Form>
         </DialogContent>

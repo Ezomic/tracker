@@ -41,7 +41,7 @@ const colors: { value: LabelColor; name: string }[] = [
 <template>
     <Dialog>
         <DialogTrigger as-child>
-            <Button variant="outline" size="sm">Edit</Button>
+            <Button variant="outline" size="sm">{{ $t('common.edit') }}</Button>
         </DialogTrigger>
         <DialogContent>
             <Form
@@ -51,14 +51,16 @@ const colors: { value: LabelColor; name: string }[] = [
                 v-slot="{ errors, processing }"
             >
                 <DialogHeader>
-                    <DialogTitle>Edit label</DialogTitle>
+                    <DialogTitle>{{ $t('labels.editLabel') }}</DialogTitle>
                     <DialogDescription>
-                        Update the label's name or color.
+                        {{ $t('labels.editDescription') }}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="grid gap-2">
-                    <Label :for="`name-${label.id}`">Name</Label>
+                    <Label :for="`name-${label.id}`">{{
+                        $t('common.name')
+                    }}</Label>
                     <Input
                         :id="`name-${label.id}`"
                         name="name"
@@ -69,7 +71,9 @@ const colors: { value: LabelColor; name: string }[] = [
                 </div>
 
                 <div class="grid gap-2">
-                    <Label :for="`color-${label.id}`">Color</Label>
+                    <Label :for="`color-${label.id}`">{{
+                        $t('common.color')
+                    }}</Label>
                     <Select name="color" :default-value="label.color">
                         <SelectTrigger :id="`color-${label.id}`" class="w-full">
                             <SelectValue />
@@ -89,9 +93,13 @@ const colors: { value: LabelColor; name: string }[] = [
 
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button variant="secondary">Cancel</Button>
+                        <Button variant="secondary">{{
+                            $t('common.cancel')
+                        }}</Button>
                     </DialogClose>
-                    <Button type="submit" :disabled="processing"> Save </Button>
+                    <Button type="submit" :disabled="processing">
+                        {{ $t('common.save') }}
+                    </Button>
                 </DialogFooter>
             </Form>
         </DialogContent>

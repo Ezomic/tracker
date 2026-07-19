@@ -29,7 +29,7 @@ class OrganizationInvitationController extends Controller
         $existing = User::query()->where('email', $email)->first();
 
         if ($existing !== null && $organization->hasMember($existing)) {
-            return back()->withErrors(['email' => 'That person is already a member of this organization.']);
+            return back()->withErrors(['email' => __('That person is already a member of this organization.')]);
         }
 
         $project = $this->resolveProject($organization, $request->validated('project_id'));
