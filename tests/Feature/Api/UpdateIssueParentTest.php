@@ -40,15 +40,62 @@ it('detaches the parent when parent is submitted null', function () {
     expect($issue->fresh()->parent_id)->toBeNull();
 });
 
-it('requires the parent field to be present', function () {
+it('is a no-op when no fields are submitted', function () {
     $user = User::factory()->create();
     $team = Project::factory()->create(['key' => 'THI']);
     joinProjects($user, $team);
-    $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+    $issue = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
 
     $this->actingAs($user, 'sanctum')
         ->patchJson("/api/issues/{$issue->identifier}", [])
-        ->assertUnprocessable()->assertJsonValidationErrors('parent');
+        ->assertOk();
+
+    expect($issue->fresh()->parent_id)->toBe($epic->id);
+});
+
+it('updates the title without touching the parent', function () {
+    $user = User::factory()->create();
+    $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
+    $epic = (new CreateIssueAction)->handle($team, 'Epic', IssueType::Feature);
+    $issue = (new CreateIssueAction)->handle($team, 'Child', IssueType::Feature, parent: $epic);
+
+    $response = $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'title' => 'Renamed title',
+    ]);
+
+    $response->assertOk()->assertJson(['title' => 'Renamed title']);
+    $issue->refresh();
+    expect($issue->title)->toBe('Renamed title');
+    expect($issue->parent_id)->toBe($epic->id);
+});
+
+it('updates the description', function () {
+    $user = User::factory()->create();
+    $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
+    $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature, description: 'Old');
+
+    $response = $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'description' => "## Steps to reproduce\n1. Do the thing",
+    ]);
+
+    $response->assertOk()->assertJson(['description' => "## Steps to reproduce\n1. Do the thing"]);
+    expect($issue->fresh()->description)->toBe("## Steps to reproduce\n1. Do the thing");
+});
+
+it('clears the description when submitted null', function () {
+    $user = User::factory()->create();
+    $team = Project::factory()->create(['key' => 'THI']);
+    joinProjects($user, $team);
+    $issue = (new CreateIssueAction)->handle($team, 'Issue', IssueType::Feature, description: 'Old');
+
+    $this->actingAs($user, 'sanctum')->patchJson("/api/issues/{$issue->identifier}", [
+        'description' => null,
+    ])->assertOk()->assertJson(['description' => null]);
+
+    expect($issue->fresh()->description)->toBeNull();
 });
 
 it('rejects an issue being assigned as its own epic', function () {
