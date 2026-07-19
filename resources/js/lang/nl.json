@@ -167,11 +167,16 @@
     "newIssue": {
         "title": "Nieuw ticket",
         "blankIssue": "Leeg ticket",
-        "fromTemplate": "Van sjabloon",
+        "subtitleChoose": "Begin met een sjabloon of een leeg ticket.",
+        "subtitleForm": "Maak een ticket aan en krijg direct een bruikbare branchnaam.",
         "project": "Project",
         "selectProject": "Kies een project",
+        "pickProject": "Kies een project om de sjablonen te zien.",
+        "noTemplates": "{key} heeft nog geen sjablonen.",
+        "back": "Terug",
+        "noEpic": "Geen epic",
         "create": "Ticket aanmaken",
-        "titlePlaceholder": "Tickettitel",
+        "titlePlaceholder": "Voeg quizvragen per les toe",
         "descriptionPlaceholder": "Voeg een omschrijving toe…"
     },
     "comments": {

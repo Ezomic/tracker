@@ -49,14 +49,6 @@ const selectedProject = computed(() =>
     props.projects.find((project) => String(project.id) === projectId.value),
 );
 
-const typeLabels: Record<string, string> = { feature: 'Feature', fix: 'Fix' };
-const priorityLabels: Record<string, string> = {
-    low: 'Low',
-    medium: 'Medium',
-    high: 'High',
-    urgent: 'Urgent',
-};
-
 // Reset each time it opens, so navigating between projects re-preselects and a
 // previous pick doesn't linger.
 watch(open, (isOpen) => {
@@ -105,22 +97,26 @@ function choose(template: IssueTemplate | null) {
     <Dialog v-model:open="open">
         <DialogContent class="sm:max-w-lg">
             <DialogHeader>
-                <DialogTitle>New issue</DialogTitle>
+                <DialogTitle>{{ $t('newIssue.title') }}</DialogTitle>
                 <DialogDescription>
                     {{
                         step === 'choose'
-                            ? 'Start from a template, or a blank issue.'
-                            : 'Create an issue and hand off a ready-to-use branch name.'
+                            ? $t('newIssue.subtitleChoose')
+                            : $t('newIssue.subtitleForm')
                     }}
                 </DialogDescription>
             </DialogHeader>
 
             <div v-if="step === 'choose'" class="grid gap-4">
                 <div class="grid gap-2">
-                    <Label for="choose-project">Project</Label>
+                    <Label for="choose-project">{{
+                        $t('newIssue.project')
+                    }}</Label>
                     <Select v-model="projectId">
                         <SelectTrigger id="choose-project" class="w-full">
-                            <SelectValue placeholder="Select a project" />
+                            <SelectValue
+                                :placeholder="$t('newIssue.selectProject')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -138,7 +134,7 @@ function choose(template: IssueTemplate | null) {
                     v-if="!selectedProject"
                     class="py-4 text-center text-sm text-muted-foreground"
                 >
-                    Pick a project to see its templates.
+                    {{ $t('newIssue.pickProject') }}
                 </p>
 
                 <div v-else class="grid gap-2">
@@ -150,7 +146,9 @@ function choose(template: IssueTemplate | null) {
                         <FilePlus2
                             class="size-4 shrink-0 text-muted-foreground"
                         />
-                        <span class="text-sm font-medium">Blank issue</span>
+                        <span class="text-sm font-medium">{{
+                            $t('newIssue.blankIssue')
+                        }}</span>
                     </button>
 
                     <button
@@ -169,13 +167,13 @@ function choose(template: IssueTemplate | null) {
                                     {{ template.name }}
                                 </span>
                                 <Badge v-if="template.type" variant="secondary">
-                                    {{ typeLabels[template.type] }}
+                                    {{ $t(`issueType.${template.type}`) }}
                                 </Badge>
                                 <Badge
                                     v-if="template.priority"
                                     variant="secondary"
                                 >
-                                    {{ priorityLabels[template.priority] }}
+                                    {{ $t(`priority.${template.priority}`) }}
                                 </Badge>
                             </span>
                             <span
@@ -191,7 +189,11 @@ function choose(template: IssueTemplate | null) {
                         v-if="!loadingTemplates && templates.length === 0"
                         class="px-1 text-xs text-muted-foreground"
                     >
-                        {{ selectedProject.key }} has no templates yet.
+                        {{
+                            $t('newIssue.noTemplates', {
+                                key: selectedProject.key,
+                            })
+                        }}
                     </p>
                 </div>
             </div>
@@ -220,47 +222,53 @@ function choose(template: IssueTemplate | null) {
                         @click="step = 'choose'"
                     >
                         <ArrowLeft class="size-3.5" />
-                        Back
+                        {{ $t('newIssue.back') }}
                     </button>
                     <span>·</span>
                     <span>{{ selectedProject?.key }}</span>
                     <span>·</span>
-                    <span>{{ chosen?.name ?? 'Blank issue' }}</span>
+                    <span>{{ chosen?.name ?? $t('newIssue.blankIssue') }}</span>
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="new-title">Title</Label>
+                    <Label for="new-title">{{ $t('issue.title') }}</Label>
                     <Input
                         id="new-title"
                         name="title"
                         required
                         autofocus
-                        placeholder="Add per-lesson quiz question pools"
+                        :placeholder="$t('newIssue.titlePlaceholder')"
                     />
                     <InputError :message="errors.title" />
                     <InputError :message="errors.project_id" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="new-type">Type</Label>
+                    <Label for="new-type">{{ $t('issue.type') }}</Label>
                     <input type="hidden" name="type" :value="type" />
                     <Select v-model="type">
                         <SelectTrigger id="new-type" class="w-full">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="feature">Feature</SelectItem>
-                            <SelectItem value="fix">Fix</SelectItem>
+                            <SelectItem value="feature">{{
+                                $t('issueType.feature')
+                            }}</SelectItem>
+                            <SelectItem value="fix">{{
+                                $t('issueType.fix')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <InputError :message="errors.type" />
                 </div>
 
                 <div v-if="epics && epics.length > 0" class="grid gap-2">
-                    <Label for="new-parent">Epic (optional)</Label>
+                    <Label for="new-parent">{{
+                        $t('issue.epicOptional')
+                    }}</Label>
                     <Select name="parent_id">
                         <SelectTrigger id="new-parent" class="w-full">
-                            <SelectValue placeholder="No epic" />
+                            <SelectValue :placeholder="$t('newIssue.noEpic')" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -276,7 +284,9 @@ function choose(template: IssueTemplate | null) {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="new-description">Description</Label>
+                    <Label for="new-description">{{
+                        $t('common.description')
+                    }}</Label>
                     <MarkdownEditor
                         v-model="description"
                         name="description"
@@ -287,7 +297,7 @@ function choose(template: IssueTemplate | null) {
 
                 <div class="flex justify-end">
                     <Button type="submit" :disabled="processing">
-                        Create issue
+                        {{ $t('newIssue.create') }}
                     </Button>
                 </div>
             </Form>
