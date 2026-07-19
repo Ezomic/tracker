@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { index as indexCategories } from '@/routes/categories';
 import { index as indexLabels } from '@/routes/labels';
 import { index as indexMembers } from '@/routes/members';
 import { edit as editProfile } from '@/routes/profile';
@@ -41,6 +42,7 @@ const navGroups = computed<NavGroup[]>(() =>
                 // from guests.
                 ...(page.props.currentOrganization?.canViewLibrary
                     ? [
+                          { title: 'Categories', href: indexCategories() },
                           { title: 'Labels', href: indexLabels() },
                           { title: 'Templates', href: indexTemplates() },
                       ]
