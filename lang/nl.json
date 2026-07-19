@@ -25,6 +25,8 @@
     "Template deleted.": "Sjabloon verwijderd.",
     "Time logged.": "Tijd geregistreerd.",
     "Time entry removed.": "Tijdregistratie verwijderd.",
+    "Time confirmed.": "Tijd bevestigd.",
+    "Time confirmed, but reporting it to Billr failed.": "Tijd bevestigd, maar het melden aan Billr is mislukt.",
     "A category cannot be moved inside itself.": "Een categorie kan niet in zichzelf worden geplaatst.",
     "That person is already a member of this organization.": "Die persoon is al lid van deze organisatie.",
     "They already have access to this project.": "Zij hebben al toegang tot dit project."

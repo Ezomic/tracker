@@ -347,6 +347,9 @@ class IssueController extends Controller
             'description' => $issue->description,
             'estimateMinutes' => $issue->estimate_minutes,
             'loggedMinutes' => (int) ($issue->getAttribute('time_entries_sum_minutes') ?? 0),
+            'invoiceable' => $issue->invoiceable,
+            'confirmedMinutes' => $issue->confirmed_minutes,
+            'confirmedAt' => $issue->confirmed_at?->toIso8601String(),
             'type' => $issue->type->value,
             'priority' => $issue->priority->value,
             'status' => $issue->status->value,
@@ -357,6 +360,7 @@ class IssueController extends Controller
             'project' => [
                 'key' => $issue->project->key,
                 'name' => $issue->project->name,
+                'billrLinked' => $issue->project->billrLinked(),
             ],
             'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
             'assignee' => $this->serializeUser($issue->relationLoaded('assignee') ? $issue->assignee : null),

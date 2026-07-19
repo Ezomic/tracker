@@ -52,6 +52,9 @@ export interface Issue {
     description: string | null;
     estimateMinutes: number | null;
     loggedMinutes: number;
+    invoiceable: boolean;
+    confirmedMinutes: number | null;
+    confirmedAt: string | null;
     type: 'feature' | 'fix';
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     status: 'backlog' | 'in_progress' | 'in_review' | 'done';
@@ -62,6 +65,7 @@ export interface Issue {
     project: {
         key: string;
         name: string;
+        billrLinked: boolean;
     };
     owner: IssueUser | null;
     assignee: IssueUser | null;

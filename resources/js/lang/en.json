@@ -170,6 +170,7 @@
         "owner": "Owner",
         "unknown": "Unknown",
         "estimatePlaceholder": "e.g. 4h 30m",
+        "invoiceable": "Invoiceable",
         "archivedBanner": "Archived:",
         "archiveReasonExample": "e.g. Superseded by THI-58",
         "partOf": "Part of",
@@ -236,7 +237,13 @@
         "loggedSuffix": "logged",
         "log": "Log",
         "empty": "No time logged yet.",
-        "delete": "Delete entry"
+        "delete": "Delete entry",
+        "confirmMinutes": "Confirmed minutes",
+        "billrClientName": "Billr client name",
+        "billrClientNamePlaceholder": "e.g. Acme BV",
+        "confirmAndBill": "Confirm & bill",
+        "confirmTime": "Confirm time",
+        "confirmedSummary": "Confirmed: {duration} on {date}"
     },
     "projects": {
         "title": "Projects",
