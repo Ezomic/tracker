@@ -167,11 +167,16 @@
     "newIssue": {
         "title": "New issue",
         "blankIssue": "Blank issue",
-        "fromTemplate": "From template",
+        "subtitleChoose": "Start from a template, or a blank issue.",
+        "subtitleForm": "Create an issue and hand off a ready-to-use branch name.",
         "project": "Project",
         "selectProject": "Select a project",
+        "pickProject": "Pick a project to see its templates.",
+        "noTemplates": "{key} has no templates yet.",
+        "back": "Back",
+        "noEpic": "No epic",
         "create": "Create issue",
-        "titlePlaceholder": "Issue title",
+        "titlePlaceholder": "Add per-lesson quiz question pools",
         "descriptionPlaceholder": "Add a description…"
     },
     "comments": {
