@@ -245,6 +245,7 @@ const canManageMember = (member: ProjectMember) =>
 
                 <template v-if="canManageMember(member)">
                     <label
+                        v-if="member.level !== 'read'"
                         class="flex items-center gap-2 text-xs text-muted-foreground"
                         :title="
                             member.ownIssuesOnly
