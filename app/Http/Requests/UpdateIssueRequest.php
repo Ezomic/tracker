@@ -51,6 +51,7 @@ class UpdateIssueRequest extends FormRequest
             'priority' => ['required', Rule::enum(IssuePriority::class)],
             'description' => ['nullable', 'string'],
             'estimate' => ['nullable', 'string', new DurationRule],
+            'invoiceable' => ['boolean'],
             'parent_id' => [
                 'nullable',
                 'integer',
