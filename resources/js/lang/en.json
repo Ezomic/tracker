@@ -363,6 +363,27 @@
         "removePasskey": "Remove passkey",
         "register": "Register passkey"
     },
+    "passkey": {
+        "title": "Passkeys",
+        "manageDescription": "Manage your passkeys for passwordless sign-in",
+        "empty": "No passkeys yet",
+        "emptyBody": "Add a passkey to sign in without a password",
+        "name": "Passkey name",
+        "namePlaceholder": "e.g., MacBook Pro, iPhone",
+        "nameHelp": "A name helps you identify this passkey later.",
+        "register": "Register passkey",
+        "registering": "Registering…",
+        "notSupported": "Passkeys are not supported in this browser.",
+        "signIn": "Sign in with a passkey",
+        "authenticating": "Authenticating…",
+        "orContinueEmail": "Or continue with email",
+        "added": "Added",
+        "lastUsed": "Last used",
+        "remove": "Remove",
+        "removePasskey": "Remove passkey",
+        "removing": "Removing…",
+        "removeConfirm": "Are you sure you want to remove the “{name}” passkey? You will no longer be able to use it to sign in."
+    },
     "confirmEmail": {
         "headTitle": "Confirm your email",
         "title": "Confirm it's you",

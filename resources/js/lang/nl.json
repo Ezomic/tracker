@@ -363,6 +363,27 @@
         "removePasskey": "Passkey verwijderen",
         "register": "Passkey registreren"
     },
+    "passkey": {
+        "title": "Passkeys",
+        "manageDescription": "Beheer je passkeys om zonder wachtwoord in te loggen",
+        "empty": "Nog geen passkeys",
+        "emptyBody": "Voeg een passkey toe om zonder wachtwoord in te loggen",
+        "name": "Naam van passkey",
+        "namePlaceholder": "bijv. MacBook Pro, iPhone",
+        "nameHelp": "Een naam helpt je deze passkey later te herkennen.",
+        "register": "Passkey registreren",
+        "registering": "Registreren…",
+        "notSupported": "Passkeys worden niet ondersteund in deze browser.",
+        "signIn": "Inloggen met een passkey",
+        "authenticating": "Bezig met authenticeren…",
+        "orContinueEmail": "Of ga verder met e-mail",
+        "added": "Toegevoegd",
+        "lastUsed": "Laatst gebruikt",
+        "remove": "Verwijderen",
+        "removePasskey": "Passkey verwijderen",
+        "removing": "Verwijderen…",
+        "removeConfirm": "Weet je zeker dat je de passkey “{name}” wilt verwijderen? Je kunt er dan niet meer mee inloggen."
+    },
     "confirmEmail": {
         "headTitle": "Bevestig je e-mailadres",
         "title": "Bevestig dat jij het bent",
