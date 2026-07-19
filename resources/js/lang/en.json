@@ -313,15 +313,19 @@
     },
     "templates": {
         "title": "Templates",
-        "description": "Reusable starting points for new issues",
+        "description": "Starting points for new issues, shared across every project in this organization",
         "newTemplate": "New template",
         "editTemplate": "Edit template",
         "deleteTemplate": "Delete template",
+        "deleteConfirm": "Delete “{name}”? Issues already created from it are untouched.",
         "defaultType": "Default type",
         "defaultPriority": "Default priority",
         "defaultLabels": "Default labels",
         "noDefault": "No default",
-        "empty": "No templates yet."
+        "empty": "No templates yet",
+        "emptyBody": "Templates prefill an issue's description and defaults, so recurring work starts from the same shape every time.",
+        "name": "Name",
+        "namePlaceholder": "Bug report"
     },
     "profile": {
         "title": "Profile settings",
