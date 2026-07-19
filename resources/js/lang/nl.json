@@ -320,10 +320,16 @@
     },
     "profile": {
         "title": "Profielinstellingen",
+        "heading": "Profiel",
         "description": "Werk je naam en e-mailadres bij",
+        "namePlaceholder": "Volledige naam",
+        "emailPlaceholder": "E-mailadres",
         "deleteAccount": "Account verwijderen",
         "deleteDescription": "Verwijder je account en alle bijbehorende gegevens",
-        "deleteConfirm": "Weet je zeker dat je je account wilt verwijderen? Dit kan niet ongedaan worden gemaakt."
+        "warning": "Waarschuwing",
+        "caution": "Ga voorzichtig te werk, dit kan niet ongedaan worden gemaakt.",
+        "deleteConfirmTitle": "Weet je zeker dat je je account wilt verwijderen?",
+        "deleteConfirmBody": "Zodra je account is verwijderd, worden alle bijbehorende bronnen en gegevens permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt."
     },
     "security": {
         "title": "Beveiligingsinstellingen",
@@ -336,8 +342,12 @@
         "register": "Passkey registreren"
     },
     "confirmEmail": {
-        "title": "Bevestig je e-mailadres",
-        "description": "Voer de code in die we hebben gestuurd om deze actie te bevestigen"
+        "headTitle": "Bevestig je e-mailadres",
+        "title": "Bevestig dat jij het bent",
+        "description": "Voor het beheren van passkeys is een korte e-mailbevestiging nodig",
+        "sentCode": "We hebben een code van 6 cijfers gestuurd naar",
+        "confirm": "Bevestigen",
+        "resend": "Code opnieuw versturen"
     },
     "commandPalette": {
         "placeholder": "Typ een opdracht of zoek…",

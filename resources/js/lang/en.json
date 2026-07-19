@@ -320,10 +320,16 @@
     },
     "profile": {
         "title": "Profile settings",
+        "heading": "Profile",
         "description": "Update your name and email address",
+        "namePlaceholder": "Full name",
+        "emailPlaceholder": "Email address",
         "deleteAccount": "Delete account",
-        "deleteDescription": "Delete your account and all of its data",
-        "deleteConfirm": "Are you sure you want to delete your account? This cannot be undone."
+        "deleteDescription": "Delete your account and all of its resources",
+        "warning": "Warning",
+        "caution": "Please proceed with caution, this cannot be undone.",
+        "deleteConfirmTitle": "Are you sure you want to delete your account?",
+        "deleteConfirmBody": "Once your account is deleted, all of its resources and data will be permanently deleted. This action cannot be undone."
     },
     "security": {
         "title": "Security settings",
@@ -336,8 +342,12 @@
         "register": "Register passkey"
     },
     "confirmEmail": {
-        "title": "Confirm your email",
-        "description": "Enter the code we sent to confirm this action"
+        "headTitle": "Confirm your email",
+        "title": "Confirm it's you",
+        "description": "Managing passkeys needs a quick email confirmation",
+        "sentCode": "We sent a 6-digit code to",
+        "confirm": "Confirm",
+        "resend": "Resend code"
     },
     "commandPalette": {
         "placeholder": "Type a command or search…",
