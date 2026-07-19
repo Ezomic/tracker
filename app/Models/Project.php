@@ -75,7 +75,7 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot('level', 'is_favorite')
+            ->withPivot('level', 'is_favorite', 'own_issues_only')
             ->withTimestamps();
     }
 
@@ -114,6 +114,29 @@ class Project extends Model
     public function hasMember(User $user): bool
     {
         return $this->members()->whereKey($user->id)->exists();
+    }
+
+    /**
+     * Whether the user's access is limited to issues they report or are assigned.
+     * Only a direct restricted grant restricts; an org role that manages
+     * (owner/admin) implies full admin and is never restricted.
+     */
+    public function restrictsToOwnIssues(User $user): bool
+    {
+        if ($this->organization?->roleFor($user)?->manages() ?? false) {
+            return false;
+        }
+
+        $member = $this->members()->find($user->id);
+
+        if ($member === null) {
+            return false;
+        }
+
+        /** @var Pivot $pivot */
+        $pivot = $member->getAttribute('pivot');
+
+        return (bool) $pivot->getAttribute('own_issues_only');
     }
 
     /**

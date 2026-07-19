@@ -29,6 +29,7 @@ class ProjectMemberController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'level' => (string) $pivot->getAttribute('level'),
+                'ownIssuesOnly' => (bool) $pivot->getAttribute('own_issues_only'),
             ];
         });
 
@@ -72,9 +73,13 @@ class ProjectMemberController extends Controller
         $this->authorize('manageMembers', $project);
         $this->guardMember($project, $user);
 
-        $project->members()->updateExistingPivot($user->id, [
-            'level' => $request->validated('level'),
-        ]);
+        $attributes = ['level' => $request->validated('level')];
+
+        if ($request->has('own_issues_only')) {
+            $attributes['own_issues_only'] = $request->boolean('own_issues_only');
+        }
+
+        $project->members()->updateExistingPivot($user->id, $attributes);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member updated.')]);
 
