@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\IssueController;
+use App\Http\Controllers\Api\LabelController;
+use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\GithubWebhookController;
@@ -16,6 +18,8 @@ Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:
 // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::get('/labels', [LabelController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::get('/members', [MemberController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues', [IssueController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues/{issue}', [IssueController::class, 'show'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
