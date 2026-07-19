@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 /**
  * @property int $id
  * @property int|null $organization_id
+ * @property int|null $category_id
  * @property string $key
  * @property string $name
  * @property string|null $description
@@ -29,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property string|null $production_url
  * @property int $next_number
  */
-#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days'])]
+#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days', 'category_id'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -41,6 +42,14 @@ class Project extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    /**
+     * @return BelongsTo<Category, $this>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     /**
