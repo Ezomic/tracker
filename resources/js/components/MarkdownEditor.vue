@@ -3,6 +3,9 @@ import { Bold, Code, Italic, Link2, List, ListOrdered } from '@lucide/vue';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { computed, nextTick, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = withDefaults(
     defineProps<{
@@ -92,14 +95,22 @@ function prefixLines(ordered: boolean) {
     });
 }
 
-const tools = [
-    { icon: Bold, label: 'Bold', run: () => wrap('**') },
-    { icon: Italic, label: 'Italic', run: () => wrap('_') },
-    { icon: Code, label: 'Code', run: () => wrap('`') },
-    { icon: List, label: 'Bulleted list', run: () => prefixLines(false) },
-    { icon: ListOrdered, label: 'Numbered list', run: () => prefixLines(true) },
-    { icon: Link2, label: 'Link', run: () => wrap('[', '](url)') },
-];
+const tools = computed(() => [
+    { icon: Bold, label: t('markdown.bold'), run: () => wrap('**') },
+    { icon: Italic, label: t('markdown.italic'), run: () => wrap('_') },
+    { icon: Code, label: t('markdown.code'), run: () => wrap('`') },
+    {
+        icon: List,
+        label: t('markdown.bulletedList'),
+        run: () => prefixLines(false),
+    },
+    {
+        icon: ListOrdered,
+        label: t('markdown.numberedList'),
+        run: () => prefixLines(true),
+    },
+    { icon: Link2, label: t('markdown.link'), run: () => wrap('[', '](url)') },
+]);
 </script>
 
 <template>
@@ -135,7 +146,7 @@ const tools = [
                     "
                     @click="mode = 'write'"
                 >
-                    Write
+                    {{ $t('markdown.write') }}
                 </button>
                 <button
                     type="button"
@@ -147,7 +158,7 @@ const tools = [
                     "
                     @click="mode = 'preview'"
                 >
-                    Preview
+                    {{ $t('markdown.preview') }}
                 </button>
             </div>
         </div>
@@ -168,7 +179,9 @@ const tools = [
             class="markdown-preview min-h-24 px-3 py-2 text-sm"
         >
             <div v-if="rendered" v-html="rendered" />
-            <p v-else class="text-muted-foreground">Nothing to preview.</p>
+            <p v-else class="text-muted-foreground">
+                {{ $t('markdown.nothingToPreview') }}
+            </p>
         </div>
     </div>
 </template>
