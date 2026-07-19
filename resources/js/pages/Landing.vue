@@ -2,11 +2,13 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Command, Folder, Kanban, Moon, Server, SunMedium } from '@lucide/vue';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, login } from '@/routes';
 
+const { t } = useI18n();
 const { resolvedAppearance, updateAppearance } = useAppearance();
 
 const isDark = computed(() => resolvedAppearance.value === 'dark');
@@ -35,32 +37,32 @@ const tickets = [
     },
 ];
 
-const features = [
+const features = computed(() => [
     {
         icon: Folder,
-        title: 'Projects & keys',
-        body: 'Each project owns its own numbering, so every ticket reads like SHOP-31.',
+        title: t('landing.featureProjectsTitle'),
+        body: t('landing.featureProjectsBody'),
     },
     {
         icon: Kanban,
-        title: 'Board view',
-        body: 'Drag tickets across backlog, in progress, review and done.',
+        title: t('landing.featureBoardTitle'),
+        body: t('landing.featureBoardBody'),
     },
     {
         icon: Command,
-        title: 'Command palette',
-        body: 'Keyboard-first. Hit ⌘K to jump, create or switch from anywhere.',
+        title: t('landing.featureCommandTitle'),
+        body: t('landing.featureCommandBody'),
     },
     {
         icon: SunMedium,
-        title: 'Light & dark',
-        body: 'A warm-neutral palette tuned for both modes, coral holding steady.',
+        title: t('landing.featureThemeTitle'),
+        body: t('landing.featureThemeBody'),
     },
-];
+]);
 </script>
 
 <template>
-    <Head title="tracker — self-hosted issue tracking" />
+    <Head :title="$t('landing.headTitle')" />
 
     <div class="min-h-screen bg-background text-foreground">
         <header
@@ -82,15 +84,15 @@ const features = [
                         href="#features"
                         class="hidden rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-block"
                     >
-                        Features
+                        {{ $t('landing.features') }}
                     </a>
                     <Button
                         variant="ghost"
                         size="icon-sm"
                         :aria-label="
                             isDark
-                                ? 'Switch to light mode'
-                                : 'Switch to dark mode'
+                                ? $t('landing.switchLight')
+                                : $t('landing.switchDark')
                         "
                         @click="toggleAppearance"
                     >
@@ -102,10 +104,12 @@ const features = [
                         :as-child="true"
                         size="sm"
                     >
-                        <Link :href="dashboard()">Dashboard</Link>
+                        <Link :href="dashboard()">{{
+                            $t('nav.dashboard')
+                        }}</Link>
                     </Button>
                     <Button v-else :as-child="true" size="sm">
-                        <Link :href="login()">Log in</Link>
+                        <Link :href="login()">{{ $t('auth.logIn') }}</Link>
                     </Button>
                 </nav>
             </div>
@@ -116,27 +120,28 @@ const features = [
                 <span
                     class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                 >
-                    Self-hosted issue tracking
+                    {{ $t('landing.badge') }}
                 </span>
                 <h1
                     class="mx-auto mt-5 max-w-2xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl"
                 >
-                    Your issues. Your server.
+                    {{ $t('landing.heroTitle') }}
                 </h1>
                 <p
                     class="mx-auto mt-4 max-w-xl text-base text-pretty text-muted-foreground sm:text-lg"
                 >
-                    Projects, boards and a keyboard-first command palette. No
-                    third parties in the loop, no seats to count.
+                    {{ $t('landing.heroBody') }}
                 </p>
                 <div
                     class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
                 >
                     <Button :as-child="true" size="lg">
-                        <Link :href="login()">Open tracker</Link>
+                        <Link :href="login()">{{
+                            $t('landing.openTracker')
+                        }}</Link>
                     </Button>
                     <Button :as-child="true" variant="outline" size="lg">
-                        <a href="#features">See the workflow</a>
+                        <a href="#features">{{ $t('landing.seeWorkflow') }}</a>
                     </Button>
                 </div>
             </section>
@@ -164,7 +169,7 @@ const features = [
                             <p
                                 class="px-2 pb-2 text-[10px] font-medium tracking-wide text-muted-foreground"
                             >
-                                PROJECTS
+                                {{ $t('landing.projectsLabel') }}
                             </p>
                             <div
                                 v-for="(project, i) in projects"
@@ -185,7 +190,9 @@ const features = [
                         </aside>
                         <div class="min-w-0 flex-1 p-4">
                             <div class="mb-2 flex items-center justify-between">
-                                <span class="text-sm font-medium">Tickets</span>
+                                <span class="text-sm font-medium">{{
+                                    $t('landing.tickets')
+                                }}</span>
                                 <kbd
                                     class="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
                                 >
@@ -240,14 +247,15 @@ const features = [
                 >
                     <Server class="size-6 text-primary" />
                     <h2 class="mt-3 text-xl font-semibold">
-                        Self-hosted. Your data, your server.
+                        {{ $t('landing.selfHostedTitle') }}
                     </h2>
                     <p class="mt-2 max-w-md text-sm text-muted-foreground">
-                        Nothing leaves your infrastructure. Sign in with SSO or
-                        a one-time email code.
+                        {{ $t('landing.selfHostedBody') }}
                     </p>
                     <Button :as-child="true" size="lg" class="mt-6">
-                        <Link :href="login()">Open tracker</Link>
+                        <Link :href="login()">{{
+                            $t('landing.openTracker')
+                        }}</Link>
                     </Button>
                 </div>
             </section>
@@ -262,7 +270,7 @@ const features = [
                     :href="login()"
                     class="transition-colors hover:text-foreground"
                 >
-                    Log in
+                    {{ $t('auth.logIn') }}
                 </Link>
             </div>
         </footer>

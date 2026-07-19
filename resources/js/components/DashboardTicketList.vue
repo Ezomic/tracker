@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { show } from '@/routes/issues';
 import type { DashboardRow } from '@/types';
 
@@ -9,6 +10,8 @@ defineProps<{
     emptyText: string;
     highlightAge?: boolean;
 }>();
+
+const { t } = useI18n();
 
 const dotClass: Record<DashboardRow['status'], string> = {
     backlog: 'bg-muted-foreground/50',
@@ -28,7 +31,7 @@ function ago(iso: string | null): string {
     );
 
     if (seconds < 60) {
-        return 'now';
+        return t('common.now');
     }
 
     const minutes = Math.floor(seconds / 60);

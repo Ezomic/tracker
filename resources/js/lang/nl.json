@@ -18,7 +18,10 @@
         "name": "Naam",
         "description": "Omschrijving",
         "color": "Kleur",
-        "emailAddress": "E-mailadres"
+        "emailAddress": "E-mailadres",
+        "now": "nu",
+        "addRepo": "Repo toevoegen",
+        "removeRepo": "Repo verwijderen"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -454,6 +457,29 @@
         "code": "Code",
         "bulletedList": "Opsomming",
         "numberedList": "Genummerde lijst"
+    },
+    "landing": {
+        "headTitle": "tracker — zelf-gehoste issuetracking",
+        "features": "Functies",
+        "switchLight": "Naar lichte modus",
+        "switchDark": "Naar donkere modus",
+        "badge": "Zelf-gehoste issuetracking",
+        "heroTitle": "Jouw issues. Jouw server.",
+        "heroBody": "Projecten, borden en een toetsenbord-first opdrachtenpalet. Geen derde partijen ertussen, geen licenties tellen.",
+        "openTracker": "Tracker openen",
+        "seeWorkflow": "Bekijk de workflow",
+        "projectsLabel": "PROJECTEN",
+        "tickets": "Tickets",
+        "featureProjectsTitle": "Projecten & sleutels",
+        "featureProjectsBody": "Elk project heeft zijn eigen nummering, zodat elk ticket leest als SHOP-31.",
+        "featureBoardTitle": "Bordweergave",
+        "featureBoardBody": "Sleep tickets tussen backlog, in uitvoering, review en klaar.",
+        "featureCommandTitle": "Opdrachtenpalet",
+        "featureCommandBody": "Toetsenbord-first. Druk op ⌘K om overal te springen, aan te maken of te wisselen.",
+        "featureThemeTitle": "Licht & donker",
+        "featureThemeBody": "Een warm-neutraal palet, afgestemd op beide modi, met koraal als constante.",
+        "selfHostedTitle": "Zelf-gehost. Jouw data, jouw server.",
+        "selfHostedBody": "Er verlaat niets je infrastructuur. Log in met SSO of een eenmalige e-mailcode."
     },
     "priority": {
         "none": "Geen prioriteit",

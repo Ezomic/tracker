@@ -71,7 +71,7 @@ const handleDelete = () => {
             @click="router.visit(confirm().url)"
         >
             <Trash2 class="h-4 w-4" />
-            <span class="sr-only">Remove</span>
+            <span class="sr-only">{{ $t('passkey.remove') }}</span>
         </Button>
 
         <Dialog v-else>

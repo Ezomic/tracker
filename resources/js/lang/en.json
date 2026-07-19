@@ -18,7 +18,10 @@
         "name": "Name",
         "description": "Description",
         "color": "Color",
-        "emailAddress": "Email address"
+        "emailAddress": "Email address",
+        "now": "now",
+        "addRepo": "Add repo",
+        "removeRepo": "Remove repo"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -454,6 +457,29 @@
         "code": "Code",
         "bulletedList": "Bulleted list",
         "numberedList": "Numbered list"
+    },
+    "landing": {
+        "headTitle": "tracker — self-hosted issue tracking",
+        "features": "Features",
+        "switchLight": "Switch to light mode",
+        "switchDark": "Switch to dark mode",
+        "badge": "Self-hosted issue tracking",
+        "heroTitle": "Your issues. Your server.",
+        "heroBody": "Projects, boards and a keyboard-first command palette. No third parties in the loop, no seats to count.",
+        "openTracker": "Open tracker",
+        "seeWorkflow": "See the workflow",
+        "projectsLabel": "PROJECTS",
+        "tickets": "Tickets",
+        "featureProjectsTitle": "Projects & keys",
+        "featureProjectsBody": "Each project owns its own numbering, so every ticket reads like SHOP-31.",
+        "featureBoardTitle": "Board view",
+        "featureBoardBody": "Drag tickets across backlog, in progress, review and done.",
+        "featureCommandTitle": "Command palette",
+        "featureCommandBody": "Keyboard-first. Hit ⌘K to jump, create or switch from anywhere.",
+        "featureThemeTitle": "Light & dark",
+        "featureThemeBody": "A warm-neutral palette tuned for both modes, coral holding steady.",
+        "selfHostedTitle": "Self-hosted. Your data, your server.",
+        "selfHostedBody": "Nothing leaves your infrastructure. Sign in with SSO or a one-time email code."
     },
     "priority": {
         "none": "No priority",
