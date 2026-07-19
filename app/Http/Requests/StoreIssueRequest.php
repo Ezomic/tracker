@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\Issue;
+use App\Models\Label;
 use App\Models\Project;
 use App\Models\User;
+use App\Rules\DurationRule;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,6 +45,13 @@ class StoreIssueRequest extends FormRequest
         if ($this->input('template') === '') {
             $this->merge(['template' => null]);
         }
+
+        // Accept labels as a comma-separated string as well as an array, so
+        // curl callers don't have to build a JSON array.
+        if (is_string($this->input('labels'))) {
+            $names = array_values(array_filter(array_map('trim', explode(',', $this->input('labels')))));
+            $this->merge(['labels' => $names]);
+        }
     }
 
     /**
@@ -56,6 +66,28 @@ class StoreIssueRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
+            'priority' => ['nullable', Rule::enum(IssuePriority::class)],
+            'estimate' => ['nullable', 'string', new DurationRule],
+            'labels' => ['nullable', 'array'],
+            'labels.*' => [
+                'string',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $project = Project::query()->where('key', $this->input('project'))->first();
+
+                    if ($project === null) {
+                        return;
+                    }
+
+                    $exists = Label::query()
+                        ->forProject($project)
+                        ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
+                        ->exists();
+
+                    if (! $exists) {
+                        $fail("The label \"{$value}\" does not exist for this project.");
+                    }
+                },
+            ],
             'template' => [
                 'nullable',
                 'string',

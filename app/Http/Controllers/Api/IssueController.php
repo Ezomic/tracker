@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateIssueAction;
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
@@ -13,8 +14,10 @@ use App\Http\Requests\UpdateIssueParentRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
+use App\Models\Label;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\Duration;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -52,6 +55,7 @@ class IssueController extends Controller
         $this->authorize('createIssue', $project);
 
         $template = $this->resolveTemplate($project, $request->validated('template'));
+        $priority = $request->validated('priority');
 
         $issue = $action->handle(
             project: $project,
@@ -61,14 +65,43 @@ class IssueController extends Controller
             parent: $this->resolveParent($request->validated('parent')),
             owner: $request->user(),
             assignee: $this->resolveAssignee($request->validated('assignee')),
-            priority: $template?->priority,
+            priority: $priority !== null ? IssuePriority::from($priority) : $template?->priority,
         );
 
-        if ($template !== null) {
+        // Explicit labels replace the template's; the template only fills the gap.
+        $labels = $request->validated('labels');
+
+        if ($labels !== null && $labels !== []) {
+            $issue->labels()->sync($this->resolveLabelIds($project, $labels));
+        } elseif ($template !== null) {
             $issue->labels()->sync($template->labels->pluck('id')->all());
         }
 
+        if ($request->validated('estimate') !== null) {
+            $issue->forceFill([
+                'estimate_minutes' => Duration::toMinutes($request->validated('estimate')),
+            ])->save();
+        }
+
         return response()->json($this->payload($issue), 201);
+    }
+
+    /**
+     * @param  list<string>  $names
+     * @return list<int>
+     */
+    private function resolveLabelIds(Project $project, array $names): array
+    {
+        $wanted = array_map(fn (string $name): string => Str::lower($name), $names);
+        $ids = [];
+
+        foreach (Label::query()->forProject($project)->get(['id', 'name']) as $label) {
+            if (in_array(Str::lower($label->name), $wanted, true)) {
+                $ids[] = $label->id;
+            }
+        }
+
+        return $ids;
     }
 
     private function resolveTemplate(Project $project, ?string $name): ?IssueTemplate
