@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property int|null $archive_after_days
  * @property list<string>|null $github_repos
  * @property string|null $production_url
+ * @property int|null $billr_project_id
+ * @property int|null $billr_client_id
  * @property int $next_number
  */
 #[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days', 'category_id'])]
@@ -185,6 +187,11 @@ class Project extends Model
     public function hasIssues(): bool
     {
         return $this->issues()->exists();
+    }
+
+    public function billrLinked(): bool
+    {
+        return $this->billr_project_id !== null;
     }
 
     /**

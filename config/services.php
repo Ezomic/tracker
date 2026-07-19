@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'billr' => [
+        'base_url' => env('BILLR_API_BASE_URL'),
+        'token' => env('BILLR_API_TOKEN'),
+    ],
+
     'github' => [
         'webhook_secret' => env('GITHUB_WEBHOOK_SECRET'),
     ],

@@ -32,6 +32,9 @@ use Illuminate\Support\Carbon;
  * @property string $slug
  * @property string|null $description
  * @property int|null $estimate_minutes
+ * @property bool $invoiceable
+ * @property int|null $confirmed_minutes
+ * @property Carbon|null $confirmed_at
  * @property IssueType $type
  * @property IssuePriority $priority
  * @property IssueStatus $status
@@ -43,7 +46,7 @@ use Illuminate\Support\Carbon;
  */
 // owner_id is deliberately not fillable: it is stamped once, at creation.
 #[ObservedBy([IssueObserver::class])]
-#[Fillable(['title', 'description', 'estimate_minutes', 'type', 'priority', 'parent_id', 'assignee_id'])]
+#[Fillable(['title', 'description', 'estimate_minutes', 'invoiceable', 'type', 'priority', 'parent_id', 'assignee_id'])]
 class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
@@ -214,6 +217,9 @@ class Issue extends Model
             'priority' => IssuePriority::class,
             'status' => IssueStatus::class,
             'estimate_minutes' => 'integer',
+            'invoiceable' => 'boolean',
+            'confirmed_minutes' => 'integer',
+            'confirmed_at' => 'datetime',
             'closed_at' => 'datetime',
             'archived_at' => 'datetime',
         ];

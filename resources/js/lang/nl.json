@@ -170,6 +170,7 @@
         "owner": "Melder",
         "unknown": "Onbekend",
         "estimatePlaceholder": "bijv. 4u 30m",
+        "invoiceable": "Factureerbaar",
         "archivedBanner": "Gearchiveerd:",
         "archiveReasonExample": "bijv. Vervangen door THI-58",
         "partOf": "Onderdeel van",
@@ -236,7 +237,13 @@
         "loggedSuffix": "geregistreerd",
         "log": "Registreren",
         "empty": "Nog geen tijd geregistreerd.",
-        "delete": "Registratie verwijderen"
+        "delete": "Registratie verwijderen",
+        "confirmMinutes": "Bevestigde minuten",
+        "billrClientName": "Naam Billr-klant",
+        "billrClientNamePlaceholder": "bijv. Acme BV",
+        "confirmAndBill": "Bevestigen & factureren",
+        "confirmTime": "Tijd bevestigen",
+        "confirmedSummary": "Bevestigd: {duration} op {date}"
     },
     "projects": {
         "title": "Projecten",

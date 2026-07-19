@@ -9,7 +9,7 @@ import {
     GitPullRequest,
     Trash2,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
@@ -45,7 +45,13 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { formatDuration } from '@/lib/duration';
-import { archive, index, show, unarchive } from '@/routes/issues';
+import {
+    archive,
+    confirmTime as confirmTimeRoute,
+    index,
+    show,
+    unarchive,
+} from '@/routes/issues';
 import {
     destroy as destroyComment,
     store as storeComment,
@@ -145,6 +151,17 @@ const spentOn = ref(new Date().toISOString().slice(0, 10));
 const note = ref('');
 const timeError = ref<string | null>(null);
 
+const confirmMinutes = ref(String(props.issue.loggedMinutes));
+const billrClientName = ref('');
+const confirmError = ref<string | null>(null);
+
+watch(
+    () => props.issue.loggedMinutes,
+    (minutes) => {
+        confirmMinutes.value = String(minutes);
+    },
+);
+
 const commentBody = ref('');
 const commentError = ref<string | null>(null);
 
@@ -203,6 +220,27 @@ function postComment() {
             },
             onError: (errors) => {
                 commentError.value = errors.body ?? null;
+            },
+        },
+    );
+}
+
+function confirmTime() {
+    confirmError.value = null;
+
+    router.post(
+        confirmTimeRoute({ issue: props.issue.identifier }).url,
+        {
+            minutes: confirmMinutes.value,
+            billr_client_name: billrClientName.value,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                billrClientName.value = '';
+            },
+            onError: (errors) => {
+                confirmError.value = errors.minutes ?? null;
             },
         },
     );
@@ -558,6 +596,21 @@ const statusDot: Record<Issue['status'], string> = {
                     <InputError :message="errors.estimate" />
                 </div>
 
+                <label
+                    class="flex items-center gap-2 text-sm"
+                    for="invoiceable"
+                >
+                    <input type="hidden" name="invoiceable" value="0" />
+                    <Checkbox
+                        id="invoiceable"
+                        name="invoiceable"
+                        value="1"
+                        :default-value="issue.invoiceable"
+                    />
+                    {{ $t('issue.invoiceable') }}
+                </label>
+                <InputError :message="errors.invoiceable" />
+
                 <div v-if="issue.children.length === 0" class="grid gap-1.5">
                     <Label
                         for="parent_id"
@@ -769,6 +822,61 @@ const statusDot: Record<Issue['status'], string> = {
                 <Button type="button" @click="logTime">{{
                     $t('time.logTime')
                 }}</Button>
+            </div>
+
+            <div
+                v-if="canManageTime"
+                class="flex flex-col gap-3 border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border"
+            >
+                <div class="grid gap-1.5">
+                    <Label
+                        for="confirm-minutes"
+                        class="text-xs text-muted-foreground"
+                    >
+                        {{ $t('time.confirmMinutes') }}
+                    </Label>
+                    <Input
+                        id="confirm-minutes"
+                        v-model="confirmMinutes"
+                        type="number"
+                        min="0"
+                    />
+                </div>
+                <div
+                    v-if="issue.invoiceable && !issue.project.billrLinked"
+                    class="grid gap-1.5"
+                >
+                    <Label
+                        for="confirm-client"
+                        class="text-xs text-muted-foreground"
+                    >
+                        {{ $t('time.billrClientName') }}
+                    </Label>
+                    <Input
+                        id="confirm-client"
+                        v-model="billrClientName"
+                        :placeholder="$t('time.billrClientNamePlaceholder')"
+                    />
+                </div>
+                <InputError v-if="confirmError" :message="confirmError" />
+                <Button type="button" variant="outline" @click="confirmTime">
+                    {{
+                        issue.invoiceable
+                            ? $t('time.confirmAndBill')
+                            : $t('time.confirmTime')
+                    }}
+                </Button>
+                <p
+                    v-if="issue.confirmedMinutes != null"
+                    class="text-xs text-muted-foreground"
+                >
+                    {{
+                        $t('time.confirmedSummary', {
+                            duration: formatDuration(issue.confirmedMinutes),
+                            date: formatDate(issue.confirmedAt!),
+                        })
+                    }}
+                </p>
             </div>
         </SheetContent>
     </Sheet>
