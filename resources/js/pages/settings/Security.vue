@@ -19,9 +19,9 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Security settings" />
+    <Head :title="$t('security.title')" />
 
-    <h1 class="sr-only">Security settings</h1>
+    <h1 class="sr-only">{{ $t('security.title') }}</h1>
 
     <ManagePasskeys
         :canManagePasskeys="props.canManagePasskeys"
