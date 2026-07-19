@@ -38,7 +38,7 @@ const hasAny = computed(() => hasPrimary.value || props.links.repos.length > 0);
                 class="h-7 gap-1.5 text-muted-foreground"
             >
                 <ExternalLink class="size-3.5" />
-                Links
+                {{ $t('projects.links') }}
                 <ChevronDown class="size-3.5 opacity-70" />
             </Button>
         </DropdownMenuTrigger>
@@ -50,14 +50,14 @@ const hasAny = computed(() => hasPrimary.value || props.links.repos.length > 0);
                     rel="noopener noreferrer"
                 >
                     <Globe />
-                    <span>Production</span>
+                    <span>{{ $t('projects.production') }}</span>
                     <ExternalLink class="ml-auto size-3 opacity-50" />
                 </a>
             </DropdownMenuItem>
             <DropdownMenuItem v-if="links.docs" as-child>
                 <a :href="links.docs" target="_blank" rel="noopener noreferrer">
                     <BookText />
-                    <span>Documentation</span>
+                    <span>{{ $t('projects.documentation') }}</span>
                     <ExternalLink class="ml-auto size-3 opacity-50" />
                 </a>
             </DropdownMenuItem>
@@ -65,7 +65,7 @@ const hasAny = computed(() => hasPrimary.value || props.links.repos.length > 0);
             <template v-if="links.repos.length">
                 <DropdownMenuSeparator v-if="hasPrimary" />
                 <DropdownMenuLabel class="text-xs text-muted-foreground">
-                    Repositories
+                    {{ $t('projects.repositories') }}
                 </DropdownMenuLabel>
                 <DropdownMenuItem
                     v-for="repo in links.repos"

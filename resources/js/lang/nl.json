@@ -233,8 +233,10 @@
         "noMatch": "Geen projecten komen overeen met “{search}”.",
         "openCount": "{n} open",
         "members": "Leden",
+        "links": "Links",
         "documentation": "Documentatie",
         "production": "Productie",
+        "repositories": "Repositories",
         "favorite": "Favoriet maken",
         "unfavorite": "Favoriet verwijderen"
     },
@@ -353,7 +355,8 @@
         "italic": "Cursief",
         "link": "Link",
         "code": "Code",
-        "list": "Lijst"
+        "bulletedList": "Opsomming",
+        "numberedList": "Genummerde lijst"
     },
     "priority": {
         "none": "Geen prioriteit",

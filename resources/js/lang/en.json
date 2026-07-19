@@ -233,8 +233,10 @@
         "noMatch": "No projects match “{search}”.",
         "openCount": "{n} open",
         "members": "Members",
+        "links": "Links",
         "documentation": "Documentation",
         "production": "Production",
+        "repositories": "Repositories",
         "favorite": "Favorite",
         "unfavorite": "Unfavorite"
     },
@@ -353,7 +355,8 @@
         "italic": "Italic",
         "link": "Link",
         "code": "Code",
-        "list": "List"
+        "bulletedList": "Bulleted list",
+        "numberedList": "Numbered list"
     },
     "priority": {
         "none": "No priority",
