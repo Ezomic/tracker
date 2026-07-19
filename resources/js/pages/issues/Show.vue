@@ -10,6 +10,7 @@ import {
     Trash2,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
@@ -76,12 +77,7 @@ const props = defineProps<{
     currentUserId: number;
 }>();
 
-const statusLabels: Record<Issue['status'], string> = {
-    backlog: 'Backlog',
-    in_progress: 'In progress',
-    in_review: 'In review',
-    done: 'Done',
-};
+const { t } = useI18n();
 
 function describeActivity(
     item: Extract<TimelineItem, { kind: 'activity' }>,
@@ -90,19 +86,25 @@ function describeActivity(
 
     switch (item.type) {
         case 'created':
-            return 'created this issue';
+            return t('activity.created');
         case 'status_changed':
-            return `changed status to ${statusLabels[data.to as Issue['status']] ?? data.to}`;
+            return t('activity.statusTo', {
+                status: t(`status.${data.to}`),
+            });
         case 'assigned':
-            return data.to ? `assigned this to ${data.to}` : 'unassigned this';
+            return data.to
+                ? t('activity.assignedTo', { name: data.to })
+                : t('activity.unassigned');
         case 'archived':
             return data.reason
-                ? `archived this: ${data.reason}`
-                : 'archived this issue';
+                ? t('activity.archivedReason', { reason: data.reason })
+                : t('activity.archived');
         case 'unarchived':
-            return 'unarchived this issue';
+            return t('activity.unarchived');
         case 'time_logged':
-            return `logged ${formatDuration(Number(data.minutes))}`;
+            return t('activity.timeLogged', {
+                duration: formatDuration(Number(data.minutes)),
+            });
         default:
             return item.type.replace(/_/g, ' ');
     }
@@ -279,11 +281,11 @@ const submittedAssignee = computed(() =>
     assigneeId.value === 'unassigned' ? '' : assigneeId.value,
 );
 
-const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
-    backlog: { label: 'Backlog', dot: 'bg-muted-foreground/50' },
-    in_progress: { label: 'In progress', dot: 'bg-primary' },
-    in_review: { label: 'In review', dot: 'bg-sky-500' },
-    done: { label: 'Done', dot: 'bg-emerald-500' },
+const statusDot: Record<Issue['status'], string> = {
+    backlog: 'bg-muted-foreground/50',
+    in_progress: 'bg-primary',
+    in_review: 'bg-sky-500',
+    done: 'bg-emerald-500',
 };
 </script>
 
@@ -306,9 +308,9 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             >
                 <span
                     class="size-2 rounded-full"
-                    :class="statusMeta[issue.status].dot"
+                    :class="statusDot[issue.status]"
                 />
-                {{ statusMeta[issue.status].label }}
+                {{ $t(`status.${issue.status}`) }}
             </span>
             <span
                 v-if="issue.archivedAt"
@@ -316,7 +318,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 :title="issue.archiveReason ?? undefined"
             >
                 <Archive class="size-3" />
-                Archived
+                {{ $t('issue.archived') }}
             </span>
 
             <div class="ml-auto flex items-center gap-2">
@@ -327,7 +329,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     @click="timeOpen = true"
                 >
                     <Clock class="size-4" />
-                    Time
+                    {{ $t('time.title') }}
                     <span
                         v-if="issue.loggedMinutes > 0"
                         class="text-muted-foreground"
@@ -345,7 +347,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         @click="unarchiveIssue"
                     >
                         <ArchiveRestore class="size-4" />
-                        Unarchive
+                        {{ $t('issue.unarchive') }}
                     </Button>
                     <Button
                         v-else
@@ -355,7 +357,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         @click="archiveOpen = true"
                     >
                         <Archive class="size-4" />
-                        Archive
+                        {{ $t('issue.archive') }}
                     </Button>
                 </template>
             </div>
@@ -365,7 +367,9 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             v-if="issue.archivedAt && issue.archiveReason"
             class="mb-4 text-sm text-muted-foreground"
         >
-            <span class="font-medium text-foreground">Archived:</span>
+            <span class="font-medium text-foreground">{{
+                $t('issue.archivedBanner')
+            }}</span>
             {{ issue.archiveReason }}
         </p>
 
@@ -382,7 +386,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         v-if="issue.parent"
                         class="text-sm text-muted-foreground"
                     >
-                        Part of
+                        {{ $t('issue.partOf') }}
                         <Link
                             :href="show({ issue: issue.parent.identifier })"
                             class="text-foreground hover:underline"
@@ -399,13 +403,13 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         for="description"
                         class="text-xs text-muted-foreground"
                     >
-                        Description
+                        {{ $t('common.description') }}
                     </Label>
                     <MarkdownEditor
                         v-model="description"
                         name="description"
                         :rows="3"
-                        placeholder="Add a description…"
+                        :placeholder="$t('newIssue.descriptionPlaceholder')"
                     />
                     <InputError :message="errors.description" />
                 </div>
@@ -416,11 +420,15 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 >
                     <div class="flex items-center justify-between">
                         <span class="text-xs text-muted-foreground">
-                            Sub-issues
+                            {{ $t('issue.subIssues') }}
                         </span>
                         <span class="text-xs text-muted-foreground">
-                            {{ doneChildrenCount }} of
-                            {{ issue.children.length }} done
+                            {{
+                                $t('issue.subDone', {
+                                    done: doneChildrenCount,
+                                    total: issue.children.length,
+                                })
+                            }}
                         </span>
                     </div>
                     <Link
@@ -431,7 +439,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     >
                         <span
                             class="size-2 shrink-0 rounded-full"
-                            :class="statusMeta[child.status].dot"
+                            :class="statusDot[child.status]"
                         />
                         <span class="font-mono text-xs text-muted-foreground">
                             {{ child.identifier }}
@@ -442,7 +450,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
 
                 <div>
                     <Button type="submit" :disabled="processing">
-                        Save changes
+                        {{ $t('issue.saveChanges') }}
                     </Button>
                 </div>
             </div>
@@ -452,7 +460,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             >
                 <div class="grid gap-1.5">
                     <Label for="assignee" class="text-xs text-muted-foreground">
-                        Assignee
+                        {{ $t('issue.assignee') }}
                     </Label>
                     <input
                         type="hidden"
@@ -465,7 +473,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="unassigned">
-                                Unassigned
+                                {{ $t('issue.unassigned') }}
                             </SelectItem>
                             <SelectItem
                                 v-for="person in members"
@@ -480,23 +488,29 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 </div>
 
                 <div class="grid gap-1.5">
-                    <Label class="text-xs text-muted-foreground">Owner</Label>
+                    <Label class="text-xs text-muted-foreground">{{
+                        $t('issue.owner')
+                    }}</Label>
                     <p class="text-sm">
-                        {{ issue.owner?.name ?? 'Unknown' }}
+                        {{ issue.owner?.name ?? $t('issue.unknown') }}
                     </p>
                 </div>
 
                 <div class="grid gap-1.5">
                     <Label for="type" class="text-xs text-muted-foreground">
-                        Type
+                        {{ $t('issue.type') }}
                     </Label>
                     <Select name="type" :default-value="issue.type">
                         <SelectTrigger id="type" class="w-full">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="feature">Feature</SelectItem>
-                            <SelectItem value="fix">Fix</SelectItem>
+                            <SelectItem value="feature">{{
+                                $t('issueType.feature')
+                            }}</SelectItem>
+                            <SelectItem value="fix">{{
+                                $t('issueType.fix')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <InputError :message="errors.type" />
@@ -504,18 +518,28 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
 
                 <div class="grid gap-1.5">
                     <Label for="priority" class="text-xs text-muted-foreground">
-                        Priority
+                        {{ $t('issue.priority') }}
                     </Label>
                     <Select name="priority" :default-value="issue.priority">
                         <SelectTrigger id="priority" class="w-full">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="none">No priority</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectItem value="none">{{
+                                $t('priority.none')
+                            }}</SelectItem>
+                            <SelectItem value="low">{{
+                                $t('priority.low')
+                            }}</SelectItem>
+                            <SelectItem value="medium">{{
+                                $t('priority.medium')
+                            }}</SelectItem>
+                            <SelectItem value="high">{{
+                                $t('priority.high')
+                            }}</SelectItem>
+                            <SelectItem value="urgent">{{
+                                $t('priority.urgent')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <InputError :message="errors.priority" />
@@ -523,13 +547,13 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
 
                 <div class="grid gap-1.5">
                     <Label for="estimate" class="text-xs text-muted-foreground">
-                        Estimate
+                        {{ $t('issue.estimate') }}
                     </Label>
                     <Input
                         id="estimate"
                         name="estimate"
                         :default-value="estimateDefault"
-                        placeholder="e.g. 4h 30m"
+                        :placeholder="$t('issue.estimatePlaceholder')"
                     />
                     <InputError :message="errors.estimate" />
                 </div>
@@ -539,7 +563,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         for="parent_id"
                         class="text-xs text-muted-foreground"
                     >
-                        Epic
+                        {{ $t('issue.epic') }}
                     </Label>
                     <Select
                         name="parent_id"
@@ -548,7 +572,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         "
                     >
                         <SelectTrigger id="parent_id" class="w-full">
-                            <SelectValue placeholder="No epic" />
+                            <SelectValue :placeholder="$t('newIssue.noEpic')" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -564,7 +588,9 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 </div>
 
                 <div v-if="labels.length > 0" class="grid gap-2">
-                    <Label class="text-xs text-muted-foreground">Labels</Label>
+                    <Label class="text-xs text-muted-foreground">{{
+                        $t('issue.labels')
+                    }}</Label>
                     <label
                         v-for="label in labels"
                         :key="label.id"
@@ -584,7 +610,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
 
                 <div class="grid gap-2">
                     <Label class="text-xs text-muted-foreground">
-                        Development
+                        {{ $t('issue.development') }}
                     </Label>
 
                     <a
@@ -614,7 +640,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
                     >
                         <GitCommit class="size-4 shrink-0" />
-                        Commits
+                        {{ $t('issue.commits') }}
                     </a>
 
                     <a
@@ -625,7 +651,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
                     >
                         <GitPullRequest class="size-4 shrink-0" />
-                        Pull request
+                        {{ $t('issue.pullRequest') }}
                     </a>
                 </div>
             </aside>
@@ -637,7 +663,9 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
             class="flex w-full flex-col gap-5 overflow-y-auto sm:max-w-md"
         >
             <SheetHeader class="gap-1">
-                <SheetTitle>Time · {{ issue.identifier }}</SheetTitle>
+                <SheetTitle
+                    >{{ $t('time.title') }} · {{ issue.identifier }}</SheetTitle
+                >
                 <SheetDescription>
                     <span
                         :class="
@@ -647,9 +675,10 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         {{ formatDuration(issue.loggedMinutes) }}
                     </span>
                     <template v-if="issue.estimateMinutes">
-                        of {{ formatDuration(issue.estimateMinutes) }}
+                        {{ $t('time.of') }}
+                        {{ formatDuration(issue.estimateMinutes) }}
                     </template>
-                    logged
+                    {{ $t('time.loggedSuffix') }}
                 </SheetDescription>
             </SheetHeader>
 
@@ -681,7 +710,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                             {{ entry.note }}
                         </p>
                         <p class="truncate text-xs text-muted-foreground">
-                            {{ entry.user?.name ?? 'Unknown' }} ·
+                            {{ entry.user?.name ?? $t('issue.unknown') }} ·
                             {{ formatDate(entry.spentOn) }}
                         </p>
                     </div>
@@ -698,7 +727,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                 </div>
             </div>
             <p v-else class="text-sm text-muted-foreground">
-                No time logged yet.
+                {{ $t('time.empty') }}
             </p>
 
             <div
@@ -710,41 +739,43 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         for="log-duration"
                         class="text-xs text-muted-foreground"
                     >
-                        Duration
+                        {{ $t('time.duration') }}
                     </Label>
                     <Input
                         id="log-duration"
                         v-model="duration"
-                        placeholder="1h 30m"
+                        :placeholder="$t('time.durationPlaceholder')"
                         @keydown.enter.prevent="logTime"
                     />
                 </div>
                 <div class="grid gap-1.5">
                     <Label for="log-date" class="text-xs text-muted-foreground">
-                        Date
+                        {{ $t('time.date') }}
                     </Label>
                     <Input id="log-date" v-model="spentOn" type="date" />
                 </div>
                 <div class="grid gap-1.5">
                     <Label for="log-note" class="text-xs text-muted-foreground">
-                        Note (optional)
+                        {{ $t('time.noteOptional') }}
                     </Label>
                     <Input
                         id="log-note"
                         v-model="note"
-                        placeholder="What did you work on?"
+                        :placeholder="$t('time.notePlaceholder')"
                         @keydown.enter.prevent="logTime"
                     />
                 </div>
                 <InputError v-if="timeError" :message="timeError" />
-                <Button type="button" @click="logTime">Log time</Button>
+                <Button type="button" @click="logTime">{{
+                    $t('time.logTime')
+                }}</Button>
             </div>
         </SheetContent>
     </Sheet>
 
     <section class="p-4 pt-0">
         <div class="flex flex-col gap-4 lg:max-w-2xl">
-            <h2 class="text-sm font-medium">Activity</h2>
+            <h2 class="text-sm font-medium">{{ $t('activity.title') }}</h2>
 
             <div v-if="timeline.length > 0" class="flex flex-col gap-4">
                 <template
@@ -760,7 +791,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
                                 <span class="text-sm font-medium">
-                                    {{ item.user?.name ?? 'Unknown' }}
+                                    {{ item.user?.name ?? $t('issue.unknown') }}
                                 </span>
                                 <span class="text-xs text-muted-foreground">
                                     {{ formatTimestamp(item.createdAt) }}
@@ -819,7 +850,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         />
                         <span>
                             <span class="font-medium text-foreground">
-                                {{ item.user?.name ?? 'Someone' }}
+                                {{ item.user?.name ?? $t('activity.someone') }}
                             </span>
                             {{ describeActivity(item) }}
                         </span>
@@ -829,13 +860,15 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                     </div>
                 </template>
             </div>
-            <p v-else class="text-sm text-muted-foreground">No activity yet.</p>
+            <p v-else class="text-sm text-muted-foreground">
+                {{ $t('activity.empty') }}
+            </p>
 
             <div class="flex flex-col gap-2 pt-2">
                 <AutoTextarea
                     v-model="commentBody"
                     rows="2"
-                    placeholder="Leave a comment…"
+                    :placeholder="$t('comments.placeholder')"
                     class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                 />
                 <InputError v-if="commentError" :message="commentError" />
@@ -846,7 +879,7 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
                         :disabled="commentBody.trim() === ''"
                         @click="postComment"
                     >
-                        Comment
+                        {{ $t('comments.add') }}
                     </Button>
                 </div>
             </div>
@@ -856,33 +889,39 @@ const statusMeta: Record<Issue['status'], { label: string; dot: string }> = {
     <Dialog v-model:open="archiveOpen">
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Archive {{ issue.identifier }}</DialogTitle>
+                <DialogTitle>{{
+                    $t('issue.archiveTitle', { identifier: issue.identifier })
+                }}</DialogTitle>
                 <DialogDescription>
-                    Archiving hides the issue from the board and lists. Add a
-                    reason so it's clear why later. You can unarchive it any
-                    time.
+                    {{ $t('issue.archiveDialogBody') }}
                 </DialogDescription>
             </DialogHeader>
 
             <div class="grid gap-2">
                 <Label for="archive-reason">
-                    Reason
-                    <span class="text-muted-foreground">(optional)</span>
+                    {{ $t('issue.archiveReason') }}
+                    <span class="text-muted-foreground">{{
+                        $t('issue.optional')
+                    }}</span>
                 </Label>
                 <AutoTextarea
                     id="archive-reason"
                     v-model="archiveReason"
                     rows="2"
-                    placeholder="e.g. Superseded by THI-58"
+                    :placeholder="$t('issue.archiveReasonExample')"
                     class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                 />
             </div>
 
             <DialogFooter class="gap-2">
                 <DialogClose as-child>
-                    <Button type="button" variant="secondary">Cancel</Button>
+                    <Button type="button" variant="secondary">{{
+                        $t('common.cancel')
+                    }}</Button>
                 </DialogClose>
-                <Button type="button" @click="archiveIssue">Archive</Button>
+                <Button type="button" @click="archiveIssue">{{
+                    $t('issue.archive')
+                }}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
