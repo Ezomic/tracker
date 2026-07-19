@@ -456,7 +456,7 @@ function toggleFavorite(project: Project) {
                         <Archive class="size-3.5" />
                         {{ archiveLabel(project.archiveAfterDays) }}
                     </span>
-                    <div class="hidden w-16 shrink-0 justify-end md:flex">
+                    <div class="hidden w-28 shrink-0 justify-end md:flex">
                         <ProjectLinks :links="project.links" />
                     </div>
 
