@@ -8,6 +8,7 @@ use App\Concerns\NormalizesGithubRepos;
 use App\Models\Project;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProjectRequest extends FormRequest
 {
@@ -34,6 +35,11 @@ class UpdateProjectRequest extends FormRequest
             'github_repos.*' => ['string', 'max:255'],
             'production_url' => ['nullable', 'url', 'max:255'],
             'archive_after_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+            'category_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('categories', 'id')->where('organization_id', $project->organization_id),
+            ],
             'key' => $project->hasIssues()
                 ? ['prohibited']
                 : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$project->id],

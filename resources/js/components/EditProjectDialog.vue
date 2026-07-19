@@ -19,12 +19,20 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Project } from '@/types';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import type { Project, ProjectCategory } from '@/types';
 
 const props = defineProps<{
     project: Project;
     palette: string[];
     usedColors?: string[];
+    categories?: ProjectCategory[];
 }>();
 
 const color = ref(props.project.color);
@@ -102,6 +110,40 @@ const description = ref(props.project.description ?? '');
                         placeholder="https://example.com"
                     />
                     <InputError :message="errors.production_url" />
+                </div>
+
+                <div
+                    v-if="categories && categories.length > 0"
+                    class="grid gap-2"
+                >
+                    <Label :for="`category-${project.id}`">Category</Label>
+                    <Select
+                        name="category_id"
+                        :default-value="
+                            project.categoryId === null
+                                ? ''
+                                : String(project.categoryId)
+                        "
+                    >
+                        <SelectTrigger
+                            :id="`category-${project.id}`"
+                            class="w-full"
+                        >
+                            <SelectValue placeholder="None" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            <SelectItem
+                                v-for="category in categories"
+                                :key="category.id"
+                                :value="String(category.id)"
+                            >
+                                {{ '  '.repeat(category.depth)
+                                }}{{ category.name }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="errors.category_id" />
                 </div>
 
                 <div class="grid gap-2">

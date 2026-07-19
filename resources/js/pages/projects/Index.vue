@@ -32,10 +32,11 @@ import {
 import { formatDuration } from '@/lib/duration';
 import { board, favorite, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
-import type { Project } from '@/types';
+import type { Project, ProjectCategory } from '@/types';
 
 const props = defineProps<{
     projects: Project[];
+    categories: ProjectCategory[];
 }>();
 
 defineOptions({
@@ -99,20 +100,108 @@ const filtered = computed(() => {
     });
 });
 
-const groups = computed(() => {
+interface ProjectGroup {
+    key: string;
+    label: string;
+    depth: number;
+    items: Project[];
+}
+
+const groups = computed<ProjectGroup[]>(() => {
     const favorites = filtered.value.filter((project) => project.isFavorite);
     const rest = filtered.value.filter((project) => !project.isFavorite);
-    const result: { key: string; label: string; items: Project[] }[] = [];
+    const result: ProjectGroup[] = [];
 
     if (favorites.length > 0) {
-        result.push({ key: 'favorites', label: 'Favorites', items: favorites });
+        result.push({
+            key: 'favorites',
+            label: 'Favorites',
+            depth: 0,
+            items: favorites,
+        });
     }
 
-    if (rest.length > 0) {
+    // No categories defined: keep the simple single "All projects" list.
+    if (props.categories.length === 0) {
+        if (rest.length > 0) {
+            result.push({
+                key: 'all',
+                label: favorites.length > 0 ? 'All projects' : '',
+                depth: 0,
+                items: rest,
+            });
+        }
+
+        return result;
+    }
+
+    const byCategory = new Map<number, Project[]>();
+    const uncategorized: Project[] = [];
+
+    for (const project of rest) {
+        if (project.categoryId === null) {
+            uncategorized.push(project);
+            continue;
+        }
+
+        const bucket = byCategory.get(project.categoryId);
+
+        if (bucket) {
+            bucket.push(project);
+        } else {
+            byCategory.set(project.categoryId, [project]);
+        }
+    }
+
+    // A category is shown if it, or any descendant, holds a matching project.
+    const childrenOf = new Map<number | null, ProjectCategory[]>();
+
+    for (const category of props.categories) {
+        const siblings = childrenOf.get(category.parentId) ?? [];
+        siblings.push(category);
+        childrenOf.set(category.parentId, siblings);
+    }
+
+    const subtreeHasProjects = new Map<number, boolean>();
+    const compute = (category: ProjectCategory): boolean => {
+        let has = (byCategory.get(category.id)?.length ?? 0) > 0;
+
+        for (const child of childrenOf.get(category.id) ?? []) {
+            if (compute(child)) {
+                has = true;
+            }
+        }
+
+        subtreeHasProjects.set(category.id, has);
+
+        return has;
+    };
+
+    for (const root of childrenOf.get(null) ?? []) {
+        compute(root);
+    }
+
+    // props.categories is already depth-first, so emitting in order keeps the
+    // tree shape; skip branches with no matching projects.
+    for (const category of props.categories) {
+        if (!subtreeHasProjects.get(category.id)) {
+            continue;
+        }
+
         result.push({
-            key: 'all',
-            label: favorites.length > 0 ? 'All projects' : '',
-            items: rest,
+            key: `category-${category.id}`,
+            label: category.name,
+            depth: category.depth,
+            items: byCategory.get(category.id) ?? [],
+        });
+    }
+
+    if (uncategorized.length > 0) {
+        result.push({
+            key: 'uncategorized',
+            label: 'Uncategorized',
+            depth: 0,
+            items: uncategorized,
         });
     }
 
@@ -237,6 +326,27 @@ function toggleFavorite(project: Project) {
                             <InputError :message="errors.production_url" />
                         </div>
 
+                        <div v-if="categories.length > 0" class="grid gap-2">
+                            <Label for="category_id">Category</Label>
+                            <Select name="category_id" default-value="">
+                                <SelectTrigger id="category_id" class="w-full">
+                                    <SelectValue placeholder="None" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">None</SelectItem>
+                                    <SelectItem
+                                        v-for="category in categories"
+                                        :key="category.id"
+                                        :value="String(category.id)"
+                                    >
+                                        {{ '  '.repeat(category.depth)
+                                        }}{{ category.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="errors.category_id" />
+                        </div>
+
                         <div class="grid gap-2">
                             <Label>Color</Label>
                             <input
@@ -294,6 +404,11 @@ function toggleFavorite(project: Project) {
                 <div
                     v-if="group.label"
                     class="border-t border-sidebar-border/70 bg-muted/40 px-4 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase first:border-t-0 dark:border-sidebar-border"
+                    :style="
+                        group.depth > 0
+                            ? { paddingLeft: `${1 + group.depth * 1.25}rem` }
+                            : undefined
+                    "
                 >
                     {{ group.label }}
                 </div>
@@ -384,6 +499,7 @@ function toggleFavorite(project: Project) {
                             <EditProjectDialog
                                 :project="project"
                                 :palette="palette"
+                                :categories="categories"
                                 :used-colors="
                                     projects
                                         .filter(

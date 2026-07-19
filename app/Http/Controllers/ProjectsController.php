@@ -8,6 +8,7 @@ use App\Actions\CreateProjectAction;
 use App\Enums\IssueStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Models\Category;
 use App\Models\Project;
 use App\Services\CurrentOrganization;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,9 +22,20 @@ class ProjectsController extends Controller
 {
     public function index(Request $request, CurrentOrganization $current): Response
     {
+        $organization = $current->for($request->user());
+
         return Inertia::render('projects/Index', [
+            'categories' => Category::orderedTree($organization)
+                ->map(fn (Category $category): array => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'parentId' => $category->parent_id,
+                    'depth' => (int) $category->getAttribute('depth'),
+                ])
+                ->values()
+                ->all(),
             'projects' => $request->user()->projects()
-                ->inOrganization($current->for($request->user()))
+                ->inOrganization($organization)
                 ->withCount([
                     'issues',
                     'issues as open_count' => fn (Builder $query) => $query
@@ -44,6 +56,7 @@ class ProjectsController extends Controller
                         'name' => $project->name,
                         'description' => $project->description,
                         'color' => $project->color,
+                        'categoryId' => $project->category_id,
                         'role' => (string) $pivot->getAttribute('role'),
                         'isFavorite' => (bool) $pivot->getAttribute('is_favorite'),
                         'githubRepos' => $project->github_repos ?? [],

@@ -64,6 +64,7 @@ export interface Project {
     name: string;
     description: string | null;
     color: string;
+    categoryId: number | null;
     level: ProjectLevel;
     isFavorite: boolean;
     githubRepos: string[];
@@ -74,6 +75,14 @@ export interface Project {
     issuesCount: number;
     loggedMinutes: number;
     keyLocked: boolean;
+}
+
+export interface ProjectCategory {
+    id: number;
+    name: string;
+    parentId: number | null;
+    depth: number;
+    projectsCount?: number;
 }
 
 export interface OrganizationSummary {
