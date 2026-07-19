@@ -37,7 +37,7 @@ const itemClass =
             ]"
         >
             <Kanban class="size-4" />
-            <span>Board</span>
+            <span>{{ $t('board.title') }}</span>
         </Link>
         <Link
             :href="listHref"
@@ -49,7 +49,7 @@ const itemClass =
             ]"
         >
             <Ticket class="size-4" />
-            <span>List</span>
+            <span>{{ $t('list.list') }}</span>
         </Link>
     </div>
 </template>

@@ -43,7 +43,7 @@ function removeRepo(index: number) {
                 variant="ghost"
                 size="icon"
                 class="shrink-0 text-muted-foreground"
-                aria-label="Remove repo"
+                :aria-label="$t('common.removeRepo')"
                 @click="removeRepo(index)"
             >
                 <X class="size-4" />
@@ -57,7 +57,7 @@ function removeRepo(index: number) {
             @click="addRepo"
         >
             <Plus class="size-4" />
-            Add repo
+            {{ $t('common.addRepo') }}
         </Button>
     </div>
 </template>

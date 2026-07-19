@@ -24,17 +24,17 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Confirm your email" />
+    <Head :title="$t('confirmEmail.headTitle')" />
 
     <div class="max-w-md space-y-6">
         <Heading
             variant="small"
-            title="Confirm it's you"
-            description="Managing passkeys needs a quick email confirmation"
+            :title="$t('confirmEmail.title')"
+            :description="$t('confirmEmail.description')"
         />
 
         <p class="text-sm text-muted-foreground">
-            We sent a 6-digit code to
+            {{ $t('confirmEmail.sentCode') }}
             <span class="font-medium text-foreground">{{ email }}</span>
         </p>
 
@@ -44,7 +44,7 @@ defineOptions({
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
-                <Label for="code">Confirmation code</Label>
+                <Label for="code">{{ $t('auth.confirmationCode') }}</Label>
                 <Input
                     id="code"
                     name="code"
@@ -61,13 +61,13 @@ defineOptions({
             <div class="mt-6 flex items-center gap-3">
                 <Button :disabled="processing">
                     <Spinner v-if="processing" />
-                    Confirm
+                    {{ $t('confirmEmail.confirm') }}
                 </Button>
                 <Link
                     :href="confirm()"
                     class="text-sm text-muted-foreground hover:text-foreground"
                 >
-                    Resend code
+                    {{ $t('confirmEmail.resend') }}
                 </Link>
             </div>
         </Form>

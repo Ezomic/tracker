@@ -39,7 +39,7 @@ class UpdateCategoryRequest extends FormRequest
                     }
 
                     if ((int) $value === $category->id || in_array((int) $value, $category->descendantIds(), true)) {
-                        $fail('A category cannot be moved inside itself.');
+                        $fail(__('A category cannot be moved inside itself.'));
                     }
                 },
             ],

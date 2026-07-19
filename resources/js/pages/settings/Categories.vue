@@ -57,15 +57,15 @@ const hasCategories = () => props.categories.length > 0;
 </script>
 
 <template>
-    <Head title="Categories" />
+    <Head :title="$t('categories.title')" />
 
-    <h1 class="sr-only">Categories</h1>
+    <h1 class="sr-only">{{ $t('categories.title') }}</h1>
 
     <div class="flex flex-col space-y-6">
         <Heading
             variant="small"
-            title="Categories"
-            description="Group the organization's projects. Categories can be nested to any depth."
+            :title="$t('categories.title')"
+            :description="$t('categories.description')"
         />
 
         <Form
@@ -76,25 +76,27 @@ const hasCategories = () => props.categories.length > 0;
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
-                <Label for="name">Name</Label>
+                <Label for="name">{{ $t('common.name') }}</Label>
                 <Input
                     id="name"
                     name="name"
                     class="w-56"
-                    placeholder="Client work"
+                    :placeholder="$t('categories.namePlaceholder')"
                     required
                 />
                 <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="parent_id">Parent</Label>
+                <Label for="parent_id">{{ $t('categories.parent') }}</Label>
                 <Select name="parent_id" default-value="">
                     <SelectTrigger id="parent_id" class="w-56">
-                        <SelectValue placeholder="None (top level)" />
+                        <SelectValue :placeholder="$t('common.noneTopLevel')" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">None (top level)</SelectItem>
+                        <SelectItem value="">{{
+                            $t('common.noneTopLevel')
+                        }}</SelectItem>
                         <SelectItem
                             v-for="option in categories"
                             :key="option.id"
@@ -107,7 +109,9 @@ const hasCategories = () => props.categories.length > 0;
                 <InputError :message="errors.parent_id" />
             </div>
 
-            <Button type="submit" :disabled="processing">Add category</Button>
+            <Button type="submit" :disabled="processing">{{
+                $t('categories.addCategory')
+            }}</Button>
         </Form>
 
         <div
@@ -117,7 +121,7 @@ const hasCategories = () => props.categories.length > 0;
                 v-if="!hasCategories()"
                 class="p-8 text-center text-sm text-muted-foreground"
             >
-                No categories yet.
+                {{ $t('categories.empty') }}
             </p>
             <div
                 v-for="category in categories"
@@ -131,11 +135,11 @@ const hasCategories = () => props.categories.length > 0;
                     {{ category.name }}
                 </span>
                 <span class="ml-auto text-xs text-muted-foreground">
-                    {{ category.projectsCount ?? 0 }}
                     {{
-                        (category.projectsCount ?? 0) === 1
-                            ? 'project'
-                            : 'projects'
+                        $t(
+                            'categories.projectCount',
+                            category.projectsCount ?? 0,
+                        )
                     }}
                 </span>
                 <template v-if="canManage">
@@ -148,7 +152,7 @@ const hasCategories = () => props.categories.length > 0;
                         size="sm"
                         @click="removing = category"
                     >
-                        Delete
+                        {{ $t('common.delete') }}
                     </Button>
                 </template>
             </div>
@@ -161,18 +165,24 @@ const hasCategories = () => props.categories.length > 0;
     >
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Delete category</DialogTitle>
+                <DialogTitle>{{ $t('categories.deleteCategory') }}</DialogTitle>
                 <DialogDescription>
-                    Delete “{{ removing?.name }}”? Any subcategories are deleted
-                    too, and projects in them become uncategorized. This can't
-                    be undone.
+                    {{
+                        $t('categories.deleteConfirm', {
+                            name: removing?.name,
+                        })
+                    }}
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter class="gap-2">
                 <DialogClose as-child>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{{
+                        $t('common.cancel')
+                    }}</Button>
                 </DialogClose>
-                <Button variant="destructive" @click="remove">Delete</Button>
+                <Button variant="destructive" @click="remove">{{
+                    $t('common.delete')
+                }}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

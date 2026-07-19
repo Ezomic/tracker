@@ -51,7 +51,7 @@ const defaultParent = computed(() =>
 <template>
     <Dialog>
         <DialogTrigger as-child>
-            <Button variant="outline" size="sm">Edit</Button>
+            <Button variant="outline" size="sm">{{ $t('common.edit') }}</Button>
         </DialogTrigger>
         <DialogContent>
             <Form
@@ -63,14 +63,18 @@ const defaultParent = computed(() =>
                 v-slot="{ errors, processing }"
             >
                 <DialogHeader>
-                    <DialogTitle>Edit category</DialogTitle>
+                    <DialogTitle>{{
+                        $t('categories.editCategory')
+                    }}</DialogTitle>
                     <DialogDescription>
-                        Rename this category or move it under another.
+                        {{ $t('categories.editDescription') }}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="grid gap-2">
-                    <Label :for="`name-${category.id}`">Name</Label>
+                    <Label :for="`name-${category.id}`">{{
+                        $t('common.name')
+                    }}</Label>
                     <Input
                         :id="`name-${category.id}`"
                         name="name"
@@ -81,16 +85,22 @@ const defaultParent = computed(() =>
                 </div>
 
                 <div class="grid gap-2">
-                    <Label :for="`parent-${category.id}`">Parent</Label>
+                    <Label :for="`parent-${category.id}`">{{
+                        $t('categories.parent')
+                    }}</Label>
                     <Select name="parent_id" :default-value="defaultParent">
                         <SelectTrigger
                             :id="`parent-${category.id}`"
                             class="w-full"
                         >
-                            <SelectValue placeholder="None (top level)" />
+                            <SelectValue
+                                :placeholder="$t('common.noneTopLevel')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">None (top level)</SelectItem>
+                            <SelectItem value="">{{
+                                $t('common.noneTopLevel')
+                            }}</SelectItem>
                             <SelectItem
                                 v-for="option in parentOptions"
                                 :key="option.id"
@@ -105,9 +115,13 @@ const defaultParent = computed(() =>
 
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button variant="secondary">Cancel</Button>
+                        <Button variant="secondary">{{
+                            $t('common.cancel')
+                        }}</Button>
                     </DialogClose>
-                    <Button type="submit" :disabled="processing"> Save </Button>
+                    <Button type="submit" :disabled="processing">
+                        {{ $t('common.save') }}
+                    </Button>
                 </DialogFooter>
             </Form>
         </DialogContent>

@@ -2,6 +2,7 @@
 import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { Archive, Clock, Plus, Search, Star, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
 import ColorSwatches from '@/components/ColorSwatches.vue';
 import EditProjectDialog from '@/components/EditProjectDialog.vue';
@@ -68,6 +69,8 @@ const usedColors = computed(() =>
     props.projects.map((project) => project.color),
 );
 
+const { t } = useI18n();
+
 const newColor = ref(palette[0]);
 const createOpen = ref(false);
 
@@ -115,7 +118,7 @@ const groups = computed<ProjectGroup[]>(() => {
     if (favorites.length > 0) {
         result.push({
             key: 'favorites',
-            label: 'Favorites',
+            label: t('projects.favorites'),
             depth: 0,
             items: favorites,
         });
@@ -126,7 +129,7 @@ const groups = computed<ProjectGroup[]>(() => {
         if (rest.length > 0) {
             result.push({
                 key: 'all',
-                label: favorites.length > 0 ? 'All projects' : '',
+                label: favorites.length > 0 ? t('projects.allProjects') : '',
                 depth: 0,
                 items: rest,
             });
@@ -199,7 +202,7 @@ const groups = computed<ProjectGroup[]>(() => {
     if (uncategorized.length > 0) {
         result.push({
             key: 'uncategorized',
-            label: 'Uncategorized',
+            label: t('projects.uncategorized'),
             depth: 0,
             items: uncategorized,
         });
@@ -214,16 +217,16 @@ function tint(hex: string): string {
 
 function archiveLabel(days: number | null): string {
     if (days === null) {
-        return 'Never';
+        return t('archiveDuration.never');
     }
 
     return (
         {
-            1: '1 day',
-            7: '1 week',
-            14: '2 weeks',
-            30: '1 month',
-        }[days] ?? `${days} days`
+            1: t('archiveDuration.oneDay'),
+            7: t('archiveDuration.oneWeek'),
+            14: t('archiveDuration.twoWeeks'),
+            30: t('archiveDuration.oneMonth'),
+        }[days] ?? t('archiveDuration.days', { n: days })
     );
 }
 
@@ -237,21 +240,21 @@ function toggleFavorite(project: Project) {
 </script>
 
 <template>
-    <Head title="Projects" />
+    <Head :title="$t('projects.title')" />
 
     <div class="flex flex-col gap-4 p-4">
         <div class="flex items-start justify-between gap-4">
             <Heading
                 variant="small"
-                title="Projects"
-                description="Manage projects and star the ones you want in the sidebar"
+                :title="$t('projects.title')"
+                :description="$t('projects.description')"
             />
 
             <Dialog v-model:open="createOpen">
                 <DialogTrigger as-child>
                     <Button size="sm" class="shrink-0">
                         <Plus />
-                        New project
+                        {{ $t('projects.newProject') }}
                     </Button>
                 </DialogTrigger>
                 <DialogContent class="sm:max-w-lg">
@@ -263,16 +266,19 @@ function toggleFavorite(project: Project) {
                         v-slot="{ errors, processing }"
                     >
                         <DialogHeader>
-                            <DialogTitle>New project</DialogTitle>
+                            <DialogTitle>{{
+                                $t('projects.newProject')
+                            }}</DialogTitle>
                             <DialogDescription>
-                                Add a project with its key, description, repos,
-                                and production URL.
+                                {{ $t('projects.addProjectDescription') }}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div class="grid gap-2">
-                                <Label for="key">Key</Label>
+                                <Label for="key">{{
+                                    $t('projects.key')
+                                }}</Label>
                                 <Input
                                     id="key"
                                     name="key"
@@ -286,7 +292,9 @@ function toggleFavorite(project: Project) {
                             </div>
 
                             <div class="grid gap-2">
-                                <Label for="name">Name</Label>
+                                <Label for="name">{{
+                                    $t('common.name')
+                                }}</Label>
                                 <Input
                                     id="name"
                                     name="name"
@@ -298,25 +306,31 @@ function toggleFavorite(project: Project) {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="description">Description</Label>
+                            <Label for="description">{{
+                                $t('common.description')
+                            }}</Label>
                             <textarea
                                 id="description"
                                 name="description"
                                 rows="2"
-                                placeholder="What is this project?"
+                                :placeholder="
+                                    $t('newIssue.descriptionPlaceholder')
+                                "
                                 class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                             />
                             <InputError :message="errors.description" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label>GitHub repos</Label>
+                            <Label>{{ $t('projects.githubRepos') }}</Label>
                             <RepoInputs :model-value="[]" />
                             <InputError :message="errors.github_repos" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="production_url">Production URL</Label>
+                            <Label for="production_url">{{
+                                $t('projects.productionUrl')
+                            }}</Label>
                             <Input
                                 id="production_url"
                                 name="production_url"
@@ -327,13 +341,19 @@ function toggleFavorite(project: Project) {
                         </div>
 
                         <div v-if="categories.length > 0" class="grid gap-2">
-                            <Label for="category_id">Category</Label>
+                            <Label for="category_id">{{
+                                $t('projects.category')
+                            }}</Label>
                             <Select name="category_id" default-value="">
                                 <SelectTrigger id="category_id" class="w-full">
-                                    <SelectValue placeholder="None" />
+                                    <SelectValue
+                                        :placeholder="$t('common.none')"
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
+                                    <SelectItem value="">{{
+                                        $t('common.none')
+                                    }}</SelectItem>
                                     <SelectItem
                                         v-for="category in categories"
                                         :key="category.id"
@@ -348,7 +368,7 @@ function toggleFavorite(project: Project) {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label>Color</Label>
+                            <Label>{{ $t('common.color') }}</Label>
                             <input
                                 type="hidden"
                                 name="color"
@@ -363,10 +383,12 @@ function toggleFavorite(project: Project) {
 
                         <DialogFooter class="gap-2">
                             <DialogClose as-child>
-                                <Button variant="secondary">Cancel</Button>
+                                <Button variant="secondary">{{
+                                    $t('common.cancel')
+                                }}</Button>
                             </DialogClose>
                             <Button type="submit" :disabled="processing">
-                                Add project
+                                {{ $t('projects.addProject') }}
                             </Button>
                         </DialogFooter>
                     </Form>
@@ -381,7 +403,7 @@ function toggleFavorite(project: Project) {
                 />
                 <Input
                     v-model="search"
-                    placeholder="Search projects"
+                    :placeholder="$t('projects.searchPlaceholder')"
                     class="pl-8"
                 />
             </div>
@@ -390,9 +412,15 @@ function toggleFavorite(project: Project) {
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="open">Most open</SelectItem>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="logged">Most logged</SelectItem>
+                    <SelectItem value="open">{{
+                        $t('projects.sortMostOpen')
+                    }}</SelectItem>
+                    <SelectItem value="name">{{
+                        $t('projects.sortName')
+                    }}</SelectItem>
+                    <SelectItem value="logged">{{
+                        $t('projects.sortMostLogged')
+                    }}</SelectItem>
                 </SelectContent>
             </Select>
         </div>
@@ -438,11 +466,11 @@ function toggleFavorite(project: Project) {
                     <span
                         class="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:block"
                     >
-                        {{ project.openCount }} open
+                        {{ $t('projects.openCount', { n: project.openCount }) }}
                     </span>
                     <span
                         class="hidden w-16 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums sm:flex"
-                        :title="`${formatDuration(project.loggedMinutes)} logged`"
+                        :title="`${formatDuration(project.loggedMinutes)} ${$t('time.logged').toLowerCase()}`"
                     >
                         <template v-if="project.loggedMinutes > 0">
                             <Clock class="size-3.5" />
@@ -451,7 +479,7 @@ function toggleFavorite(project: Project) {
                     </span>
                     <span
                         class="hidden w-24 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground md:flex"
-                        :title="`Auto-archives done issues: ${archiveLabel(project.archiveAfterDays).toLowerCase()}`"
+                        :title="`${$t('projects.autoArchive')}: ${archiveLabel(project.archiveAfterDays).toLowerCase()}`"
                     >
                         <Archive class="size-3.5" />
                         {{ archiveLabel(project.archiveAfterDays) }}
@@ -465,7 +493,9 @@ function toggleFavorite(project: Project) {
                             type="button"
                             class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent"
                             :aria-label="
-                                project.isFavorite ? 'Unfavorite' : 'Favorite'
+                                project.isFavorite
+                                    ? $t('projects.unfavorite')
+                                    : $t('projects.favorite')
                             "
                             @click="toggleFavorite(project)"
                         >
@@ -493,7 +523,9 @@ function toggleFavorite(project: Project) {
                                     "
                                 >
                                     <Users class="size-4" />
-                                    <span class="sr-only">Members</span>
+                                    <span class="sr-only">{{
+                                        $t('projects.members')
+                                    }}</span>
                                 </Link>
                             </Button>
                             <EditProjectDialog
@@ -519,8 +551,8 @@ function toggleFavorite(project: Project) {
             >
                 {{
                     projects.length === 0
-                        ? 'No projects yet. Create your first one.'
-                        : `No projects match “${search}”.`
+                        ? $t('projects.empty')
+                        : $t('projects.noMatch', { search })
                 }}
             </p>
         </div>

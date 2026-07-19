@@ -33,13 +33,13 @@ defineProps<{
 
     <div class="grid gap-2">
         <Button class="w-full" as-child>
-            <a :href="ssoRedirect().url">Sign in with Thijssensoftware</a>
+            <a :href="ssoRedirect().url">{{ $t('auth.signInWith') }}</a>
         </Button>
 
         <Button type="button" variant="outline" class="w-full" as-child>
             <Link :href="createLoginCode()">
                 <Mail class="h-4 w-4" />
-                Log in with a code emailed to you
+                {{ $t('auth.logInWithCode') }}
             </Link>
         </Button>
     </div>
@@ -47,7 +47,7 @@ defineProps<{
     <PasskeyVerify />
 
     <div class="mt-4 space-x-1 text-center text-sm text-muted-foreground">
-        <span>New here?</span>
-        <TextLink :href="register()">Create an account</TextLink>
+        <span>{{ $t('auth.newHere') }}</span>
+        <TextLink :href="register()">{{ $t('auth.createAccount') }}</TextLink>
     </div>
 </template>

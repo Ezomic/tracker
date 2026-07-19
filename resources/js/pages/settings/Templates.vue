@@ -35,14 +35,6 @@ const createOpen = ref(false);
 const editing = ref<IssueTemplate | null>(null);
 const deleting = ref<IssueTemplate | null>(null);
 
-const typeLabels: Record<string, string> = { feature: 'Feature', fix: 'Fix' };
-const priorityLabels: Record<string, string> = {
-    low: 'Low',
-    medium: 'Medium',
-    high: 'High',
-    urgent: 'Urgent',
-};
-
 function labelsFor(template: IssueTemplate): IssueLabel[] {
     return props.labels.filter((label) => template.labelIds.includes(label.id));
 }
@@ -62,16 +54,16 @@ function remove() {
 </script>
 
 <template>
-    <Head title="Templates" />
+    <Head :title="$t('templates.title')" />
 
-    <h1 class="sr-only">Templates</h1>
+    <h1 class="sr-only">{{ $t('templates.title') }}</h1>
 
     <div class="flex flex-col space-y-6">
         <div class="flex items-start justify-between gap-4">
             <Heading
                 variant="small"
-                title="Templates"
-                description="Starting points for new issues, shared across every project in this organization"
+                :title="$t('templates.title')"
+                :description="$t('templates.description')"
             />
 
             <Button
@@ -81,7 +73,7 @@ function remove() {
                 @click="createOpen = true"
             >
                 <Plus />
-                New template
+                {{ $t('templates.newTemplate') }}
             </Button>
         </div>
 
@@ -93,10 +85,9 @@ function remove() {
                 <FileText class="size-6 text-muted-foreground" />
             </div>
             <div class="space-y-1">
-                <p class="text-sm font-medium">No templates yet</p>
+                <p class="text-sm font-medium">{{ $t('templates.empty') }}</p>
                 <p class="max-w-sm text-sm text-muted-foreground">
-                    Templates prefill an issue's description and defaults, so
-                    recurring work starts from the same shape every time.
+                    {{ $t('templates.emptyBody') }}
                 </p>
             </div>
         </div>
@@ -117,10 +108,10 @@ function remove() {
                     <div class="flex flex-wrap items-center gap-2">
                         <p class="text-sm font-medium">{{ template.name }}</p>
                         <Badge v-if="template.type" variant="secondary">
-                            {{ typeLabels[template.type] }}
+                            {{ $t(`issueType.${template.type}`) }}
                         </Badge>
                         <Badge v-if="template.priority" variant="secondary">
-                            {{ priorityLabels[template.priority] }}
+                            {{ $t(`priority.${template.priority}`) }}
                         </Badge>
                         <LabelBadge
                             v-for="label in labelsFor(template)"
@@ -143,7 +134,7 @@ function remove() {
                         size="sm"
                         @click="editing = template"
                     >
-                        Edit
+                        {{ $t('common.edit') }}
                     </Button>
                     <Button
                         variant="ghost"
@@ -151,7 +142,7 @@ function remove() {
                         class="text-destructive hover:text-destructive"
                         @click="deleting = template"
                     >
-                        Delete
+                        {{ $t('common.delete') }}
                     </Button>
                 </template>
             </div>
@@ -179,17 +170,22 @@ function remove() {
     >
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Delete template</DialogTitle>
+                <DialogTitle>{{ $t('templates.deleteTemplate') }}</DialogTitle>
                 <DialogDescription>
-                    Delete "{{ deleting?.name }}"? Issues already created from
-                    it are untouched.
+                    {{
+                        $t('templates.deleteConfirm', { name: deleting?.name })
+                    }}
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter class="gap-2">
                 <DialogClose as-child>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{{
+                        $t('common.cancel')
+                    }}</Button>
                 </DialogClose>
-                <Button variant="destructive" @click="remove">Delete</Button>
+                <Button variant="destructive" @click="remove">{{
+                    $t('common.delete')
+                }}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

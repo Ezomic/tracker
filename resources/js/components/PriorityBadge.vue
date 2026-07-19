@@ -5,14 +5,6 @@ import type { Issue } from '@/types';
 const props = defineProps<{
     priority: Issue['priority'];
 }>();
-
-const labels: Record<Issue['priority'], string> = {
-    none: 'No priority',
-    low: 'Low',
-    medium: 'Medium',
-    high: 'High',
-    urgent: 'Urgent',
-};
 </script>
 
 <template>
@@ -24,6 +16,6 @@ const labels: Record<Issue['priority'], string> = {
                 : 'outline'
         "
     >
-        {{ labels[props.priority] }}
+        {{ $t(`priority.${props.priority}`) }}
     </Badge>
 </template>

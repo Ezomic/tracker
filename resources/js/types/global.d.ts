@@ -22,6 +22,7 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            locale: string;
             auth: Auth;
             currentOrganization: OrganizationSummary | null;
             organizations: OrganizationSummary[];

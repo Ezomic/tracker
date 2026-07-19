@@ -19,22 +19,24 @@ import {
     <div class="space-y-6">
         <Heading
             variant="small"
-            title="Delete account"
-            description="Delete your account and all of its resources"
+            :title="$t('profile.deleteAccount')"
+            :description="$t('profile.deleteDescription')"
         />
         <div
             class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10"
         >
             <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
-                <p class="font-medium">Warning</p>
+                <p class="font-medium">{{ $t('profile.warning') }}</p>
                 <p class="text-sm">
-                    Please proceed with caution, this cannot be undone.
+                    {{ $t('profile.caution') }}
                 </p>
             </div>
             <Dialog>
                 <DialogTrigger as-child>
-                    <Button variant="destructive" data-test="delete-user-button"
-                        >Delete account</Button
+                    <Button
+                        variant="destructive"
+                        data-test="delete-user-button"
+                        >{{ $t('profile.deleteAccount') }}</Button
                     >
                 </DialogTrigger>
                 <DialogContent>
@@ -47,14 +49,11 @@ import {
                         v-slot="{ processing, reset, clearErrors }"
                     >
                         <DialogHeader class="space-y-3">
-                            <DialogTitle
-                                >Are you sure you want to delete your
-                                account?</DialogTitle
-                            >
+                            <DialogTitle>{{
+                                $t('profile.deleteConfirmTitle')
+                            }}</DialogTitle>
                             <DialogDescription>
-                                Once your account is deleted, all of its
-                                resources and data will be permanently deleted.
-                                This action cannot be undone.
+                                {{ $t('profile.deleteConfirmBody') }}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -69,7 +68,7 @@ import {
                                         }
                                     "
                                 >
-                                    Cancel
+                                    {{ $t('common.cancel') }}
                                 </Button>
                             </DialogClose>
 
@@ -79,7 +78,7 @@ import {
                                 :disabled="processing"
                                 data-test="confirm-delete-user-button"
                             >
-                                Delete account
+                                {{ $t('profile.deleteAccount') }}
                             </Button>
                         </DialogFooter>
                     </Form>
