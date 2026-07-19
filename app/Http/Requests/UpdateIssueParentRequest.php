@@ -38,8 +38,10 @@ class UpdateIssueParentRequest extends FormRequest
         $issue = $this->route('issue');
 
         return [
+            'title' => ['sometimes', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string'],
             'parent' => [
-                'present',
+                'sometimes',
                 'nullable',
                 'string',
                 Rule::exists('issues', 'identifier')->where('parent_id', null),
