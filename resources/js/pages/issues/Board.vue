@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import PriorityBars from '@/components/PriorityBars.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -52,14 +53,6 @@ const columns: { status: Issue['status']; dot: string; accent: string }[] = [
     { status: 'in_review', dot: 'bg-sky-500', accent: 'bg-sky-500' },
     { status: 'done', dot: 'bg-emerald-500', accent: 'bg-emerald-500' },
 ];
-
-const priorityEdge: Record<Issue['priority'], string> = {
-    none: 'bg-transparent',
-    low: 'bg-sky-400',
-    medium: 'bg-amber-400',
-    high: 'bg-orange-500',
-    urgent: 'bg-red-500',
-};
 
 const issuesByStatus = computed(() => {
     const grouped = new Map<Issue['status'], Issue[]>();
@@ -177,7 +170,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                         :key="issue.identifier"
                         :href="show({ issue: issue.identifier })"
                         draggable="true"
-                        class="group relative flex cursor-grab flex-col gap-2 overflow-hidden rounded-lg border bg-card p-3 pl-3.5 text-sm shadow-xs transition-all hover:-translate-y-px hover:shadow-md active:cursor-grabbing"
+                        class="group flex cursor-grab flex-col gap-2 overflow-hidden rounded-lg border bg-card p-3 text-sm shadow-xs transition-all hover:-translate-y-px hover:shadow-md active:cursor-grabbing"
                         :class="[
                             draggingId === issue.identifier
                                 ? 'border-primary opacity-60'
@@ -187,13 +180,8 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                         @dragstart="onDragStart($event, issue)"
                         @dragend="onDragEnd"
                     >
-                        <span
-                            class="absolute inset-y-0 left-0 w-1"
-                            :class="priorityEdge[issue.priority]"
-                            :title="$t(`priority.${issue.priority}`)"
-                        />
-
                         <div class="flex items-center gap-2">
+                            <PriorityBars :priority="issue.priority" />
                             <span
                                 class="font-mono text-xs text-muted-foreground"
                             >
