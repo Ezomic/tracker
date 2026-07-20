@@ -111,6 +111,40 @@ function describeActivity(
             return t('activity.timeLogged', {
                 duration: formatDuration(Number(data.minutes)),
             });
+        case 'time_confirmed':
+            return t('activity.timeConfirmed', {
+                duration: formatDuration(Number(data.minutes)),
+            });
+        case 'priority_changed':
+            return t('activity.priorityTo', {
+                priority: t(`priority.${data.to}`),
+            });
+        case 'type_changed':
+            return t('activity.typeTo', {
+                type: t(`issueType.${data.to}`),
+            });
+        case 'estimate_changed':
+            return data.to
+                ? t('activity.estimateTo', {
+                      duration: formatDuration(Number(data.to)),
+                  })
+                : t('activity.estimateCleared');
+        case 'renamed':
+            return t('activity.renamed', { title: data.to });
+        case 'description_edited':
+            return t('activity.descriptionEdited');
+        case 'parent_changed':
+            return data.to
+                ? t('activity.parentSet', { parent: data.to })
+                : t('activity.parentCleared');
+        case 'label_added':
+            return t('activity.labelAdded', { name: data.name });
+        case 'label_removed':
+            return t('activity.labelRemoved', { name: data.name });
+        case 'pr_opened':
+            return t('activity.prOpened');
+        case 'pr_merged':
+            return t('activity.prMerged');
         default:
             return item.type.replace(/_/g, ' ');
     }

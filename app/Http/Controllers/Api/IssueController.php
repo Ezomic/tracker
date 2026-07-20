@@ -158,7 +158,7 @@ class IssueController extends Controller
         // alone here, unlike the web endpoint where the whole form is submitted
         // and an omission means "none" — a partial patch must stay partial.
         if ($request->has('labels')) {
-            $issue->labels()->sync($this->resolveLabelIds($issue->project, $request->validated('labels', [])));
+            $issue->syncLabelsWithActivity($this->resolveLabelIds($issue->project, $request->validated('labels', [])));
         }
 
         return response()->json(

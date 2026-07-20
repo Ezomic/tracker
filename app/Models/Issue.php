@@ -103,6 +103,38 @@ class Issue extends Model
     }
 
     /**
+     * Sync labels while recording a label_added / label_removed timeline event
+     * for each change. Used by the update paths; plain sync() stays for creation.
+     *
+     * @param  array<int, int>  $ids
+     */
+    public function syncLabelsWithActivity(array $ids): void
+    {
+        $before = $this->labels()->pluck('labels.id')->all();
+        $this->labels()->sync($ids);
+        $after = $this->labels()->pluck('labels.id')->all();
+
+        $added = array_diff($after, $before);
+        $removed = array_diff($before, $after);
+
+        if ($added === [] && $removed === []) {
+            return;
+        }
+
+        $names = Label::query()
+            ->whereIn('id', array_merge($added, $removed))
+            ->pluck('name', 'id');
+
+        foreach ($added as $id) {
+            $this->recordActivity('label_added', ['name' => $names[$id] ?? null]);
+        }
+
+        foreach ($removed as $id) {
+            $this->recordActivity('label_removed', ['name' => $names[$id] ?? null]);
+        }
+    }
+
+    /**
      * @return HasMany<TimeEntry, $this>
      */
     public function timeEntries(): HasMany
@@ -146,6 +178,35 @@ class Issue extends Model
             'type' => $type,
             'data' => $data === [] ? null : $data,
         ]);
+    }
+
+    /**
+     * Record a timeline event that folds repeated edits by the same user within
+     * a short window into a single entry. The detail page autosaves free-text
+     * fields on a debounce, so title/description edits would otherwise flood the
+     * timeline with one row per save.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function recordActivityCollapsing(string $type, array $data = [], int $windowMinutes = 10): void
+    {
+        $recent = $this->activities()
+            ->where('type', $type)
+            ->where('user_id', auth()->id())
+            ->where('created_at', '>=', now()->subMinutes($windowMinutes))
+            ->latest('created_at')
+            ->first();
+
+        if ($recent !== null) {
+            $recent->forceFill([
+                'data' => $data === [] ? null : $data,
+                'created_at' => now(),
+            ])->save();
+
+            return;
+        }
+
+        $this->recordActivity($type, $data);
     }
 
     public function getRouteKeyName(): string
