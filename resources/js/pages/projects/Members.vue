@@ -26,6 +26,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { getInitials } from '@/composables/useInitials';
 import { index as projectsIndex } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/projects/members';
 import type { AssignableMember, ProjectLevel, ProjectMember } from '@/types';
@@ -51,15 +52,6 @@ const addError = ref<string | null>(null);
 const removing = ref<ProjectMember | null>(null);
 
 const hasAssignable = computed(() => props.assignable.length > 0);
-
-function initials(name: string): string {
-    return name
-        .split(' ')
-        .map((part) => part[0] ?? '')
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
-}
 
 function add() {
     if (addUserId.value === '') {
@@ -235,7 +227,7 @@ const canManageMember = (member: ProjectMember) =>
             >
                 <Avatar class="size-8 shrink-0">
                     <AvatarFallback class="text-xs">
-                        {{ initials(member.name) }}
+                        {{ getInitials(member.name) }}
                     </AvatarFallback>
                 </Avatar>
                 <div class="min-w-0 flex-1">
