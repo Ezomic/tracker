@@ -37,7 +37,7 @@
         <meta name="description" content="Your issues. Your server. Self-hosted issue tracking with projects, boards and a keyboard-first command palette.">
 
         <meta property="og:type" content="website">
-        <meta property="og:site_name" content="tracker">
+        <meta property="og:site_name" content="Tracker">
         <meta property="og:title" content="tracker — self-hosted issue tracking">
         <meta property="og:description" content="Your issues. Your server. Projects, boards and a keyboard-first command palette.">
         <meta property="og:url" content="{{ url()->current() }}">
