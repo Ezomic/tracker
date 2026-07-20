@@ -34,6 +34,22 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        <meta name="description" content="Your issues. Your server. Self-hosted issue tracking with projects, boards and a keyboard-first command palette.">
+
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Tracker">
+        <meta property="og:title" content="tracker — self-hosted issue tracking">
+        <meta property="og:description" content="Your issues. Your server. Projects, boards and a keyboard-first command palette.">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:image" content="{{ url('/og-image.png') }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="tracker — self-hosted issue tracking">
+        <meta name="twitter:description" content="Your issues. Your server. Projects, boards and a keyboard-first command palette.">
+        <meta name="twitter:image" content="{{ url('/og-image.png') }}">
+
         @fonts
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
