@@ -6,6 +6,7 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
 use App\Enums\ProjectLevel;
 use App\Models\Comment;
+use App\Models\Issue;
 use App\Models\Label;
 use App\Models\Project;
 
@@ -13,7 +14,7 @@ use App\Models\Project;
  * @param  array<string, mixed>  $overrides
  * @return array<string, mixed>
  */
-function updatePayload(App\Models\Issue $issue, array $overrides = []): array
+function updatePayload(Issue $issue, array $overrides = []): array
 {
     return array_merge([
         'title' => $issue->title,
