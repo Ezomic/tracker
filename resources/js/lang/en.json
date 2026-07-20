@@ -128,6 +128,14 @@
         "emptyColumn": "No issues",
         "noProject": "No project"
     },
+    "savedViews": {
+        "label": "Views",
+        "empty": "No saved views yet.",
+        "save": "Save current filters…",
+        "saveTitle": "Save this view",
+        "namePlaceholder": "View name",
+        "delete": "Delete view"
+    },
     "list": {
         "title": "Tickets",
         "project": "Project",

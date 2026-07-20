@@ -20,6 +20,7 @@ use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
+use App\Models\SavedView;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\CurrentOrganization;
@@ -77,6 +78,13 @@ class IssueController extends Controller
             'epics' => $this->eligibleParents($user),
             'labels' => Label::query()->forOrganization($organization)->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => $filters,
+            'savedViews' => SavedView::query()
+                ->where('user_id', $user->id)
+                ->where(fn (Builder $query) => $query
+                    ->whereNull('project_id')
+                    ->when($project, fn (Builder $q) => $q->orWhere('project_id', $project->id)))
+                ->orderBy('name')
+                ->get(['id', 'name', 'project_id', 'criteria']),
         ]);
     }
 
