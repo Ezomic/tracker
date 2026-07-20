@@ -498,7 +498,9 @@
         "f6Body": "Branches and PRs it names for you flow back onto the ticket timeline automatically.",
         "bandLine1": "It runs on your box.",
         "bandLine2": "The data never leaves.",
-        "bandBody": "One SQLite file, one droplet, one deploy script. No seats, no per-user pricing, no third party holding your backlog."
+        "bandBody": "One SQLite file, one droplet, one deploy script. No seats, no per-user pricing, no third party holding your backlog.",
+        "footerSuite": "One of the connected Thijssen Software workflow apps.",
+        "footerSuiteLink": "One sign-in for all of them →"
     },
     "priority": {
         "none": "No priority",

@@ -498,7 +498,9 @@
         "f6Body": "Branches en PR’s die hij voor je benoemt komen automatisch terug op de tickettijdlijn.",
         "bandLine1": "Hij draait op jouw server.",
         "bandLine2": "De data verlaat hem nooit.",
-        "bandBody": "Eén SQLite-bestand, één droplet, één deploy-script. Geen seats, geen prijs per gebruiker, geen derde partij die jouw backlog beheert."
+        "bandBody": "Eén SQLite-bestand, één droplet, één deploy-script. Geen seats, geen prijs per gebruiker, geen derde partij die jouw backlog beheert.",
+        "footerSuite": "Eén van de verbonden Thijssen Software workflow-apps.",
+        "footerSuiteLink": "Eén keer inloggen voor allemaal →"
     },
     "priority": {
         "none": "Geen prioriteit",
