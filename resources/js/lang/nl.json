@@ -181,7 +181,10 @@
         "pullRequest": "Pull request",
         "archiveTitle": "{identifier} archiveren",
         "archiveDialogBody": "Archiveren verbergt het ticket van het bord en de lijsten. Voeg een reden toe zodat later duidelijk is waarom. Je kunt het altijd terugzetten.",
-        "optional": "(optioneel)"
+        "optional": "(optioneel)",
+        "addEstimate": "Schatting toevoegen",
+        "addLabel": "Label toevoegen",
+        "saving": "Opslaan…"
     },
     "newIssue": {
         "title": "Nieuw ticket",
