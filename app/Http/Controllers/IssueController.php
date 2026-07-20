@@ -184,7 +184,7 @@ class IssueController extends Controller
         $this->authorize('update', $issue);
 
         $issue->update($request->safe()->except(['labels', 'estimate']));
-        $issue->labels()->sync($request->validated('labels', []));
+        $issue->syncLabelsWithActivity($request->validated('labels', []));
 
         if ($request->has('estimate')) {
             $issue->forceFill(['estimate_minutes' => Duration::toMinutes($request->validated('estimate'))])->save();

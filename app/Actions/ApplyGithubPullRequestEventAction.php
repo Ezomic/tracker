@@ -37,6 +37,8 @@ class ApplyGithubPullRequestEventAction
                 'github_pr_url' => $prUrl,
             ])->save();
 
+            $issue->recordActivity('pr_opened', ['url' => $prUrl]);
+
             return;
         }
 
@@ -46,6 +48,8 @@ class ApplyGithubPullRequestEventAction
                 'closed_at' => now(),
                 'github_pr_url' => $prUrl,
             ])->save();
+
+            $issue->recordActivity('pr_merged', ['url' => $prUrl]);
         }
     }
 
