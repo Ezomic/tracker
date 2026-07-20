@@ -73,6 +73,7 @@ export interface Issue {
     archivedAt: string | null;
     archiveReason: string | null;
     childrenCount: number;
+    childrenDoneCount: number;
     parent: {
         id: number;
         identifier: string;
