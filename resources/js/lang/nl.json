@@ -465,6 +465,7 @@
         "groupActions": "Acties",
         "groupGoTo": "Ga naar",
         "groupProjects": "Projecten",
+        "groupIssues": "Tickets",
         "createIssue": "Ticket aanmaken",
         "allIssues": "Alle tickets",
         "board": "Bord",

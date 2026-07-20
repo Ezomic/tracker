@@ -465,6 +465,7 @@
         "groupActions": "Actions",
         "groupGoTo": "Go to",
         "groupProjects": "Projects",
+        "groupIssues": "Issues",
         "createIssue": "Create issue",
         "allIssues": "All issues",
         "board": "Board",
