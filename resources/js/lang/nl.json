@@ -184,7 +184,8 @@
         "optional": "(optioneel)",
         "addEstimate": "Schatting toevoegen",
         "addLabel": "Label toevoegen",
-        "saving": "Opslaan…"
+        "saving": "Opslaan…",
+        "legacyLayout": "Oude indeling"
     },
     "newIssue": {
         "title": "Nieuw ticket",

@@ -184,7 +184,8 @@
         "optional": "(optional)",
         "addEstimate": "Add estimate",
         "addLabel": "Add label",
-        "saving": "Saving…"
+        "saving": "Saving…",
+        "legacyLayout": "Legacy layout"
     },
     "newIssue": {
         "title": "New issue",
