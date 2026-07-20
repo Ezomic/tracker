@@ -10,7 +10,7 @@ use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIssueRequest;
-use App\Http\Requests\UpdateIssueParentRequest;
+use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
@@ -117,7 +117,7 @@ class IssueController extends Controller
             ->first();
     }
 
-    public function update(UpdateIssueParentRequest $request, Issue $issue): JsonResponse
+    public function update(UpdateIssueApiRequest $request, Issue $issue): JsonResponse
     {
         $this->authorize('update', $issue);
 
