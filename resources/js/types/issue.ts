@@ -120,6 +120,19 @@ export interface SavedView {
     criteria: Partial<IssueFilters>;
 }
 
+export interface AppNotification {
+    id: string;
+    read: boolean;
+    createdAt: string | null;
+    data: {
+        type: 'issue_assigned' | 'comment_mention' | 'issue_commented';
+        issueIdentifier: string;
+        issueTitle: string;
+        actorName: string;
+        excerpt: string | null;
+    };
+}
+
 export interface IssueTemplate {
     id: number;
     name: string;

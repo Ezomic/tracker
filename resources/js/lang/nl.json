@@ -136,6 +136,18 @@
         "namePlaceholder": "Naam van de weergave",
         "delete": "Weergave verwijderen"
     },
+    "notifications": {
+        "label": "Meldingen",
+        "title": "Meldingen",
+        "empty": "Je bent helemaal bij.",
+        "markAllRead": "Alles gelezen",
+        "assigned": "{actor} wees je {identifier} toe",
+        "mentioned": "{actor} noemde je in {identifier}",
+        "commented": "{actor} reageerde op {identifier}",
+        "justNow": "zojuist",
+        "minutesAgo": "{count} min geleden",
+        "hoursAgo": "{count} u geleden"
+    },
     "list": {
         "title": "Tickets",
         "project": "Project",
