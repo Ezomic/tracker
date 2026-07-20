@@ -181,7 +181,10 @@
         "pullRequest": "Pull request",
         "archiveTitle": "Archive {identifier}",
         "archiveDialogBody": "Archiving hides the issue from the board and lists. Add a reason so it's clear why later. You can unarchive it any time.",
-        "optional": "(optional)"
+        "optional": "(optional)",
+        "addEstimate": "Add estimate",
+        "addLabel": "Add label",
+        "saving": "Saving…"
     },
     "newIssue": {
         "title": "New issue",
