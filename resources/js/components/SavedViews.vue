@@ -96,7 +96,9 @@ function remove(view: SavedView) {
                     @select="apply(view)"
                 >
                     <span class="flex items-center gap-2 truncate">
-                        <Check class="size-3.5 shrink-0 text-muted-foreground" />
+                        <Check
+                            class="size-3.5 shrink-0 text-muted-foreground"
+                        />
                         <span class="truncate">{{ view.name }}</span>
                     </span>
                     <button
@@ -110,10 +112,7 @@ function remove(view: SavedView) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
             </template>
-            <p
-                v-else
-                class="px-2 py-1.5 text-xs text-muted-foreground"
-            >
+            <p v-else class="px-2 py-1.5 text-xs text-muted-foreground">
                 {{ t('savedViews.empty') }}
             </p>
 
