@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { getInitials } from '@/composables/useInitials';
 import { formatDuration } from '@/lib/duration';
 import { board, show, updateStatus } from '@/routes/issues';
 import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
@@ -82,15 +83,6 @@ function hasMeta(issue: Issue): boolean {
         issue.estimateMinutes !== null ||
         issue.childrenCount > 0
     );
-}
-
-function initials(name: string): string {
-    return name
-        .split(' ')
-        .map((part) => part[0] ?? '')
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
 }
 
 const draggingId = ref<string | null>(null);
@@ -257,7 +249,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                                 :title="issue.assignee.name"
                             >
                                 <AvatarFallback class="text-[10px]">
-                                    {{ initials(issue.assignee.name) }}
+                                    {{ getInitials(issue.assignee.name) }}
                                 </AvatarFallback>
                             </Avatar>
 

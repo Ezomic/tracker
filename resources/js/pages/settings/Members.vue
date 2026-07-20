@@ -26,6 +26,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { getInitials } from '@/composables/useInitials';
 import {
     destroy as revokeInvitation,
     resend as resendInvitation,
@@ -64,15 +65,6 @@ const inviteErrors = ref<Record<string, string>>({});
 const removing = ref<OrganizationMember | null>(null);
 
 const hasProject = computed(() => inviteProjectId.value !== '');
-
-function initials(name: string): string {
-    return name
-        .split(' ')
-        .map((part) => part[0] ?? '')
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
-}
 
 function formatExpiry(iso: string): string {
     return new Date(iso).toLocaleDateString(undefined, {
@@ -296,7 +288,7 @@ function remove() {
             >
                 <Avatar class="size-8 shrink-0">
                     <AvatarFallback class="text-xs">
-                        {{ initials(member.name) }}
+                        {{ getInitials(member.name) }}
                     </AvatarFallback>
                 </Avatar>
                 <div class="min-w-0 flex-1">
