@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Check, ChevronDown, Flag } from '@lucide/vue';
+import { Check, ChevronDown } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PriorityBars from '@/components/PriorityBars.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -89,14 +90,7 @@ const pill =
 
         <DropdownMenu>
             <DropdownMenuTrigger :class="pill">
-                <Flag
-                    class="size-3"
-                    :class="
-                        priority === 'urgent' || priority === 'high'
-                            ? 'text-destructive'
-                            : 'text-muted-foreground'
-                    "
-                />
+                <PriorityBars :priority="priority" />
                 {{ t(`priority.${priority}`) }}
                 <ChevronDown class="size-3 text-muted-foreground" />
             </DropdownMenuTrigger>
@@ -106,6 +100,7 @@ const pill =
                     :key="option"
                     @select="priority = option"
                 >
+                    <PriorityBars :priority="option" />
                     {{ t(`priority.${option}`) }}
                     <Check
                         v-if="option === priority"
