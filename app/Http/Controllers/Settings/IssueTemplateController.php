@@ -29,6 +29,7 @@ class IssueTemplateController extends Controller
         return Inertia::render('settings/Templates', [
             'templates' => $this->serializeMany($organization->issueTemplates()->with('labels')->orderBy('name')->get()),
             'labels' => Label::query()->forOrganization($organization)->orderBy('name')->get(['id', 'name', 'color']),
+            'projects' => $organization->projects()->orderBy('key')->get(['id', 'key', 'name']),
             'canManage' => $request->user()->can('update', $organization),
         ]);
     }
@@ -99,6 +100,9 @@ class IssueTemplateController extends Controller
             'type' => $template->type?->value,
             'priority' => $template->priority?->value,
             'labelIds' => $template->labels->pluck('id')->all(),
+            'cadence' => $template->cadence->value,
+            'nextRunAt' => $template->next_run_at?->toIso8601String(),
+            'targetProjectId' => $template->target_project_id,
         ])->all());
     }
 

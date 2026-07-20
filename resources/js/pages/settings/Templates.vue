@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { FileText, Plus } from '@lucide/vue';
+import { FileText, Plus, Repeat } from '@lucide/vue';
 import { ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import IssueTemplateDialog from '@/components/IssueTemplateDialog.vue';
@@ -17,11 +17,12 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { destroy as destroyTemplate, index } from '@/routes/templates';
-import type { IssueLabel, IssueTemplate } from '@/types';
+import type { IssueLabel, IssueTemplate, Project } from '@/types';
 
 const props = defineProps<{
     templates: IssueTemplate[];
     labels: IssueLabel[];
+    projects: Pick<Project, 'id' | 'key' | 'name'>[];
     canManage: boolean;
 }>();
 
@@ -113,6 +114,22 @@ function remove() {
                         <Badge v-if="template.priority" variant="secondary">
                             {{ $t(`priority.${template.priority}`) }}
                         </Badge>
+                        <Badge
+                            v-if="template.cadence !== 'none'"
+                            variant="outline"
+                            class="gap-1"
+                        >
+                            <Repeat class="size-3" />
+                            {{
+                                $t(
+                                    'templates.repeat' +
+                                        template.cadence
+                                            .charAt(0)
+                                            .toUpperCase() +
+                                        template.cadence.slice(1),
+                                )
+                            }}
+                        </Badge>
                         <LabelBadge
                             v-for="label in labelsFor(template)"
                             :key="label.id"
@@ -153,6 +170,7 @@ function remove() {
         v-if="canManage"
         v-model:open="createOpen"
         :labels="labels"
+        :projects="projects"
     />
 
     <IssueTemplateDialog
@@ -160,6 +178,7 @@ function remove() {
         :key="editing.id"
         :open="true"
         :labels="labels"
+        :projects="projects"
         :template="editing"
         @update:open="(value) => !value && (editing = null)"
     />

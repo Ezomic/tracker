@@ -10,8 +10,10 @@ Artisan::command('inspire', function () {
 
 $backup = Schedule::command('backup:database')->daily();
 $archive = Schedule::command('issues:archive-done')->hourly();
+$recurring = Schedule::command('issues:spawn-recurring')->hourly();
 
 if ($adminEmail = config('tracker.admin_email')) {
     $backup->emailOutputOnFailure($adminEmail);
     $archive->emailOutputOnFailure($adminEmail);
+    $recurring->emailOutputOnFailure($adminEmail);
 }

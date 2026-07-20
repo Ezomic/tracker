@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Cadence;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
+use Carbon\CarbonImmutable;
 use Database\Factories\IssueTemplateFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,8 +22,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $description
  * @property IssueType|null $type
  * @property IssuePriority|null $priority
+ * @property Cadence $cadence
+ * @property CarbonImmutable|null $next_run_at
+ * @property int|null $target_project_id
  */
-#[Fillable(['name', 'description', 'type', 'priority'])]
+#[Fillable(['name', 'description', 'type', 'priority', 'cadence', 'next_run_at', 'target_project_id'])]
 class IssueTemplate extends Model
 {
     /** @use HasFactory<IssueTemplateFactory> */
@@ -46,6 +51,16 @@ class IssueTemplate extends Model
     }
 
     /**
+     * The project recurring issues are filed into.
+     *
+     * @return BelongsTo<Project, $this>
+     */
+    public function targetProject(): BelongsTo
+    {
+        return $this->belongsTo(Project::class, 'target_project_id');
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -53,6 +68,8 @@ class IssueTemplate extends Model
         return [
             'type' => IssueType::class,
             'priority' => IssuePriority::class,
+            'cadence' => Cadence::class,
+            'next_run_at' => 'immutable_datetime',
         ];
     }
 }

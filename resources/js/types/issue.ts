@@ -133,6 +133,8 @@ export interface AppNotification {
     };
 }
 
+export type Cadence = 'none' | 'daily' | 'weekly' | 'monthly';
+
 export interface IssueTemplate {
     id: number;
     name: string;
@@ -140,4 +142,7 @@ export interface IssueTemplate {
     type: Issue['type'] | null;
     priority: Issue['priority'] | null;
     labelIds: number[];
+    cadence: Cadence;
+    nextRunAt: string | null;
+    targetProjectId: number | null;
 }
