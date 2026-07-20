@@ -208,9 +208,9 @@ class IssueController extends Controller
                 ->visibleTo($request->user())
                 ->inOrganization($current->for($request->user()))
                 ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
-                ->withCount('children')
+                ->withCount(['children', 'children as children_done_count' => fn (Builder $children) => $children->where('status', IssueStatus::Done)])
                 ->withSum('timeEntries', 'minutes')
-                ->with(['project', 'labels', 'assignee'])
+                ->with(['project', 'labels', 'assignee', 'parent'])
                 ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
                 ->latest()
                 ->get()
@@ -369,6 +369,7 @@ class IssueController extends Controller
             'archiveReason' => $issue->archive_reason,
             'childrenCount' => $issue->children_count
                 ?? ($issue->relationLoaded('children') ? $issue->children->count() : 0),
+            'childrenDoneCount' => (int) ($issue->getAttribute('children_done_count') ?? 0),
             'parent' => $issue->relationLoaded('parent') && $issue->parent !== null ? [
                 'id' => $issue->parent->id,
                 'identifier' => $issue->parent->identifier,
