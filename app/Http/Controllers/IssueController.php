@@ -25,6 +25,7 @@ use App\Models\User;
 use App\Services\CurrentOrganization;
 use App\Support\Duration;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -77,6 +78,43 @@ class IssueController extends Controller
             'labels' => Label::query()->forOrganization($organization)->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => $filters,
         ]);
+    }
+
+    public function search(Request $request, CurrentOrganization $current): JsonResponse
+    {
+        $user = $request->user();
+        $term = trim((string) $request->query('q', ''));
+
+        if ($term === '') {
+            return response()->json([]);
+        }
+
+        $like = '%'.addcslashes($term, '%_\\').'%';
+
+        $issues = Issue::query()
+            ->visibleTo($user)
+            ->inOrganization($current->for($user))
+            ->with('project:id,key')
+            ->where(function (Builder $query) use ($like): void {
+                $query->where('identifier', 'like', $like)
+                    ->orWhere('title', 'like', $like)
+                    ->orWhere('description', 'like', $like);
+            })
+            ->orderByRaw('CASE WHEN identifier = ? THEN 0 WHEN identifier like ? THEN 1 ELSE 2 END', [
+                mb_strtoupper($term),
+                mb_strtoupper($term).'%',
+            ])
+            ->latest('updated_at')
+            ->limit(15)
+            ->get(['id', 'identifier', 'title', 'status', 'archived_at', 'project_id']);
+
+        return response()->json($issues->map(fn (Issue $issue): array => [
+            'identifier' => $issue->identifier,
+            'title' => $issue->title,
+            'status' => $issue->status->value,
+            'projectKey' => $issue->project->key,
+            'archived' => $issue->archived_at !== null,
+        ])->all());
     }
 
     public function store(StoreIssueWebRequest $request, CreateIssueAction $action): RedirectResponse

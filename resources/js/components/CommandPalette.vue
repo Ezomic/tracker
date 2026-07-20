@@ -2,13 +2,19 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { Kanban, LayoutGrid, Plus, Search, Ticket } from '@lucide/vue';
 import type { LucideIcon } from '@lucide/vue';
+import { useDebounceFn } from '@vueuse/core';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
-import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
+import {
+    board as issuesBoard,
+    index as issuesIndex,
+    search as searchIssues,
+    show as showIssue,
+} from '@/routes/issues';
 import type { SidebarProject } from '@/types';
 
 type Command = {
@@ -18,6 +24,14 @@ type Command = {
     href: string;
     icon?: LucideIcon | Component;
     dot?: string;
+};
+
+type IssueResult = {
+    identifier: string;
+    title: string;
+    status: string;
+    projectKey: string;
+    archived: boolean;
 };
 
 const { open, close, toggle } = useCommandPalette();
@@ -30,6 +44,36 @@ const projects = computed<SidebarProject[]>(
 const query = ref('');
 const selected = ref(0);
 const inputEl = ref<HTMLInputElement | null>(null);
+const issueResults = ref<IssueResult[]>([]);
+
+const runSearch = useDebounceFn(async (term: string) => {
+    if (term === '') {
+        issueResults.value = [];
+
+        return;
+    }
+
+    try {
+        const response = await fetch(searchIssues({ query: { q: term } }).url, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        issueResults.value = response.ok ? await response.json() : [];
+    } catch {
+        issueResults.value = [];
+    }
+}, 200);
+
+const issueCommands = computed<Command[]>(() =>
+    issueResults.value.map((issue) => ({
+        group: t('commandPalette.groupIssues'),
+        label: issue.identifier,
+        hint: issue.title,
+        href: showIssue(issue.identifier).url,
+        icon: Ticket,
+    })),
+);
 
 const commands = computed<Command[]>(() => {
     const base: Command[] = [
@@ -86,11 +130,13 @@ const filtered = computed(() => {
         return commands.value;
     }
 
-    return commands.value.filter(
+    const staticMatches = commands.value.filter(
         (command) =>
             command.label.toLowerCase().includes(q) ||
             command.hint?.toLowerCase().includes(q),
     );
+
+    return [...issueCommands.value, ...staticMatches];
 });
 
 const groupedFiltered = computed(() => {
@@ -113,14 +159,16 @@ function indexOf(command: Command): number {
     return filtered.value.indexOf(command);
 }
 
-watch(query, () => {
+watch(query, (value) => {
     selected.value = 0;
+    runSearch(value.trim());
 });
 
 watch(open, (isOpen) => {
     if (isOpen) {
         query.value = '';
         selected.value = 0;
+        issueResults.value = [];
         nextTick(() => inputEl.value?.focus());
     }
 });
