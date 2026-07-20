@@ -8,6 +8,7 @@ import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import NewIssueDialog from '@/components/NewIssueDialog.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
+import SavedViews from '@/components/SavedViews.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ import type {
     IssueFilters,
     IssueLabel,
     Project,
+    SavedView,
 } from '@/types';
 
 const props = defineProps<{
@@ -33,6 +35,7 @@ const props = defineProps<{
     epics: EpicOption[];
     labels: IssueLabel[];
     filters: IssueFilters;
+    savedViews: SavedView[];
 }>();
 
 defineOptions({
@@ -113,6 +116,49 @@ const hasActiveFilters = computed(
         priority.value !== 'all' ||
         labelId.value !== 'all',
 );
+
+const currentCriteria = computed<Partial<IssueFilters>>(() => {
+    const criteria: Partial<IssueFilters> = {};
+
+    if (search.value) {
+        criteria.search = search.value;
+    }
+
+    if (!isScoped.value && projectId.value !== 'all') {
+        criteria.project_id = Number(projectId.value);
+    }
+
+    if (status.value !== 'all') {
+        criteria.status = status.value as Issue['status'];
+    }
+
+    if (type.value !== 'all') {
+        criteria.type = type.value as Issue['type'];
+    }
+
+    if (priority.value !== 'all') {
+        criteria.priority = priority.value as Issue['priority'];
+    }
+
+    if (labelId.value !== 'all') {
+        criteria.label_id = Number(labelId.value);
+    }
+
+    return criteria;
+});
+
+const scopeProjectId = computed(() =>
+    isScoped.value && scopedProject.value ? scopedProject.value.id : null,
+);
+
+function applyView(criteria: Partial<IssueFilters>) {
+    search.value = criteria.search ?? '';
+    projectId.value = criteria.project_id ? String(criteria.project_id) : 'all';
+    status.value = criteria.status ?? 'all';
+    type.value = criteria.type ?? 'all';
+    priority.value = criteria.priority ?? 'all';
+    labelId.value = criteria.label_id ? String(criteria.label_id) : 'all';
+}
 
 const priorityDot: Record<Issue['priority'], string> = {
     none: 'border border-muted-foreground/40',
@@ -296,6 +342,15 @@ const createOpen = ref(false);
             >
                 {{ $t('list.clear') }}
             </Button>
+
+            <SavedViews
+                class="ml-auto"
+                :views="savedViews"
+                :criteria="currentCriteria"
+                :project-id="scopeProjectId"
+                :can-save="hasActiveFilters"
+                @apply="applyView"
+            />
         </div>
 
         <div

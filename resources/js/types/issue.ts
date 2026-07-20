@@ -113,6 +113,13 @@ export interface IssueFilters {
     label_id: number | null;
 }
 
+export interface SavedView {
+    id: number;
+    name: string;
+    project_id: number | null;
+    criteria: Partial<IssueFilters>;
+}
+
 export interface IssueTemplate {
     id: number;
     name: string;

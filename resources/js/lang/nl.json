@@ -128,6 +128,14 @@
         "emptyColumn": "Geen tickets",
         "noProject": "Geen project"
     },
+    "savedViews": {
+        "label": "Weergaven",
+        "empty": "Nog geen opgeslagen weergaven.",
+        "save": "Huidige filters opslaan…",
+        "saveTitle": "Deze weergave opslaan",
+        "namePlaceholder": "Naam van de weergave",
+        "delete": "Weergave verwijderen"
+    },
     "list": {
         "title": "Tickets",
         "project": "Project",

@@ -7,6 +7,7 @@ use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
+use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\TimeEntryController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('issues/{issue:identifier}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
     Route::delete('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'destroy'])->name('issues.comments.destroy');
+
+    Route::post('saved-views', [SavedViewController::class, 'store'])->name('saved-views.store');
+    Route::delete('saved-views/{savedView}', [SavedViewController::class, 'destroy'])->name('saved-views.destroy');
 
     // Project-scoped views. The uppercase-key constraint keeps these from shadowing
     // lowercase paths like /issues, /dashboard, or /settings.
