@@ -112,6 +112,17 @@ class HandleInertiaRequests extends Middleware
                     ])
                 : [],
             'currentProjectId' => fn () => $this->currentProjectId($request),
+            'notifications' => fn () => $request->user()
+                ? $request->user()->notifications()->latest()->limit(15)->get()->map(fn ($notification) => [
+                    'id' => $notification->id,
+                    'data' => $notification->data,
+                    'read' => $notification->read_at !== null,
+                    'createdAt' => $notification->created_at?->toIso8601String(),
+                ])
+                : [],
+            'unreadNotificationsCount' => fn () => $request->user()
+                ? $request->user()->unreadNotifications()->count()
+                : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

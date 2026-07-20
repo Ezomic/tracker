@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\Issue;
+use App\Models\User;
+use App\Notifications\IssueNotification;
 
 class IssueObserver
 {
@@ -24,6 +26,7 @@ class IssueObserver
 
         if ($issue->wasChanged('assignee_id')) {
             $issue->recordActivity('assigned', ['to' => $issue->assignee?->name]);
+            $this->notifyAssignee($issue);
         }
 
         if ($issue->wasChanged('priority')) {
@@ -70,5 +73,19 @@ class IssueObserver
                 ? $issue->recordActivity('archived', ['reason' => $issue->archive_reason])
                 : $issue->recordActivity('unarchived');
         }
+    }
+
+    // Notify the new assignee, unless they assigned it to themselves or the change
+    // came from an unauthenticated context (e.g. a GitHub webhook). The assignee is
+    // loaded by id rather than via the relation, which may be stale after the change.
+    private function notifyAssignee(Issue $issue): void
+    {
+        $actor = auth()->user();
+
+        if ($actor === null || $issue->assignee_id === null || $issue->assignee_id === $actor->id) {
+            return;
+        }
+
+        User::find($issue->assignee_id)?->notify(new IssueNotification('issue_assigned', $issue, $actor));
     }
 }

@@ -136,6 +136,18 @@
         "namePlaceholder": "View name",
         "delete": "Delete view"
     },
+    "notifications": {
+        "label": "Notifications",
+        "title": "Notifications",
+        "empty": "You're all caught up.",
+        "markAllRead": "Mark all read",
+        "assigned": "{actor} assigned you {identifier}",
+        "mentioned": "{actor} mentioned you on {identifier}",
+        "commented": "{actor} commented on {identifier}",
+        "justNow": "just now",
+        "minutesAgo": "{count}m ago",
+        "hoursAgo": "{count}h ago"
+    },
     "list": {
         "title": "Tickets",
         "project": "Project",

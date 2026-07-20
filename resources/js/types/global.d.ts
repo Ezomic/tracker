@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { AppNotification } from '@/types/issue';
 import type {
     OrganizationSummary,
     Project,
@@ -29,6 +30,8 @@ declare module '@inertiajs/core' {
             sidebarProjects: SidebarProject[];
             newIssueProjects: Pick<Project, 'id' | 'key' | 'name'>[];
             currentProjectId: number | null;
+            notifications: AppNotification[];
+            unreadNotificationsCount: number;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };
