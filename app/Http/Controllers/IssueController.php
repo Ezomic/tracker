@@ -190,8 +190,8 @@ class IssueController extends Controller
             $issue->forceFill(['estimate_minutes' => Duration::toMinutes($request->validated('estimate'))])->save();
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue updated.')]);
-
+        // The detail page autosaves on every change, so a toast per save would be noise —
+        // it shows an inline saved indicator instead.
         return to_route('issues.show', $issue);
     }
 
