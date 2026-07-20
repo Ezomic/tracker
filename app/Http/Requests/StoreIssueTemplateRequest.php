@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\Cadence;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\IssueTemplate;
@@ -20,10 +21,15 @@ class StoreIssueTemplateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        foreach (['type', 'priority'] as $field) {
+        foreach (['type', 'priority', 'target_project_id', 'next_run_at'] as $field) {
             if ($this->input($field) === '') {
                 $this->merge([$field => null]);
             }
+        }
+
+        if (($this->input('cadence') ?: 'none') === 'none') {
+            // A non-recurring template carries no schedule or target.
+            $this->merge(['cadence' => 'none', 'target_project_id' => null, 'next_run_at' => null]);
         }
     }
 
@@ -54,6 +60,13 @@ class StoreIssueTemplateRequest extends FormRequest
                 'integer',
                 Rule::exists('labels', 'id')->where('organization_id', $organizationId),
             ],
+            'cadence' => ['required', Rule::enum(Cadence::class)],
+            'target_project_id' => [
+                'nullable',
+                'required_unless:cadence,none',
+                Rule::exists('projects', 'id')->where('organization_id', $organizationId),
+            ],
+            'next_run_at' => ['nullable', 'required_unless:cadence,none', 'date'],
         ];
     }
 }

@@ -28,10 +28,11 @@ import {
     store as storeTemplate,
     update as updateTemplate,
 } from '@/routes/templates';
-import type { IssueLabel, IssueTemplate } from '@/types';
+import type { IssueLabel, IssueTemplate, Project } from '@/types';
 
 const props = defineProps<{
     labels: IssueLabel[];
+    projects: Pick<Project, 'id' | 'key' | 'name'>[];
     // Present when editing; absent when creating.
     template?: IssueTemplate | null;
 }>();
@@ -43,6 +44,9 @@ const description = ref('');
 const type = ref('none');
 const priority = ref('none');
 const labelIds = ref<number[]>([]);
+const cadence = ref('none');
+const targetProjectId = ref('');
+const nextRunAt = ref('');
 
 // Reset from the template each time it opens, so a cancelled edit doesn't leak
 // into the next one.
@@ -56,6 +60,14 @@ watch(open, (isOpen) => {
     type.value = props.template?.type ?? 'none';
     priority.value = props.template?.priority ?? 'none';
     labelIds.value = [...(props.template?.labelIds ?? [])];
+    cadence.value = props.template?.cadence ?? 'none';
+    targetProjectId.value = props.template?.targetProjectId
+        ? String(props.template.targetProjectId)
+        : '';
+    // The date input wants YYYY-MM-DD; drop the time part of the ISO string.
+    nextRunAt.value = props.template?.nextRunAt
+        ? props.template.nextRunAt.slice(0, 10)
+        : '';
 });
 
 function toggleLabel(id: number, checked: boolean) {
@@ -211,6 +223,86 @@ function toggleLabel(id: number, checked: boolean) {
                                 :color="label.color"
                             />
                         </label>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 rounded-lg border border-border p-4">
+                    <div class="grid gap-2">
+                        <Label for="template-cadence">{{
+                            $t('templates.repeats')
+                        }}</Label>
+                        <input type="hidden" name="cadence" :value="cadence" />
+                        <Select v-model="cadence">
+                            <SelectTrigger id="template-cadence" class="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">{{
+                                    $t('templates.repeatNone')
+                                }}</SelectItem>
+                                <SelectItem value="daily">{{
+                                    $t('templates.repeatDaily')
+                                }}</SelectItem>
+                                <SelectItem value="weekly">{{
+                                    $t('templates.repeatWeekly')
+                                }}</SelectItem>
+                                <SelectItem value="monthly">{{
+                                    $t('templates.repeatMonthly')
+                                }}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <InputError :message="errors.cadence" />
+                    </div>
+
+                    <div
+                        v-if="cadence !== 'none'"
+                        class="grid gap-4 sm:grid-cols-2"
+                    >
+                        <div class="grid gap-2">
+                            <Label for="template-project">{{
+                                $t('templates.targetProject')
+                            }}</Label>
+                            <input
+                                type="hidden"
+                                name="target_project_id"
+                                :value="targetProjectId"
+                            />
+                            <Select v-model="targetProjectId">
+                                <SelectTrigger
+                                    id="template-project"
+                                    class="w-full"
+                                >
+                                    <SelectValue
+                                        :placeholder="
+                                            $t('templates.chooseProject')
+                                        "
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="project in projects"
+                                        :key="project.id"
+                                        :value="String(project.id)"
+                                    >
+                                        {{ project.key }} · {{ project.name }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="errors.target_project_id" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="template-next-run">{{
+                                $t('templates.startDate')
+                            }}</Label>
+                            <Input
+                                id="template-next-run"
+                                v-model="nextRunAt"
+                                name="next_run_at"
+                                type="date"
+                            />
+                            <InputError :message="errors.next_run_at" />
+                        </div>
                     </div>
                 </div>
 

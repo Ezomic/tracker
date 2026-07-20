@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Cadence;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Enums\OrganizationRole;
@@ -207,4 +208,47 @@ it('rejects a template from a different organization when filing', function () {
     ])->assertSessionHasErrors('template_id');
 
     expect(Issue::query()->count())->toBe(0);
+});
+
+it('creates a recurring template with a target project and start date', function () {
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+
+    $this->actingAs($owner)->post('/settings/templates', [
+        'name' => 'Weekly chores',
+        'cadence' => 'weekly',
+        'target_project_id' => $project->id,
+        'next_run_at' => '2026-08-01',
+    ])->assertRedirect();
+
+    $template = IssueTemplate::query()->firstOrFail();
+    expect($template->cadence)->toBe(Cadence::Weekly)
+        ->and($template->target_project_id)->toBe($project->id)
+        ->and($template->next_run_at)->not->toBeNull();
+});
+
+it('requires a target project and start date when recurring', function () {
+    [$org, $owner] = organizationWith();
+
+    $this->actingAs($owner)->post('/settings/templates', [
+        'name' => 'Broken recurring',
+        'cadence' => 'weekly',
+    ])->assertSessionHasErrors(['target_project_id', 'next_run_at']);
+});
+
+it('clears the schedule when cadence is none', function () {
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+
+    $this->actingAs($owner)->post('/settings/templates', [
+        'name' => 'One off',
+        'cadence' => 'none',
+        'target_project_id' => $project->id,
+        'next_run_at' => '2026-08-01',
+    ])->assertRedirect();
+
+    $template = IssueTemplate::query()->firstOrFail();
+    expect($template->cadence)->toBe(Cadence::None)
+        ->and($template->target_project_id)->toBeNull()
+        ->and($template->next_run_at)->toBeNull();
 });
