@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\IssuePriority;
+use App\Enums\IssueType;
 use App\Models\Issue;
+use App\Models\Label;
+use App\Models\User;
+use App\Rules\DurationRule;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UpdateIssueParentRequest extends FormRequest
@@ -25,6 +31,18 @@ class UpdateIssueParentRequest extends FormRequest
         if ($this->input('parent') === '') {
             $this->merge(['parent' => null]);
         }
+
+        // An empty assignee means "unassign", matching the create endpoint.
+        if ($this->input('assignee') === '') {
+            $this->merge(['assignee' => null]);
+        }
+
+        // Accept labels as a comma-separated string as well as an array, so
+        // shell callers can pass them without building JSON.
+        if (is_string($this->input('labels'))) {
+            $names = array_values(array_filter(array_map('trim', explode(',', $this->input('labels')))));
+            $this->merge(['labels' => $names]);
+        }
     }
 
     /**
@@ -40,6 +58,35 @@ class UpdateIssueParentRequest extends FormRequest
         return [
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
+            'type' => ['sometimes', Rule::enum(IssueType::class)],
+            'priority' => ['sometimes', Rule::enum(IssuePriority::class)],
+            'estimate' => ['sometimes', 'nullable', 'string', new DurationRule],
+            'assignee' => [
+                'sometimes',
+                'nullable',
+                'string',
+                function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
+                    $user = User::query()->where('email', Str::lower((string) $value))->first();
+
+                    if ($user === null || ! $issue->project->hasMember($user)) {
+                        $fail('The assignee must be a member of this project.');
+                    }
+                },
+            ],
+            'labels' => ['sometimes', 'array'],
+            'labels.*' => [
+                'string',
+                function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
+                    $exists = Label::query()
+                        ->forProject($issue->project)
+                        ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
+                        ->exists();
+
+                    if (! $exists) {
+                        $fail("The label [{$value}] does not exist in this project.");
+                    }
+                },
+            ],
             'parent' => [
                 'sometimes',
                 'nullable',
