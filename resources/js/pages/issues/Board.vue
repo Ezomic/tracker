@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Clock, GitBranch } from '@lucide/vue';
+import { Clock, CornerDownRight, GitBranch } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
@@ -72,6 +72,17 @@ const issuesByStatus = computed(() => {
 
     return grouped;
 });
+
+// Cards with nothing to show would otherwise render an empty footer row.
+function hasMeta(issue: Issue): boolean {
+    return (
+        issue.assignee !== null ||
+        issue.archivedAt !== null ||
+        issue.loggedMinutes > 0 ||
+        issue.estimateMinutes !== null ||
+        issue.childrenCount > 0
+    );
+}
 
 function initials(name: string): string {
     return name
@@ -204,6 +215,15 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                             </Badge>
                         </div>
 
+                        <span
+                            v-if="issue.parent"
+                            class="flex items-center gap-1 font-mono text-[11px] text-muted-foreground"
+                            :title="issue.parent.title"
+                        >
+                            <CornerDownRight class="size-3 shrink-0" />
+                            {{ issue.parent.identifier }}
+                        </span>
+
                         <span class="line-clamp-2 font-medium tracking-tight">
                             {{ issue.title }}
                         </span>
@@ -227,7 +247,10 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                             {{ issue.archiveReason }}
                         </p>
 
-                        <div class="flex items-center gap-2 pt-0.5">
+                        <div
+                            v-if="hasMeta(issue)"
+                            class="flex items-center gap-2 pt-0.5"
+                        >
                             <Avatar
                                 v-if="issue.assignee"
                                 class="size-6 shrink-0"
@@ -237,11 +260,6 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                                     {{ initials(issue.assignee.name) }}
                                 </AvatarFallback>
                             </Avatar>
-                            <span
-                                v-else
-                                class="size-6 shrink-0 rounded-full border border-dashed border-muted-foreground/40"
-                                :title="$t('issue.unassigned')"
-                            />
 
                             <Badge
                                 v-if="issue.archivedAt"
@@ -277,11 +295,18 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                                 </span>
                                 <span
                                     v-if="issue.childrenCount > 0"
-                                    class="flex items-center gap-1 tabular-nums"
-                                    :title="$t('issue.subIssues')"
+                                    class="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 font-medium text-primary tabular-nums"
+                                    :title="
+                                        $t('issue.subDone', {
+                                            done: issue.childrenDoneCount,
+                                            total: issue.childrenCount,
+                                        })
+                                    "
                                 >
                                     <GitBranch class="size-3.5" />
-                                    {{ issue.childrenCount }}
+                                    {{ issue.childrenDoneCount }}/{{
+                                        issue.childrenCount
+                                    }}
                                 </span>
                             </div>
                         </div>

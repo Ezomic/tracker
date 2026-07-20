@@ -74,3 +74,27 @@ it('rejects an invalid status', function () {
         ->patch("/issues/{$issue->identifier}/status", ['status' => 'archived'])
         ->assertSessionHasErrors('status');
 });
+
+it('exposes the parent link and sub-issue progress on board cards', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $action = new CreateIssueAction;
+    $epic = $action->handle($project, 'Epic', IssueType::Feature);
+    $done = $action->handle($project, 'Finished child', IssueType::Feature, parent: $epic);
+    $done->forceFill(['status' => IssueStatus::Done])->save();
+    $action->handle($project, 'Open child', IssueType::Feature, parent: $epic);
+
+    $this->actingAs(member($project))
+        ->get('/issues/board')
+        ->assertOk()
+        ->assertInertia(function ($page) {
+            $issues = collect($page->toArray()['props']['issues']);
+            $epicCard = $issues->firstWhere('identifier', 'THI-1');
+            $childCard = $issues->firstWhere('identifier', 'THI-2');
+
+            expect($epicCard['childrenCount'])->toBe(2)
+                ->and($epicCard['childrenDoneCount'])->toBe(1)
+                ->and($epicCard['parent'])->toBeNull()
+                ->and($childCard['parent']['identifier'])->toBe('THI-1')
+                ->and($childCard['childrenCount'])->toBe(0);
+        });
+});
