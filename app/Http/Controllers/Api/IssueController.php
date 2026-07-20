@@ -135,9 +135,35 @@ class IssueController extends Controller
             $attributes['parent_id'] = $this->resolveParent($request->validated('parent'))?->id;
         }
 
+        if ($request->has('type')) {
+            $attributes['type'] = IssueType::from($request->validated('type'));
+        }
+
+        if ($request->has('priority')) {
+            $attributes['priority'] = IssuePriority::from($request->validated('priority'));
+        }
+
+        if ($request->has('assignee')) {
+            $attributes['assignee_id'] = $this->resolveAssignee($request->validated('assignee'))?->id;
+        }
+
+        if ($request->has('estimate')) {
+            $estimate = $request->validated('estimate');
+            $attributes['estimate_minutes'] = $estimate === null ? null : Duration::toMinutes($estimate);
+        }
+
         $issue->forceFill($attributes)->save();
 
-        return response()->json($this->payload($issue->fresh()));
+        // Only touched when the key is present. An omitted `labels` leaves them
+        // alone here, unlike the web endpoint where the whole form is submitted
+        // and an omission means "none" — a partial patch must stay partial.
+        if ($request->has('labels')) {
+            $issue->labels()->sync($this->resolveLabelIds($issue->project, $request->validated('labels', [])));
+        }
+
+        return response()->json(
+            $this->detail($issue->fresh()->load(['project', 'parent', 'owner', 'assignee', 'labels']))
+        );
     }
 
     public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): JsonResponse
