@@ -523,7 +523,7 @@
         "heroBody": "Een snelle, toetsenbord-eerst issue tracker die je op je eigen server draait. Maak tickets aan vanaf de command line, zie ze op het board verschijnen, en werk verder vanaf de branch die hij voor je benoemt.",
         "openTracker": "Open tracker",
         "seeWorkflow": "Bekijk de workflow",
-        "underCta": "SSO of e-mailcode-login · geen accounts nodig",
+        "underCta": "Log in met SSO, een e-mailcode of een passkey",
         "terminalAria": "Terminal die een ticket aanmaakt vanaf de command line en een identifier en branchnaam terugkrijgt",
         "flowLabel": "en het landt op je board",
         "f1Title": "Projecten, geen teams",
@@ -542,7 +542,9 @@
         "bandLine2": "De data verlaat hem nooit.",
         "bandBody": "Eén SQLite-bestand, één droplet, één deploy-script. Geen seats, geen prijs per gebruiker, geen derde partij die jouw backlog beheert.",
         "footerSuite": "Eén van de verbonden Thijssen Software workflow-apps.",
-        "footerSuiteLink": "Eén keer inloggen voor allemaal →"
+        "footerSuiteLink": "Eén keer inloggen voor allemaal →",
+        "f7Title": "Werkt met je AI-agent",
+        "f7Body": "De token-API en de tracker-CLI zijn gemaakt om door een AI-codeeragent te worden aangestuurd, die tickets aanmaakt en bijwerkt terwijl hij werkt."
     },
     "priority": {
         "none": "Geen prioriteit",

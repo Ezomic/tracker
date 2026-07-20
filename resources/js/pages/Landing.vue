@@ -114,6 +114,7 @@ const features = computed(() => [
     { title: t('landing.f4Title'), body: t('landing.f4Body') },
     { title: t('landing.f5Title'), body: t('landing.f5Body') },
     { title: t('landing.f6Title'), body: t('landing.f6Body') },
+    { title: t('landing.f7Title'), body: t('landing.f7Body') },
 ]);
 </script>
 

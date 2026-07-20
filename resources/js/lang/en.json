@@ -523,7 +523,7 @@
         "heroBody": "A fast, keyboard-first issue tracker you run on your own box. File tickets from the command line, watch them land on the board, ship from the branch it names for you.",
         "openTracker": "Open tracker",
         "seeWorkflow": "See the workflow",
-        "underCta": "SSO or email-code sign-in · no accounts to create",
+        "underCta": "Sign in with SSO, an email code, or a passkey",
         "terminalAria": "Terminal creating a ticket from the command line and receiving an identifier and branch name",
         "flowLabel": "and it lands on your board",
         "f1Title": "Projects, not teams",
@@ -542,7 +542,9 @@
         "bandLine2": "The data never leaves.",
         "bandBody": "One SQLite file, one droplet, one deploy script. No seats, no per-user pricing, no third party holding your backlog.",
         "footerSuite": "One of the connected Thijssen Software workflow apps.",
-        "footerSuiteLink": "One sign-in for all of them →"
+        "footerSuiteLink": "One sign-in for all of them →",
+        "f7Title": "Works with your AI agent",
+        "f7Body": "The token API and the tracker CLI are built to be driven by an AI coding agent, filing and updating tickets as it works."
     },
     "priority": {
         "none": "No priority",
