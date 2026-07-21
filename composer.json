@@ -73,6 +73,10 @@
         "types:check": [
             "phpstan analyse --memory-limit=512M"
         ],
+        "test:mutation": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php vendor/bin/pest --mutate --covered-only --parallel --min=65 --path=app/Actions,app/Enums,app/Services,app/Support"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@lint:check",
