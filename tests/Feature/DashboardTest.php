@@ -38,6 +38,9 @@ it('lets authenticated users visit an empty dashboard', function () {
             ->component('Dashboard')
             ->where('stats.open', 0)
             ->where('activeByProject', [])
+            ->where('attention', [])
+            ->where('board.backlog', [])
+            ->has('trend', 8)
         );
 });
 
@@ -68,37 +71,66 @@ it('counts active tickets per project excluding done and archived', function () 
         );
 });
 
-it('lists in-review tickets and this-week completions', function () {
+it('surfaces the users own open issues, stalest first, flagging stale ones', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project);
+
+    $stale = Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Backlog,
+        'assignee_id' => $user->id,
+    ]);
+    $stale->forceFill(['updated_at' => now()->subDays(20)])->save();
+
+    Issue::factory()->for($project)->create([
+        'status' => IssueStatus::InProgress,
+        'owner_id' => $user->id,
+    ]);
+
+    // Not owned by or assigned to the user: must not appear.
+    Issue::factory()->for($project)->create(['status' => IssueStatus::Backlog]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->has('attention', 2)
+            ->where('attention.0.identifier', $stale->identifier)
+            ->where('attention.0.stale', true)
+            ->where('attention.1.stale', false)
+        );
+});
+
+it('groups board columns by status', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $review = Issue::factory()->for($project)->create(['status' => IssueStatus::InReview]);
     $done = Issue::factory()->for($project)->create([
         'status' => IssueStatus::Done,
-        'closed_at' => now()->subDays(2),
-    ]);
-    Issue::factory()->for($project)->create([
-        'status' => IssueStatus::Done,
-        'closed_at' => now()->subDays(30),
+        'closed_at' => now()->subDay(),
     ]);
 
     $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
-            ->where('inReview.0.identifier', $review->identifier)
-            ->has('recentlyCompleted', 1)
-            ->where('recentlyCompleted.0.identifier', $done->identifier)
+            ->where('board.in_review.0.identifier', $review->identifier)
+            ->where('board.done.0.identifier', $done->identifier)
+            ->where('board.backlog', [])
         );
 });
 
-it('orders stale tickets by oldest update among open issues', function () {
+it('reports weekly metrics and a work-in-progress load', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    Issue::factory()->for($project)->create(['status' => IssueStatus::Backlog]);
-    $stale = Issue::factory()->for($project)->create(['status' => IssueStatus::Backlog]);
-    $stale->forceFill(['updated_at' => now()->subDays(90)])->save();
-    Issue::factory()->for($project)->create(['status' => IssueStatus::Done]);
+    Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Done,
+        'closed_at' => now(),
+        'created_at' => now()->subDays(3),
+    ]);
+    Issue::factory()->for($project)->count(2)->create(['status' => IssueStatus::InProgress]);
+    Issue::factory()->for($project)->create(['status' => IssueStatus::InReview]);
 
     $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
-            ->where('stale.0.identifier', $stale->identifier)
+            ->has('trend', 8)
+            ->where('metrics.completed', 1)
+            ->where('metrics.wip', 3)
         );
 });

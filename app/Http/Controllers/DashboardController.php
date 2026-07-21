@@ -10,13 +10,19 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    private const STALE_DAYS = 7;
+
+    private const TREND_WEEKS = 8;
+
     private ?Organization $organization = null;
 
     public function index(Request $request, CurrentOrganization $current): Response
@@ -36,10 +42,10 @@ class DashboardController extends Controller
             'statusBreakdown' => $counts,
             'hasProjects' => $user->projects()->exists(),
             'activeByProject' => $this->activeByProject($user),
-            'recent' => $this->recent($user),
-            'stale' => $this->stale($user),
-            'inReview' => $this->inReview($user),
-            'recentlyCompleted' => $this->recentlyCompleted($user),
+            'attention' => $this->attention($user),
+            'board' => $this->board($user),
+            'trend' => $this->trend($user),
+            'metrics' => $this->metrics($user, $counts),
         ]);
     }
 
@@ -48,8 +54,7 @@ class DashboardController extends Controller
      */
     private function statusCounts(User $user): array
     {
-        $count = fn (IssueStatus $status): int => Issue::query()
-            ->visibleTo($user)->inOrganization($this->organization)
+        $count = fn (IssueStatus $status): int => $this->scoped($user)
             ->notArchived()
             ->where('status', $status->value)
             ->count();
@@ -88,84 +93,198 @@ class DashboardController extends Controller
     }
 
     /**
+     * Open issues owned by or assigned to the user, stalest first.
+     *
      * @return list<array<string, mixed>>
      */
-    private function recent(User $user): array
+    private function attention(User $user): array
     {
-        return array_values(Issue::query()
-            ->visibleTo($user)->inOrganization($this->organization)
-            ->notArchived()
-            ->with('project')
-            ->latest()
-            ->take(6)
-            ->get()
-            ->map(fn (Issue $issue): array => $this->row($issue, 'created_at'))
-            ->all());
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private function stale(User $user): array
-    {
-        return array_values(Issue::query()
-            ->visibleTo($user)->inOrganization($this->organization)
+        return array_values($this->scoped($user)
             ->notArchived()
             ->where('status', '!=', IssueStatus::Done->value)
+            ->where(fn (Builder $query) => $query
+                ->where('owner_id', $user->id)
+                ->orWhere('assignee_id', $user->id))
             ->with('project')
             ->orderBy('updated_at')
             ->take(6)
             ->get()
-            ->map(fn (Issue $issue): array => $this->row($issue, 'updated_at'))
+            ->map(fn (Issue $issue): array => $this->row($issue))
             ->all());
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array{backlog: list<array<string, mixed>>, in_progress: list<array<string, mixed>>, in_review: list<array<string, mixed>>, done: list<array<string, mixed>>}
      */
-    private function inReview(User $user): array
+    private function board(User $user): array
     {
-        return array_values(Issue::query()
-            ->visibleTo($user)->inOrganization($this->organization)
-            ->notArchived()
-            ->where('status', IssueStatus::InReview->value)
+        $column = fn (IssueStatus $status, string $order): array => array_values($this->scoped($user)
+            ->when($status !== IssueStatus::Done, fn (Builder $query) => $query->notArchived())
+            ->where('status', $status->value)
             ->with('project')
-            ->latest('updated_at')
-            ->take(6)
+            ->orderByDesc($order)
+            ->take(5)
             ->get()
-            ->map(fn (Issue $issue): array => $this->row($issue, 'updated_at'))
+            ->map(fn (Issue $issue): array => $this->row($issue))
             ->all());
+
+        return [
+            'backlog' => $column(IssueStatus::Backlog, 'updated_at'),
+            'in_progress' => $column(IssueStatus::InProgress, 'updated_at'),
+            'in_review' => $column(IssueStatus::InReview, 'updated_at'),
+            'done' => $column(IssueStatus::Done, 'closed_at'),
+        ];
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * Weekly opened vs completed counts over the trailing window.
+     *
+     * @return list<array{label: string, opened: int, completed: int, cycle: float|null}>
      */
-    private function recentlyCompleted(User $user): array
+    private function trend(User $user): array
     {
-        return array_values(Issue::query()
-            ->visibleTo($user)->inOrganization($this->organization)
+        $start = $this->windowStart();
+
+        $opened = $this->scoped($user)
+            ->where('created_at', '>=', $start)
+            ->pluck('created_at');
+
+        $completed = $this->scoped($user)
             ->where('status', IssueStatus::Done->value)
             ->whereNotNull('closed_at')
-            ->where('closed_at', '>=', now()->subDays(7))
-            ->with('project')
-            ->orderByDesc('closed_at')
-            ->take(6)
-            ->get()
-            ->map(fn (Issue $issue): array => $this->row($issue, 'closed_at'))
-            ->all());
+            ->where('closed_at', '>=', $start)
+            ->get(['created_at', 'closed_at']);
+
+        $weeks = [];
+
+        for ($i = self::TREND_WEEKS - 1; $i >= 0; $i--) {
+            $weekStart = CarbonImmutable::now()->startOfWeek()->subWeeks($i);
+            $weekEnd = $weekStart->addWeek();
+
+            $openedCount = $opened
+                ->filter(fn (CarbonImmutable $date): bool => $date >= $weekStart && $date < $weekEnd)
+                ->count();
+
+            $completedInWeek = $completed
+                ->filter(fn (Issue $issue): bool => $issue->closed_at >= $weekStart && $issue->closed_at < $weekEnd);
+
+            $weeks[] = [
+                'label' => $weekStart->format('M j'),
+                'opened' => $openedCount,
+                'completed' => $completedInWeek->count(),
+                'cycle' => $this->medianCycleDays($completedInWeek),
+            ];
+        }
+
+        return $weeks;
+    }
+
+    /**
+     * @param  array{backlog: int, in_progress: int, in_review: int, done: int}  $counts
+     * @return array<string, mixed>
+     */
+    private function metrics(User $user, array $counts): array
+    {
+        $weeks = $this->trend($user);
+        $current = $weeks[self::TREND_WEEKS - 1];
+        $previous = $weeks[self::TREND_WEEKS - 2];
+
+        $cycles = array_values(array_filter(
+            array_map(fn (array $week): ?float => $week['cycle'], $weeks),
+            fn (?float $value): bool => $value !== null,
+        ));
+
+        return [
+            'completed' => $current['completed'],
+            'completedDelta' => $this->percentDelta($current['completed'], $previous['completed']),
+            'opened' => $current['opened'],
+            'openedDelta' => $this->percentDelta($current['opened'], $previous['opened']),
+            'wip' => $counts['in_progress'] + $counts['in_review'],
+            'cycleDays' => $current['cycle'],
+            'cycleDelta' => $this->pointDelta($current['cycle'], $previous['cycle']),
+            'completedSpark' => array_map(fn (array $week): int => $week['completed'], $weeks),
+            'openedSpark' => array_map(fn (array $week): int => $week['opened'], $weeks),
+            'cycleSpark' => $cycles,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Issue>  $issues
+     */
+    private function medianCycleDays(Collection $issues): ?float
+    {
+        if ($issues->isEmpty()) {
+            return null;
+        }
+
+        $days = $issues
+            ->map(fn (Issue $issue): float => (float) $issue->created_at->diffInDays($issue->closed_at, true))
+            ->sort()
+            ->values();
+
+        $count = $days->count();
+        $middle = intdiv($count, 2);
+
+        $median = $count % 2 === 0
+            ? ($days[$middle - 1] + $days[$middle]) / 2
+            : $days[$middle];
+
+        return round($median, 1);
+    }
+
+    private function percentDelta(int $current, int $previous): int
+    {
+        if ($previous === 0) {
+            return $current === 0 ? 0 : 100;
+        }
+
+        return (int) round((($current - $previous) / $previous) * 100);
+    }
+
+    private function pointDelta(?float $current, ?float $previous): ?float
+    {
+        if ($current === null || $previous === null) {
+            return null;
+        }
+
+        return round($current - $previous, 1);
+    }
+
+    private function windowStart(): CarbonImmutable
+    {
+        return CarbonImmutable::now()->startOfWeek()->subWeeks(self::TREND_WEEKS - 1);
+    }
+
+    /**
+     * @return Builder<Issue>
+     */
+    private function scoped(User $user): Builder
+    {
+        return Issue::query()->visibleTo($user)->inOrganization($this->organization);
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function row(Issue $issue, string $timeColumn): array
+    private function row(Issue $issue): array
     {
+        $reference = $issue->status === IssueStatus::Done
+            ? $issue->closed_at
+            : $issue->updated_at;
+
+        $ageDays = $reference !== null
+            ? (int) CarbonImmutable::now()->diffInDays($reference, true)
+            : 0;
+
         return [
             'identifier' => $issue->identifier,
             'title' => $issue->title,
+            'projectName' => $issue->project->name,
             'projectColor' => $issue->project->color,
             'status' => $issue->status->value,
-            'timestamp' => $issue->{$timeColumn}?->toIso8601String(),
+            'ageDays' => $ageDays,
+            'stale' => $issue->status !== IssueStatus::Done && $ageDays >= self::STALE_DAYS,
+            'timestamp' => $reference?->toIso8601String(),
         ];
     }
 }
