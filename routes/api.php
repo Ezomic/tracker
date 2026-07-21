@@ -21,6 +21,9 @@ Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->m
 // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/templates', [TemplateController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::patch('/templates/{template}', [TemplateController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::delete('/templates/{template}', [TemplateController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/categories', [CategoryController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/categories', [CategoryController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/categories/{category}', [CategoryController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);

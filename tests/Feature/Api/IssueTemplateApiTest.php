@@ -19,15 +19,20 @@ it('lists the templates for the project organization', function () {
         'priority' => 'high',
     ]);
     $template->labels()->attach($label);
+    $template->refresh();
 
     $this->actingAs($user, 'sanctum')->getJson('/api/templates?project=THI')
         ->assertOk()
         ->assertExactJson([[
+            'id' => $template->id,
             'name' => 'Bug report',
             'description' => 'Steps to reproduce:',
             'type' => 'fix',
             'priority' => 'high',
             'labels' => ['bug'],
+            'cadence' => $template->cadence->value,
+            'nextRunAt' => $template->next_run_at?->toIso8601String(),
+            'targetProjectId' => $template->target_project_id,
         ]]);
 });
 
