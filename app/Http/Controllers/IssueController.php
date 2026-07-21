@@ -24,6 +24,7 @@ use App\Models\SavedView;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use App\Support\Duration;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -54,12 +55,12 @@ class IssueController extends Controller
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
                 ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
-                ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
-                ->when($filters['project_id'] ?? null, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
-                ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
-                ->when($filters['type'] ?? null, fn (Builder $query, string $type) => $query->where('type', $type))
-                ->when($filters['priority'] ?? null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
-                ->when($filters['label_id'] ?? null, fn (Builder $query, int $labelId) => $query->whereHas('labels', fn (Builder $q) => $q->where('labels.id', $labelId)))
+                ->when($request->string('search')->toString() ?: null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
+                ->when($request->integer('project_id') ?: null, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
+                ->when($request->string('status')->toString() ?: null, fn (Builder $query, string $status) => $query->where('status', $status))
+                ->when($request->string('type')->toString() ?: null, fn (Builder $query, string $type) => $query->where('type', $type))
+                ->when($request->string('priority')->toString() ?: null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
+                ->when($request->integer('label_id') ?: null, fn (Builder $query, int $labelId) => $query->whereHas('labels', fn (Builder $q) => $q->where('labels.id', $labelId)))
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
@@ -139,9 +140,9 @@ class IssueController extends Controller
 
         $issue = $action->handle(
             project: $project,
-            title: $request->validated('title'),
-            type: IssueType::from($request->validated('type')),
-            description: $request->validated('description'),
+            title: $request->string('title')->toString(),
+            type: IssueType::from($request->string('type')->toString()),
+            description: $request->string('description')->toString() ?: null,
             parent: $parent,
             owner: $this->currentUser($request),
             priority: $template?->priority,
@@ -230,10 +231,10 @@ class IssueController extends Controller
         $this->authorize('update', $issue);
 
         $issue->update($request->safe()->except(['labels', 'estimate']));
-        $issue->syncLabelsWithActivity($request->validated('labels', []));
+        $issue->syncLabelsWithActivity($this->intList($request->validated('labels', [])));
 
         if ($request->has('estimate')) {
-            $issue->forceFill(['estimate_minutes' => Duration::toMinutes($request->validated('estimate'))])->save();
+            $issue->forceFill(['estimate_minutes' => Duration::toMinutes($request->string('estimate')->toString() ?: null)])->save();
         }
 
         // The detail page autosaves on every change, so a toast per save would be noise —
@@ -274,7 +275,7 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $status = IssueStatus::from($request->validated('status'));
+        $status = IssueStatus::from($request->string('status')->toString());
 
         $issue->forceFill([
             'status' => $status,
@@ -288,7 +289,7 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $action->handle($issue, $request->validated('reason'));
+        $action->handle($issue, $request->string('reason')->toString() ?: null);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Issue archived.')]);
 
@@ -310,7 +311,7 @@ class IssueController extends Controller
     {
         return $templateId === null
             ? null
-            : IssueTemplate::query()->with('labels')->whereKey((int) $templateId)->first();
+            : IssueTemplate::query()->with('labels')->whereKey(Cast::int($templateId))->first();
     }
 
     private function findParent(mixed $parentId): ?Issue
@@ -392,7 +393,7 @@ class IssueController extends Controller
             'title' => $issue->title,
             'description' => $issue->description,
             'estimateMinutes' => $issue->estimate_minutes,
-            'loggedMinutes' => (int) ($issue->getAttribute('time_entries_sum_minutes') ?? 0),
+            'loggedMinutes' => Cast::int($issue->getAttribute('time_entries_sum_minutes') ?? 0),
             'invoiceable' => $issue->invoiceable,
             'confirmedMinutes' => $issue->confirmed_minutes,
             'confirmedAt' => $issue->confirmed_at?->toIso8601String(),
@@ -415,7 +416,7 @@ class IssueController extends Controller
             'archiveReason' => $issue->archive_reason,
             'childrenCount' => $issue->children_count
                 ?? ($issue->relationLoaded('children') ? $issue->children->count() : 0),
-            'childrenDoneCount' => (int) ($issue->getAttribute('children_done_count') ?? 0),
+            'childrenDoneCount' => Cast::int($issue->getAttribute('children_done_count') ?? 0),
             'parent' => $issue->relationLoaded('parent') && $issue->parent !== null ? [
                 'id' => $issue->parent->id,
                 'identifier' => $issue->parent->identifier,

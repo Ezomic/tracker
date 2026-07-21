@@ -13,8 +13,9 @@ class SavedViewController extends Controller
 {
     public function store(StoreSavedViewRequest $request): RedirectResponse
     {
+        $raw = $request->validated('criteria', []);
         $criteria = array_filter(
-            $request->validated('criteria', []),
+            is_array($raw) ? $raw : [],
             fn ($value) => $value !== null && $value !== '',
         );
 

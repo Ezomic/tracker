@@ -9,6 +9,7 @@ use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Enums\OrganizationRole;
 use App\Observers\IssueObserver;
+use App\Support\Cast;
 use Database\Factories\IssueFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -114,9 +115,9 @@ class Issue extends Model
      */
     public function syncLabelsWithActivity(array $ids): void
     {
-        $before = $this->labels()->pluck('labels.id')->all();
+        $before = Cast::ints($this->labels()->pluck('labels.id')->all());
         $this->labels()->sync($ids);
-        $after = $this->labels()->pluck('labels.id')->all();
+        $after = Cast::ints($this->labels()->pluck('labels.id')->all());
 
         $added = array_diff($after, $before);
         $removed = array_diff($before, $after);

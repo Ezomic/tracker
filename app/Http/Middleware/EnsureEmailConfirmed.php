@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\Cast;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -47,6 +48,6 @@ class EnsureEmailConfirmed
     {
         $confirmedAt = $request->session()->get(self::SESSION_KEY);
 
-        return $confirmedAt !== null && (time() - (int) $confirmedAt) <= self::WINDOW_SECONDS;
+        return $confirmedAt !== null && (time() - Cast::int($confirmedAt)) <= self::WINDOW_SECONDS;
     }
 }

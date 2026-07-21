@@ -10,6 +10,7 @@ use App\Models\Issue;
 use App\Models\Label;
 use App\Models\User;
 use App\Rules\DurationRule;
+use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -66,7 +67,7 @@ class UpdateIssueApiRequest extends FormRequest
                 'nullable',
                 'string',
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
-                    $user = User::query()->where('email', Str::lower((string) $value))->first();
+                    $user = User::query()->where('email', Str::lower(Cast::string($value)))->first();
 
                     if ($user === null || ! $issue->project->hasMember($user)) {
                         $fail('The assignee must be a member of this project.');
@@ -79,11 +80,11 @@ class UpdateIssueApiRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
                     $exists = Label::query()
                         ->forProject($issue->project)
-                        ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
+                        ->whereRaw('lower(name) = ?', [Str::lower(Cast::string($value))])
                         ->exists();
 
                     if (! $exists) {
-                        $fail("The label [{$value}] does not exist in this project.");
+                        $fail('The label ['.Cast::string($value).'] does not exist in this project.');
                     }
                 },
             ],

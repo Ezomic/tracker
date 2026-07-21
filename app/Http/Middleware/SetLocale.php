@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\Cast;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,7 +21,7 @@ class SetLocale
     {
         $locale = $request->user()?->locale;
 
-        if ($locale !== null && in_array($locale, config('app.supported_locales', ['en']), true)) {
+        if ($locale !== null && in_array($locale, Cast::strings(config('app.supported_locales', ['en'])), true)) {
             app()->setLocale($locale);
         }
 

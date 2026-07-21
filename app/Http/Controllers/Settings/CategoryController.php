@@ -10,6 +10,7 @@ use App\Http\Requests\Settings\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Models\Organization;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -77,8 +78,8 @@ class CategoryController extends Controller
                 'id' => $category->id,
                 'name' => $category->name,
                 'parentId' => $category->parent_id,
-                'depth' => (int) $category->getAttribute('depth'),
-                'projectsCount' => (int) $category->getAttribute('projects_count'),
+                'depth' => Cast::int($category->getAttribute('depth')),
+                'projectsCount' => Cast::int($category->getAttribute('projects_count')),
             ])
             ->values()
             ->all();

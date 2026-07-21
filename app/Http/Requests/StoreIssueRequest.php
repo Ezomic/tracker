@@ -11,6 +11,7 @@ use App\Models\Label;
 use App\Models\Project;
 use App\Models\User;
 use App\Rules\DurationRule;
+use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -80,11 +81,11 @@ class StoreIssueRequest extends FormRequest
 
                     $exists = Label::query()
                         ->forProject($project)
-                        ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
+                        ->whereRaw('lower(name) = ?', [Str::lower(Cast::string($value))])
                         ->exists();
 
                     if (! $exists) {
-                        $fail("The label \"{$value}\" does not exist for this project.");
+                        $fail('The label "'.Cast::string($value).'" does not exist for this project.');
                     }
                 },
             ],
@@ -100,7 +101,7 @@ class StoreIssueRequest extends FormRequest
 
                     $exists = $project->organization
                         ?->issueTemplates()
-                        ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
+                        ->whereRaw('lower(name) = ?', [Str::lower(Cast::string($value))])
                         ->exists() ?? false;
 
                     if (! $exists) {
@@ -113,7 +114,7 @@ class StoreIssueRequest extends FormRequest
                 'email',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $project = Project::query()->where('key', $this->input('project'))->first();
-                    $user = User::query()->where('email', Str::lower((string) $value))->first();
+                    $user = User::query()->where('email', Str::lower(Cast::string($value)))->first();
 
                     if ($project === null) {
                         return;
@@ -131,7 +132,7 @@ class StoreIssueRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $parent = Issue::query()->where('identifier', $value)->first();
 
-                    if ($parent && strcasecmp($parent->project->key, (string) $this->input('project')) !== 0) {
+                    if ($parent && strcasecmp($parent->project->key, $this->string('project')->toString()) !== 0) {
                         $fail('The parent issue must belong to the same project.');
                     }
                 },

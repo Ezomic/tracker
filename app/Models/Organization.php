@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\OrganizationRole;
+use App\Support\Cast;
 use Database\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -86,7 +87,7 @@ class Organization extends Model
         /** @var Pivot $pivot */
         $pivot = $member->getAttribute('pivot');
 
-        return OrganizationRole::from((string) $pivot->getAttribute('role'));
+        return OrganizationRole::from(Cast::string($pivot->getAttribute('role')));
     }
 
     public function hasMember(User $user): bool

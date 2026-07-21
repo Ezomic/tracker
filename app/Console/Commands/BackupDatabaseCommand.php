@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Support\Cast;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -22,7 +23,7 @@ class BackupDatabaseCommand extends Command
         $databasePath = config('database.connections.sqlite.database');
 
         if (! is_string($databasePath) || ! File::exists($databasePath)) {
-            $this->error("No sqlite database file found at [{$databasePath}].");
+            $this->error('No sqlite database file found at ['.Cast::string($databasePath).'].');
 
             return self::FAILURE;
         }

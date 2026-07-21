@@ -34,7 +34,7 @@ class RegisterController extends Controller
 
     public function store(StoreRegistrationRequest $request): RedirectResponse
     {
-        $email = Str::lower($request->validated('email'));
+        $email = Str::lower($request->string('email')->toString());
 
         // Enumeration-safe: create the account only if the email is new, but
         // always issue a code and land on the verify screen, so an existing

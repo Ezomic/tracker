@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Support\Cast;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -386,9 +387,9 @@ return new class extends Migration
             }
 
             DB::table('issue_label')->insert(
-                $labelIds->map(fn (int $labelId): array => [
+                $labelIds->map(fn (mixed $labelId): array => [
                     'issue_id' => $issue->id,
-                    'label_id' => $labelId,
+                    'label_id' => Cast::int($labelId),
                 ])->all()
             );
         }

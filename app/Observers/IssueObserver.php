@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Enums\IssuePriority;
+use App\Enums\IssueStatus;
+use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\User;
 use App\Notifications\IssueNotification;
@@ -19,7 +22,7 @@ class IssueObserver
     {
         if ($issue->wasChanged('status')) {
             $issue->recordActivity('status_changed', [
-                'from' => $issue->getOriginal('status')?->value,
+                'from' => ($from = $issue->getOriginal('status')) instanceof IssueStatus ? $from->value : null,
                 'to' => $issue->status->value,
             ]);
         }
@@ -31,14 +34,14 @@ class IssueObserver
 
         if ($issue->wasChanged('priority')) {
             $issue->recordActivity('priority_changed', [
-                'from' => $issue->getOriginal('priority')?->value,
+                'from' => ($from = $issue->getOriginal('priority')) instanceof IssuePriority ? $from->value : null,
                 'to' => $issue->priority->value,
             ]);
         }
 
         if ($issue->wasChanged('type')) {
             $issue->recordActivity('type_changed', [
-                'from' => $issue->getOriginal('type')?->value,
+                'from' => ($from = $issue->getOriginal('type')) instanceof IssueType ? $from->value : null,
                 'to' => $issue->type->value,
             ]);
         }

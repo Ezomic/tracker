@@ -9,6 +9,7 @@ use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\User;
 use App\Rules\DurationRule;
+use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -57,7 +58,7 @@ class UpdateIssueRequest extends FormRequest
                 'integer',
                 Rule::exists('issues', 'id')->where('parent_id', null),
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
-                    if ((int) $value === $issue->id) {
+                    if (Cast::int($value) === $issue->id) {
                         $fail('An issue cannot be its own epic.');
                     }
 
@@ -70,7 +71,7 @@ class UpdateIssueRequest extends FormRequest
                 'nullable',
                 'integer',
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
-                    $user = User::query()->whereKey((int) $value)->first();
+                    $user = User::query()->whereKey(Cast::int($value))->first();
 
                     if ($user === null || ! $issue->project->hasMember($user)) {
                         $fail('The assignee must be a member of this project.');

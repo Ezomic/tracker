@@ -11,7 +11,9 @@ use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Category;
 use App\Models\Project;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +32,7 @@ class ProjectsController extends Controller
                     'id' => $category->id,
                     'name' => $category->name,
                     'parentId' => $category->parent_id,
-                    'depth' => (int) $category->getAttribute('depth'),
+                    'depth' => Cast::int($category->getAttribute('depth')),
                 ])
                 ->values()
                 ->all(),
@@ -57,16 +59,16 @@ class ProjectsController extends Controller
                         'description' => $project->description,
                         'color' => $project->color,
                         'categoryId' => $project->category_id,
-                        'role' => (string) $pivot->getAttribute('role'),
+                        'role' => Cast::string($pivot->getAttribute('role')),
                         'isFavorite' => (bool) $pivot->getAttribute('is_favorite'),
                         'githubRepos' => $project->github_repos ?? [],
                         'productionUrl' => $project->production_url,
                         'archiveAfterDays' => $project->archive_after_days,
                         'links' => $project->links(),
-                        'openCount' => (int) $project->getAttribute('open_count'),
-                        'issuesCount' => (int) $project->getAttribute('issues_count'),
-                        'loggedMinutes' => (int) ($project->getAttribute('time_entries_sum_minutes') ?? 0),
-                        'keyLocked' => (int) $project->getAttribute('issues_count') > 0,
+                        'openCount' => Cast::int($project->getAttribute('open_count')),
+                        'issuesCount' => Cast::int($project->getAttribute('issues_count')),
+                        'loggedMinutes' => Cast::int($project->getAttribute('time_entries_sum_minutes') ?? 0),
+                        'keyLocked' => Cast::int($project->getAttribute('issues_count')) > 0,
                     ];
                 }),
         ]);
@@ -97,7 +99,8 @@ class ProjectsController extends Controller
         $this->authorize('view', $project);
 
         $member = $this->currentUser($request)->projects()->find($project->id);
-        $current = $member !== null && (bool) $member->getAttribute('pivot')->getAttribute('is_favorite');
+        $pivot = $member?->getAttribute('pivot');
+        $current = $pivot instanceof Model && (bool) $pivot->getAttribute('is_favorite');
 
         $this->currentUser($request)->projects()->updateExistingPivot($project->id, ['is_favorite' => ! $current]);
 

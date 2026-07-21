@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Models\Commit;
 use App\Models\Issue;
+use App\Support\Cast;
 use Illuminate\Support\Carbon;
 
 class RecordPushedCommitsAction
@@ -35,7 +36,13 @@ class RecordPushedCommitsAction
             return;
         }
 
-        foreach ($payload['commits'] ?? [] as $commit) {
+        $commits = $payload['commits'] ?? [];
+
+        foreach (is_array($commits) ? $commits : [] as $commit) {
+            if (! is_array($commit)) {
+                continue;
+            }
+
             $sha = $commit['id'] ?? null;
 
             if (! is_string($sha)) {
@@ -51,7 +58,7 @@ class RecordPushedCommitsAction
                     'author_name' => data_get($commit, 'author.name'),
                     'url' => $commit['url'] ?? null,
                     'committed_at' => isset($commit['timestamp'])
-                        ? Carbon::parse($commit['timestamp'])
+                        ? Carbon::parse(Cast::string($commit['timestamp']))
                         : now(),
                 ],
             );
