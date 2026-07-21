@@ -22,7 +22,7 @@ class ProjectsController extends Controller
 {
     public function index(Request $request, CurrentOrganization $current): Response
     {
-        $organization = $current->for($request->user());
+        $organization = $current->for($this->currentUser($request));
 
         return Inertia::render('projects/Index', [
             'categories' => Category::orderedTree($organization)
@@ -34,7 +34,7 @@ class ProjectsController extends Controller
                 ])
                 ->values()
                 ->all(),
-            'projects' => $request->user()->projects()
+            'projects' => $this->currentUser($request)->projects()
                 ->inOrganization($organization)
                 ->withCount([
                     'issues',
@@ -74,7 +74,7 @@ class ProjectsController extends Controller
 
     public function store(StoreProjectRequest $request, CreateProjectAction $action, CurrentOrganization $current): RedirectResponse
     {
-        $action->handle($request->validated(), $request->user(), $current->for($request->user()));
+        $action->handle($request->validated(), $this->currentUser($request), $current->for($this->currentUser($request)));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project created.')]);
 
@@ -96,10 +96,10 @@ class ProjectsController extends Controller
     {
         $this->authorize('view', $project);
 
-        $member = $request->user()->projects()->find($project->id);
+        $member = $this->currentUser($request)->projects()->find($project->id);
         $current = $member !== null && (bool) $member->getAttribute('pivot')->getAttribute('is_favorite');
 
-        $request->user()->projects()->updateExistingPivot($project->id, ['is_favorite' => ! $current]);
+        $this->currentUser($request)->projects()->updateExistingPivot($project->id, ['is_favorite' => ! $current]);
 
         return back();
     }

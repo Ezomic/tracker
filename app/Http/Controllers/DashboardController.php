@@ -27,7 +27,7 @@ class DashboardController extends Controller
 
     public function index(Request $request, CurrentOrganization $current): Response
     {
-        $user = $request->user();
+        $user = $this->currentUser($request);
         $this->organization = $current->for($user);
         $counts = $this->statusCounts($user);
 
@@ -213,23 +213,21 @@ class DashboardController extends Controller
      */
     private function medianCycleDays(Collection $issues): ?float
     {
-        if ($issues->isEmpty()) {
-            return null;
-        }
+        $median = $issues
+            ->map(function (Issue $issue): ?float {
+                $created = $issue->created_at;
+                $closed = $issue->closed_at;
 
-        $days = $issues
-            ->map(fn (Issue $issue): float => (float) $issue->created_at->diffInDays($issue->closed_at, true))
-            ->sort()
-            ->values();
+                if ($created === null || $closed === null) {
+                    return null;
+                }
 
-        $count = $days->count();
-        $middle = intdiv($count, 2);
+                return (float) $created->diffInDays($closed, true);
+            })
+            ->filter(fn (?float $days): bool => $days !== null)
+            ->median();
 
-        $median = $count % 2 === 0
-            ? ($days[$middle - 1] + $days[$middle]) / 2
-            : $days[$middle];
-
-        return round($median, 1);
+        return $median === null ? null : round((float) $median, 1);
     }
 
     private function percentDelta(int $current, int $previous): int

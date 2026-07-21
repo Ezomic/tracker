@@ -40,7 +40,7 @@ class OrganizationMemberController extends Controller
                 'key' => $project->key,
                 'name' => $project->name,
             ]),
-            'currentUserId' => $request->user()->id,
+            'currentUserId' => $this->currentUser($request)->id,
         ]);
     }
 
@@ -76,7 +76,7 @@ class OrganizationMemberController extends Controller
 
     private function currentOrganization(Request $request, CurrentOrganization $current): Organization
     {
-        $organization = $current->for($request->user());
+        $organization = $current->for($this->currentUser($request));
 
         abort_if($organization === null, 404);
 
@@ -95,7 +95,7 @@ class OrganizationMemberController extends Controller
     {
         abort_unless($organization->hasMember($user), 404);
         // Owners are untouchable, and you can't manage your own membership here.
-        abort_if($user->id === $request->user()->id, 403);
+        abort_if($user->id === $this->currentUser($request)->id, 403);
         abort_if($organization->roleFor($user) === OrganizationRole::Owner, 403);
     }
 

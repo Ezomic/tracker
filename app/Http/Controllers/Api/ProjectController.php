@@ -14,7 +14,7 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         return response()->json(
-            Project::query()->visibleTo($request->user())->orderBy('key')->get(['key', 'name', 'color'])
+            Project::query()->visibleTo($this->currentUser($request))->orderBy('key')->get(['key', 'name', 'color'])
         );
     }
 }

@@ -24,11 +24,11 @@ class CommentController extends Controller
         $this->authorize('view', $issue);
 
         $comment = $issue->comments()->create([
-            'user_id' => $request->user()->id,
+            'user_id' => $this->currentUser($request)->id,
             'body' => $request->validated('body'),
         ]);
 
-        $this->notifyMentionsAndAssignee($issue, $comment, $request->user());
+        $this->notifyMentionsAndAssignee($issue, $comment, $this->currentUser($request));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Comment added.')]);
 
@@ -40,7 +40,7 @@ class CommentController extends Controller
         abort_unless($comment->issue_id === $issue->id, 404);
 
         // You can always remove your own comment; otherwise it takes project admin.
-        if ($comment->user_id !== $request->user()->id) {
+        if ($comment->user_id !== $this->currentUser($request)->id) {
             $this->authorize('delete', $issue);
         } else {
             $this->authorize('view', $issue);

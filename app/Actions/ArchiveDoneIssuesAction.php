@@ -21,6 +21,10 @@ class ArchiveDoneIssuesAction
             ->each(function (Project $project) use (&$count): void {
                 $days = $project->archive_after_days;
 
+                if ($days === null) {
+                    return;
+                }
+
                 $count += Issue::query()
                     ->where('project_id', $project->id)
                     ->where('status', IssueStatus::Done)

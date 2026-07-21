@@ -19,7 +19,7 @@ class SavedViewController extends Controller
         );
 
         SavedView::query()->create([
-            'user_id' => $request->user()->id,
+            'user_id' => $this->currentUser($request)->id,
             'project_id' => $request->validated('project_id'),
             'name' => $request->validated('name'),
             'criteria' => $criteria,
@@ -30,7 +30,7 @@ class SavedViewController extends Controller
 
     public function destroy(Request $request, SavedView $savedView): RedirectResponse
     {
-        abort_unless($savedView->user_id === $request->user()->id, 403);
+        abort_unless($savedView->user_id === $this->currentUser($request)->id, 403);
 
         $savedView->delete();
 

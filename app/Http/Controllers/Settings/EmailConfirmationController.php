@@ -22,7 +22,7 @@ class EmailConfirmationController extends Controller
 
     public function create(Request $request): Response
     {
-        $user = $request->user();
+        $user = $this->currentUser($request);
 
         $code = $this->codes->issue($this->cacheKey($user->id));
 
@@ -35,7 +35,7 @@ class EmailConfirmationController extends Controller
 
     public function store(ConfirmEmailRequest $request): RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->currentUser($request);
 
         $result = $this->codes->verify($this->cacheKey($user->id), $request->validated('code'));
 

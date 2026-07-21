@@ -31,6 +31,8 @@ class ImportIssuesFromCsvAction
             throw new RuntimeException("Unable to read a header row from [{$path}].");
         }
 
+        $header = array_map(fn (?string $cell): string => (string) $cell, $header);
+
         $imported = 0;
         $skipped = 0;
         $errors = [];
@@ -39,6 +41,7 @@ class ImportIssuesFromCsvAction
 
         while (($row = fgetcsv($handle, escape: '')) !== false) {
             $rowNumber++;
+            $row = array_map(fn (?string $cell): string => (string) $cell, $row);
 
             if (count($row) !== count($header)) {
                 $errors[] = "Skipped row {$rowNumber}: expected ".count($header).' columns, got '.count($row).' (check for an unescaped comma in a field).';

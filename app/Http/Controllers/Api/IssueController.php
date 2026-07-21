@@ -30,7 +30,7 @@ class IssueController extends Controller
             'project' => ['sometimes', 'string', 'exists:projects,key'],
         ]);
 
-        $query = Issue::query()->visibleTo($request->user())->notArchived()->with(['project', 'parent', 'owner', 'assignee', 'labels']);
+        $query = Issue::query()->visibleTo($this->currentUser($request))->notArchived()->with(['project', 'parent', 'owner', 'assignee', 'labels']);
 
         if (isset($validated['project'])) {
             $query->whereRelation('project', 'key', $validated['project']);
@@ -63,7 +63,7 @@ class IssueController extends Controller
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description') ?? $template?->description,
             parent: $this->resolveParent($request->validated('parent')),
-            owner: $request->user(),
+            owner: $this->currentUser($request),
             assignee: $this->resolveAssignee($request->validated('assignee')),
             priority: $priority !== null ? IssuePriority::from($priority) : $template?->priority,
         );
@@ -111,7 +111,7 @@ class IssueController extends Controller
         }
 
         return $project->organization
-            ->issueTemplates()
+            ?->issueTemplates()
             ->with('labels')
             ->whereRaw('lower(name) = ?', [Str::lower($name)])
             ->first();
@@ -162,7 +162,7 @@ class IssueController extends Controller
         }
 
         return response()->json(
-            $this->detail($issue->fresh()->load(['project', 'parent', 'owner', 'assignee', 'labels']))
+            $this->detail($issue->refresh()->load(['project', 'parent', 'owner', 'assignee', 'labels']))
         );
     }
 
@@ -177,7 +177,7 @@ class IssueController extends Controller
             'closed_at' => $status === IssueStatus::Done ? now() : null,
         ])->save();
 
-        return response()->json($this->payload($issue->fresh()));
+        return response()->json($this->payload($issue->refresh()));
     }
 
     public function destroy(Request $request, Issue $issue): JsonResponse

@@ -17,7 +17,7 @@ class LocaleController extends Controller
             'locale' => ['required', 'string', Rule::in(config('app.supported_locales', ['en']))],
         ]);
 
-        $request->user()->update(['locale' => $validated['locale']]);
+        $this->currentUser($request)->update(['locale' => $validated['locale']]);
 
         return back();
     }

@@ -36,7 +36,7 @@ class IssueController extends Controller
 {
     public function index(FilterIssuesRequest $request, CurrentOrganization $current, ?Project $project = null): Response
     {
-        $user = $request->user();
+        $user = $this->currentUser($request);
         $organization = $current->for($user);
         $filters = $request->validated();
 
@@ -53,7 +53,7 @@ class IssueController extends Controller
                 ->withCount('children')
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
-                ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
+                ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
                 ->when($filters['project_id'] ?? null, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
@@ -82,7 +82,7 @@ class IssueController extends Controller
                 ->where('user_id', $user->id)
                 ->where(fn (Builder $query) => $query
                     ->whereNull('project_id')
-                    ->when($project, fn (Builder $q) => $q->orWhere('project_id', $project->id)))
+                    ->when($project?->id, fn (Builder $q, int $projectId) => $q->orWhere('project_id', $projectId)))
                 ->orderBy('name')
                 ->get(['id', 'name', 'project_id', 'criteria']),
         ]);
@@ -90,7 +90,7 @@ class IssueController extends Controller
 
     public function search(Request $request, CurrentOrganization $current): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->currentUser($request);
         $term = trim((string) $request->query('q', ''));
 
         if ($term === '') {
@@ -143,7 +143,7 @@ class IssueController extends Controller
             type: IssueType::from($request->validated('type')),
             description: $request->validated('description'),
             parent: $parent,
-            owner: $request->user(),
+            owner: $this->currentUser($request),
             priority: $template?->priority,
         );
 
@@ -174,13 +174,13 @@ class IssueController extends Controller
             'issue' => $this->serialize($issue),
             'timeline' => $this->serializeTimeline($issue),
             'members' => $this->projectMembers($issue->project),
-            'epics' => $this->eligibleParents($request->user(), $issue),
+            'epics' => $this->eligibleParents($this->currentUser($request), $issue),
             'labels' => Label::query()->forProject($issue->project)->orderBy('name')->get(['id', 'name', 'color']),
-            'canLogTime' => $request->user()->can('update', $issue),
-            'canManageTime' => $request->user()->can('delete', $issue),
-            'canModerateComments' => $request->user()->can('delete', $issue),
-            'canArchive' => $request->user()->can('update', $issue),
-            'currentUserId' => $request->user()->id,
+            'canLogTime' => $this->currentUser($request)->can('update', $issue),
+            'canManageTime' => $this->currentUser($request)->can('delete', $issue),
+            'canModerateComments' => $this->currentUser($request)->can('delete', $issue),
+            'canArchive' => $this->currentUser($request)->can('update', $issue),
+            'currentUserId' => $this->currentUser($request)->id,
         ]);
     }
 
@@ -251,13 +251,13 @@ class IssueController extends Controller
 
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
-                ->visibleTo($request->user())
-                ->inOrganization($current->for($request->user()))
+                ->visibleTo($this->currentUser($request))
+                ->inOrganization($current->for($this->currentUser($request)))
                 ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
                 ->withCount(['children', 'children as children_done_count' => fn (Builder $children) => $children->where('status', IssueStatus::Done)])
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee', 'parent'])
-                ->when($project, fn (Builder $query) => $query->where('project_id', $project->id))
+                ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
@@ -330,7 +330,7 @@ class IssueController extends Controller
         return Issue::query()
             ->visibleTo($user)
             ->whereNull('parent_id')
-            ->when($excluding, fn ($query) => $query->where('id', '!=', $excluding->id))
+            ->when($excluding?->id, fn ($query, int $id) => $query->where('id', '!=', $id))
             ->notArchived()
             ->orderBy('identifier')
             ->get(['id', 'identifier', 'title'])
