@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property int|null $billr_project_id
  * @property int|null $billr_client_id
  * @property int $next_number
+ * @property Carbon|null $archived_at
  */
 #[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days', 'category_id'])]
 class Project extends Model
@@ -266,6 +268,21 @@ class Project extends Model
     {
         return [
             'github_repos' => 'array',
+            'archived_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @param  Builder<Project>  $query
+     * @return Builder<Project>
+     */
+    public function scopeNotArchived(Builder $query): Builder
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null;
     }
 }

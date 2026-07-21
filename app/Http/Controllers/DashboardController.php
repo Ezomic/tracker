@@ -41,7 +41,7 @@ class DashboardController extends Controller
                 'archived' => Issue::query()->visibleTo($user)->inOrganization($this->organization)->whereNotNull('archived_at')->count(),
             ],
             'statusBreakdown' => $counts,
-            'hasProjects' => $user->projects()->exists(),
+            'hasProjects' => $user->projects()->notArchived()->exists(),
             'activeByProject' => $this->activeByProject($user),
             'attention' => $this->attention($user),
             'board' => $this->board($user),
@@ -74,7 +74,7 @@ class DashboardController extends Controller
     private function activeByProject(User $user): array
     {
         $rows = Project::query()
-            ->visibleTo($user)->inOrganization($this->organization)
+            ->visibleTo($user)->inOrganization($this->organization)->notArchived()
             ->withCount(['issues as active_count' => fn (Builder $query) => $query
                 ->whereNull('archived_at')
                 ->where('status', '!=', IssueStatus::Done->value)])

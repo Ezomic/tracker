@@ -19,6 +19,8 @@ Route::get('/user', function (Request $request) {
 Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/projects', [ProjectController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::delete('/projects/{project:key}', [ProjectController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/projects/{project:key}/restore', [ProjectController::class, 'restore'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/projects/{project:key}/members', [ProjectMemberController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
