@@ -138,11 +138,11 @@ it('does not accept a label from another organization', function () {
 it('lists the labels for the project organization', function () {
     [$organization, $user] = organizationWith();
     projectInOrganization($organization, $user, ['key' => 'THI']);
-    Label::factory()->create(['organization_id' => $organization->id, 'name' => 'backend', 'color' => 'blue']);
+    $label = Label::factory()->create(['organization_id' => $organization->id, 'name' => 'backend', 'color' => 'blue']);
 
     $this->actingAs($user, 'sanctum')->getJson('/api/labels?project=THI')
         ->assertOk()
-        ->assertExactJson([['name' => 'backend', 'color' => 'blue']]);
+        ->assertExactJson([['id' => $label->id, 'name' => 'backend', 'color' => 'blue']]);
 });
 
 it('lists the members of a project', function () {
