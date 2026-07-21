@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateIssueAction;
+use App\Actions\LogTimeAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIssueRequest;
+use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Issue;
@@ -178,6 +180,27 @@ class IssueController extends Controller
         ])->save();
 
         return response()->json($this->payload($issue->refresh()));
+    }
+
+    public function logTime(StoreTimeEntryRequest $request, Issue $issue, LogTimeAction $action): JsonResponse
+    {
+        $this->authorize('update', $issue);
+
+        $entry = $action->handle(
+            $issue,
+            $this->currentUser($request),
+            $request->string('duration')->toString(),
+            $request->string('spent_on')->toString() ?: null,
+            $request->string('note')->toString() ?: null,
+        );
+
+        return response()->json([
+            'id' => $entry->id,
+            'issue' => $issue->identifier,
+            'minutes' => $entry->minutes,
+            'spentOn' => $entry->spent_on->toDateString(),
+            'note' => $entry->note,
+        ], 201);
     }
 
     public function destroy(Request $request, Issue $issue): JsonResponse

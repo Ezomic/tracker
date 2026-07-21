@@ -25,6 +25,7 @@ Route::get('/issues/{issue}', [IssueController::class, 'show'])->middleware(['au
 Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/issues/{issue}', [IssueController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/issues/{issue}/time', [IssueController::class, 'logTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::delete('/issues/{issue}', [IssueController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
 
 Route::post('/webhooks/github', [GithubWebhookController::class, 'handle'])
