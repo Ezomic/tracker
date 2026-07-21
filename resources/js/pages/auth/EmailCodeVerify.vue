@@ -57,7 +57,9 @@ defineOptions({
             </div>
         </Form>
 
-        <div class="flex flex-wrap items-center justify-center gap-1 text-center text-sm text-muted-foreground">
+        <div
+            class="flex flex-wrap items-center justify-center gap-1 text-center text-sm text-muted-foreground"
+        >
             <span>{{ $t('auth.didntGetCode') }}</span>
             <TextLink :href="create()">{{ $t('common.tryAgain') }}</TextLink>
         </div>

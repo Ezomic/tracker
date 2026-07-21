@@ -64,7 +64,9 @@ defineOptions({
             </div>
         </Form>
 
-        <div class="flex flex-wrap items-center justify-center gap-1 text-center text-sm text-muted-foreground">
+        <div
+            class="flex flex-wrap items-center justify-center gap-1 text-center text-sm text-muted-foreground"
+        >
             <span>{{ $t('auth.alreadyHaveAccount') }}</span>
             <TextLink :href="login()">{{ $t('auth.logIn') }}</TextLink>
         </div>
