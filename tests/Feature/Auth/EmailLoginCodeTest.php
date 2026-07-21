@@ -74,3 +74,17 @@ it('rejects verification with no pending email in session', function () {
 
     $this->assertGuest();
 });
+
+it('fails gracefully when a valid code outlives its user', function () {
+    // No user owns this address, but a still-valid code sits in the cache —
+    // e.g. the account was deleted within the code's 10-minute TTL.
+    Cache::put('login-code:ghost@example.com', ['hash' => Hash::make('123456'), 'attempts' => 0], now()->addMinutes(10));
+    $this->withSession(['login-code-email' => 'ghost@example.com']);
+
+    $this->post('/login/code/verify', ['code' => '123456'])
+        ->assertRedirect(route('login.code.create'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
+    expect(session('login-code-email'))->toBeNull();
+});

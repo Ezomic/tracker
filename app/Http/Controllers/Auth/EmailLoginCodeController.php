@@ -72,7 +72,17 @@ class EmailLoginCodeController extends Controller
             return back()->withErrors(['code' => 'That code is incorrect.']);
         }
 
-        $user = User::query()->where('email', $email)->firstOrFail();
+        $user = User::query()->where('email', $email)->first();
+
+        // A valid code can outlive its user: the account may be deleted or its
+        // email changed within the code's TTL. Fail gracefully rather than
+        // letting firstOrFail render a bare 404.
+        if ($user === null) {
+            $request->session()->forget('login-code-email');
+
+            return to_route('login.code.create')
+                ->withErrors(['email' => 'That account is no longer available. Please start again.']);
+        }
 
         // A verified code proves ownership of the address, so confirm the email
         // on first use — new registrants start unverified.
