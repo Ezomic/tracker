@@ -18,6 +18,7 @@ use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
+use App\Models\TimeEntry;
 use App\Models\User;
 use App\Support\Duration;
 use Illuminate\Http\JsonResponse;
@@ -180,6 +181,42 @@ class IssueController extends Controller
         ])->save();
 
         return response()->json($this->payload($issue->refresh()));
+    }
+
+    public function listTime(Request $request, Issue $issue): JsonResponse
+    {
+        $this->authorize('view', $issue);
+
+        $entries = $issue->timeEntries()
+            ->with('user:id,name')
+            ->orderByDesc('spent_on')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (TimeEntry $entry): array => [
+                'id' => $entry->id,
+                'minutes' => $entry->minutes,
+                'spentOn' => $entry->spent_on->toDateString(),
+                'note' => $entry->note,
+                'user' => $entry->user?->name,
+            ]);
+
+        return response()->json($entries);
+    }
+
+    public function deleteTime(Request $request, Issue $issue, TimeEntry $timeEntry): JsonResponse
+    {
+        abort_unless($timeEntry->issue_id === $issue->id, 404);
+
+        // You can always remove your own entry; otherwise it takes project admin.
+        if ($timeEntry->user_id !== $this->currentUser($request)->id) {
+            $this->authorize('delete', $issue);
+        } else {
+            $this->authorize('view', $issue);
+        }
+
+        $timeEntry->delete();
+
+        return response()->json(status: 204);
     }
 
     public function logTime(StoreTimeEntryRequest $request, Issue $issue, LogTimeAction $action): JsonResponse
