@@ -6,6 +6,7 @@ use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 function seedDashboard(): Project
 {
@@ -133,4 +134,21 @@ it('reports weekly metrics and a work-in-progress load', function () {
             ->where('metrics.completed', 1)
             ->where('metrics.wip', 3)
         );
+});
+
+it('computes the weekly trend only once per dashboard load', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project);
+
+    DB::enableQueryLog();
+    $this->actingAs($user)->get('/dashboard')->assertOk();
+
+    // The completed-trend query selects exactly created_at + closed_at; before
+    // the fix metrics() re-ran trend(), so it appeared twice.
+    $trendQueries = collect(DB::getQueryLog())
+        ->filter(fn (array $q): bool => str_contains($q['query'], 'select "created_at", "closed_at" from "issues"'));
+
+    expect($trendQueries)->toHaveCount(1);
+
+    DB::disableQueryLog();
 });
