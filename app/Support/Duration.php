@@ -23,11 +23,11 @@ class Duration
             return null;
         }
 
-        if (preg_match('/^\d+$/', $input)) {
+        if (preg_match('/^\d+$/', $input) === 1) {
             return (int) $input;
         }
 
-        if (preg_match('/^(?:(\d+(?:\.\d+)?)\s*h)?\s*(?:(\d+)\s*m)?$/', $input, $matches)
+        if (preg_match('/^(?:(\d+(?:\.\d+)?)\s*h)?\s*(?:(\d+)\s*m)?$/', $input, $matches) === 1
             && (($matches[1] ?? '') !== '' || ($matches[2] ?? '') !== '')) {
             $hours = ($matches[1] ?? '') !== '' ? (float) $matches[1] : 0.0;
             $minutes = ($matches[2] ?? '') !== '' ? (int) $matches[2] : 0;

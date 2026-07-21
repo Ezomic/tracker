@@ -17,7 +17,7 @@ class GithubWebhookController extends Controller
         RecordPushedCommitsAction $pushes,
     ): Response {
         $event = $request->header('X-GitHub-Event');
-        $payload = (array) $request->json()->all();
+        $payload = $request->json()->all();
 
         if ($event === 'pull_request') {
             $pullRequests->handle($payload);

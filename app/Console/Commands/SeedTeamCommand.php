@@ -15,8 +15,8 @@ class SeedTeamCommand extends Command
 {
     public function handle(): int
     {
-        $key = strtoupper((string) $this->argument('key'));
-        $name = (string) $this->argument('name');
+        $key = strtoupper($this->argument('key'));
+        $name = $this->argument('name');
         $requestedNumber = (int) $this->argument('next_number');
 
         $team = Project::query()->where('key', $key)->first();

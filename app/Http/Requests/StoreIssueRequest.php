@@ -132,7 +132,7 @@ class StoreIssueRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $parent = Issue::query()->where('identifier', $value)->first();
 
-                    if ($parent && strcasecmp($parent->project->key, $this->string('project')->toString()) !== 0) {
+                    if ($parent !== null && strcasecmp($parent->project->key, $this->string('project')->toString()) !== 0) {
                         $fail('The parent issue must belong to the same project.');
                     }
                 },

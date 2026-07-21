@@ -1,4 +1,5 @@
 includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
     - vendor/larastan/larastan/extension.neon
     - vendor/nesbot/carbon/extension.neon
 
@@ -14,3 +15,20 @@ parameters:
         - config/sanctum.php
 
     level: 9
+
+    # phpstan-strict-rules, minus the rules that fight Laravel idioms:
+    # strictCalls (Eloquent builder methods are static-but-called-dynamically),
+    # the short-ternary ban (?: is idiomatic here), and strictArrayFilter
+    # (the only hits are in framework-default config). The enabled rules catch
+    # real issues: non-boolean conditions, loose comparisons and useless casts.
+    strictRules:
+        allRules: false
+        booleansInConditions: true
+        disallowedLooseComparison: true
+        uselessCast: true
+        strictArrayFilter: false
+        overwriteVariablesWithLoop: true
+        closureUsesThis: true
+        matchingInheritedMethodNames: true
+        numericOperandsInArithmeticOperators: true
+        requireParentConstructorCall: true

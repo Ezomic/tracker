@@ -96,7 +96,7 @@ class UpdateIssueApiRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
                     $parent = Issue::query()->where('identifier', $value)->first();
 
-                    if (! $parent) {
+                    if ($parent === null) {
                         return;
                     }
 

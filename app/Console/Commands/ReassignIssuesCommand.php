@@ -16,7 +16,7 @@ class ReassignIssuesCommand extends Command
 {
     public function handle(ReassignIssuesAction $action): int
     {
-        $path = (string) $this->argument('path');
+        $path = $this->argument('path');
 
         $contents = @file_get_contents($path);
 

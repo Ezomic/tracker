@@ -347,7 +347,7 @@ class IssueController extends Controller
     private function githubRepoBase(Issue $issue): ?string
     {
         if ($issue->github_pr_url !== null
-            && preg_match('#^(https?://github\.com/[^/]+/[^/]+)/pull/#', $issue->github_pr_url, $matches)) {
+            && preg_match('#^(https?://github\.com/[^/]+/[^/]+)/pull/#', $issue->github_pr_url, $matches) === 1) {
             return $matches[1];
         }
 
