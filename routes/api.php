@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\IssueController;
 use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\MemberController;
@@ -20,6 +21,10 @@ Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->m
 // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::get('/categories', [CategoryController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/categories', [CategoryController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::patch('/categories/{category}', [CategoryController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/labels', [LabelController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/labels', [LabelController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/labels/{label}', [LabelController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
