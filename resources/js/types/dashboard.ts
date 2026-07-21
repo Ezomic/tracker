@@ -1,3 +1,7 @@
+export type DashboardView = 'focus' | 'metrics' | 'board';
+
+export type IssueStatusKey = 'backlog' | 'in_progress' | 'in_review' | 'done';
+
 export interface DashboardStats {
     open: number;
     in_progress: number;
@@ -20,10 +24,40 @@ export interface ActiveByProject {
     count: number;
 }
 
-export interface DashboardRow {
+export interface IssueRow {
     identifier: string;
     title: string;
+    projectName: string;
     projectColor: string;
-    status: 'backlog' | 'in_progress' | 'in_review' | 'done';
+    status: IssueStatusKey;
+    ageDays: number;
+    stale: boolean;
     timestamp: string | null;
+}
+
+export interface BoardColumns {
+    backlog: IssueRow[];
+    in_progress: IssueRow[];
+    in_review: IssueRow[];
+    done: IssueRow[];
+}
+
+export interface TrendPoint {
+    label: string;
+    opened: number;
+    completed: number;
+    cycle: number | null;
+}
+
+export interface DashboardMetrics {
+    completed: number;
+    completedDelta: number;
+    opened: number;
+    openedDelta: number;
+    wip: number;
+    cycleDays: number | null;
+    cycleDelta: number | null;
+    completedSpark: number[];
+    openedSpark: number[];
+    cycleSpark: number[];
 }
