@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
 use App\Enums\ProjectLevel;
+use App\Jobs\ReportTimeToBillrJob;
 use App\Models\Project;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     config(['services.billr.base_url' => 'http://billr.test', 'services.billr.token' => 'test-token']);
@@ -89,10 +91,8 @@ it('sends the cached billr_project_id and no name fields once a project is linke
     });
 });
 
-it('keeps the local confirmation and flashes an error when Billr is unreachable', function () {
-    Http::fake([
-        '*/api/time-entries' => Http::response([], 500),
-    ]);
+it('confirms locally and queues the Billr report without blocking the request', function () {
+    Queue::fake();
 
     $project = Project::factory()->create(['key' => 'THI']);
     $user = member($project, ProjectLevel::Write);
@@ -105,9 +105,30 @@ it('keeps the local confirmation and flashes an error when Billr is unreachable'
             'billr_client_name' => 'Acme BV',
         ])
         ->assertRedirect()
-        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
     expect($issue->fresh()->confirmed_minutes)->toBe(30);
+
+    Queue::assertPushed(
+        ReportTimeToBillrJob::class,
+        fn (ReportTimeToBillrJob $job): bool => $job->issue->is($issue)
+            && $job->minutes === 30
+            && $job->clientName === 'Acme BV',
+    );
+});
+
+it('does not queue a Billr report for a non-invoiceable issue', function () {
+    Queue::fake();
+
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project, ProjectLevel::Write);
+    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
+
+    $this->actingAs($user)
+        ->post("/issues/{$issue->identifier}/confirm-time", ['minutes' => 90])
+        ->assertRedirect();
+
+    Queue::assertNotPushed(ReportTimeToBillrJob::class);
 });
 
 it('forbids a read member from confirming time', function () {

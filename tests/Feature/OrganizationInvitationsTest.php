@@ -46,7 +46,7 @@ it('lets an owner invite someone to the organization', function () {
         ->and($invitation->invited_by_id)->toBe($owner->id)
         ->and($invitation->isPending())->toBeTrue();
 
-    Mail::assertSent(OrganizationInvitationMail::class, fn ($mail) => $mail->hasTo('new@example.com'));
+    Mail::assertQueued(OrganizationInvitationMail::class, fn ($mail) => $mail->hasTo('new@example.com'));
 });
 
 it('invites a guest with an initial project grant', function () {
@@ -166,7 +166,7 @@ it('lets a manager revoke and resend an invitation', function () {
     $this->actingAs($owner)
         ->post("/settings/invitations/{$invitation->id}/resend")
         ->assertRedirect();
-    Mail::assertSent(OrganizationInvitationMail::class);
+    Mail::assertQueued(OrganizationInvitationMail::class);
 
     $this->actingAs($owner)
         ->delete("/settings/invitations/{$invitation->id}")

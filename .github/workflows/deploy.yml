@@ -44,4 +44,6 @@ jobs:
             # old cache persists and the fpm reload below just reloads stale routes.
             php artisan optimize
             sudo /bin/systemctl reload php8.4-fpm
+            # Tell the tracker-queue worker to pick up the freshly deployed code.
+            php artisan queue:restart
             php artisan up
