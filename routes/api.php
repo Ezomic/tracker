@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\IssueController;
 use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectMemberController;
 use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\GithubWebhookController;
 use App\Http\Middleware\VerifyGithubWebhookSignature;
@@ -18,6 +19,10 @@ Route::get('/user', function (Request $request) {
 Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/projects', [ProjectController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/projects/{project:key}/members', [ProjectMemberController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::patch('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::delete('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
 // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
