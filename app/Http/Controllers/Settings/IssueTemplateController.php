@@ -23,14 +23,14 @@ class IssueTemplateController extends Controller
 
     public function index(Request $request): Response
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('viewLibrary', $organization);
 
         return Inertia::render('settings/Templates', [
             'templates' => $this->serializeMany($organization->issueTemplates()->with('labels')->orderBy('name')->get()),
             'labels' => Label::query()->forOrganization($organization)->orderBy('name')->get(['id', 'name', 'color']),
             'projects' => $organization->projects()->orderBy('key')->get(['id', 'key', 'name']),
-            'canManage' => $request->user()->can('update', $organization),
+            'canManage' => $this->currentUser($request)->can('update', $organization),
         ]);
     }
 
@@ -39,7 +39,7 @@ class IssueTemplateController extends Controller
      */
     public function options(Request $request): JsonResponse
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('viewLibrary', $organization);
 
         return response()->json(
@@ -49,7 +49,7 @@ class IssueTemplateController extends Controller
 
     public function store(StoreIssueTemplateRequest $request): RedirectResponse
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('update', $organization);
 
         $template = $organization->issueTemplates()->create($request->safe()->except('labels'));
@@ -62,7 +62,7 @@ class IssueTemplateController extends Controller
 
     public function update(StoreIssueTemplateRequest $request, IssueTemplate $template): RedirectResponse
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('update', $organization);
         $this->guardBelongsToOrganization($organization, $template);
 
@@ -76,7 +76,7 @@ class IssueTemplateController extends Controller
 
     public function destroy(Request $request, IssueTemplate $template): RedirectResponse
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('update', $organization);
         $this->guardBelongsToOrganization($organization, $template);
 

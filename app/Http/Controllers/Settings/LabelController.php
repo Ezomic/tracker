@@ -20,7 +20,7 @@ class LabelController extends Controller
 
     public function index(Request $request): Response
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('viewLibrary', $organization);
 
         return Inertia::render('settings/Labels', [
@@ -35,13 +35,13 @@ class LabelController extends Controller
                     'color' => $label->color->value,
                     'issuesCount' => $label->issues_count,
                 ]),
-            'canManage' => $request->user()->can('update', $organization),
+            'canManage' => $this->currentUser($request)->can('update', $organization),
         ]);
     }
 
     public function store(StoreLabelRequest $request): RedirectResponse
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->require($this->currentUser($request));
         $this->authorize('update', $organization);
 
         $organization->labels()->create($request->validated());

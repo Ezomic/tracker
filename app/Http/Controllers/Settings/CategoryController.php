@@ -21,18 +21,18 @@ class CategoryController extends Controller
 
     public function index(Request $request): Response
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->for($this->currentUser($request));
         $this->authorize('viewLibrary', $organization);
 
         return Inertia::render('settings/Categories', [
             'categories' => $this->tree($organization),
-            'canManage' => $request->user()->can('update', $organization),
+            'canManage' => $this->currentUser($request)->can('update', $organization),
         ]);
     }
 
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
-        $organization = $this->current->for($request->user());
+        $organization = $this->current->for($this->currentUser($request));
         $this->authorize('update', $organization);
 
         $organization?->categories()->create($request->validated());

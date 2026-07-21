@@ -40,7 +40,7 @@ class OrganizationInvitationController extends Controller
             OrganizationRole::from($request->validated('role')),
             $project,
             $project === null ? null : ProjectLevel::from($request->validated('level')),
-            $request->user(),
+            $this->currentUser($request),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation sent.')]);
@@ -60,7 +60,7 @@ class OrganizationInvitationController extends Controller
             $invitation->role,
             $invitation->project,
             $invitation->level,
-            $request->user(),
+            $this->currentUser($request),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation resent.')]);
@@ -83,7 +83,7 @@ class OrganizationInvitationController extends Controller
 
     private function currentOrganization(Request $request, CurrentOrganization $current): Organization
     {
-        $organization = $current->for($request->user());
+        $organization = $current->for($this->currentUser($request));
 
         abort_if($organization === null, 404);
 

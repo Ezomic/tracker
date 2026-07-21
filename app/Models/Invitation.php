@@ -23,6 +23,9 @@ use Illuminate\Support\Carbon;
  * @property int|null $invited_by_id
  * @property Carbon $expires_at
  * @property Carbon|null $accepted_at
+ * @property-read Organization $organization
+ * @property-read Project|null $project
+ * @property-read User|null $invitedBy
  */
 #[Fillable(['organization_id', 'email', 'role', 'project_id', 'level', 'token', 'invited_by_id', 'expires_at', 'accepted_at'])]
 class Invitation extends Model

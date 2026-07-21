@@ -99,9 +99,9 @@ class StoreIssueRequest extends FormRequest
                     }
 
                     $exists = $project->organization
-                        ->issueTemplates()
+                        ?->issueTemplates()
                         ->whereRaw('lower(name) = ?', [Str::lower((string) $value)])
-                        ->exists();
+                        ->exists() ?? false;
 
                     if (! $exists) {
                         $fail('The selected template does not exist for this project.');

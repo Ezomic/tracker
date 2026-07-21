@@ -21,7 +21,7 @@ class LabelController extends Controller
 
         $organization = isset($validated['project'])
             ? Project::query()->where('key', $validated['project'])->firstOrFail()->organization
-            : Organization::query()->visibleTo($request->user())->orderBy('name')->first();
+            : Organization::query()->visibleTo($this->currentUser($request))->orderBy('name')->first();
 
         abort_if($organization === null, 404);
 

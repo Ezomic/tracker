@@ -52,6 +52,10 @@ class SpawnRecurringIssuesAction
 
             $next = $template->next_run_at;
 
+            if ($next === null) {
+                continue;
+            }
+
             do {
                 $next = $template->cadence->advance($next);
             } while ($next->lessThanOrEqualTo($now));

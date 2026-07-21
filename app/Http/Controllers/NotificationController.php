@@ -11,7 +11,7 @@ class NotificationController extends Controller
 {
     public function read(Request $request, string $notification): RedirectResponse
     {
-        $request->user()
+        $this->currentUser($request)
             ->notifications()
             ->whereKey($notification)
             ->whereNull('read_at')
@@ -22,7 +22,7 @@ class NotificationController extends Controller
 
     public function readAll(Request $request): RedirectResponse
     {
-        $request->user()->unreadNotifications->markAsRead();
+        $this->currentUser($request)->unreadNotifications->markAsRead();
 
         return back();
     }

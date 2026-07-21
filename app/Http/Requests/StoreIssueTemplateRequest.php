@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\Cadence;
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\IssueTemplate;
 use App\Services\CurrentOrganization;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,6 +15,8 @@ use Illuminate\Validation\Rule;
 
 class StoreIssueTemplateRequest extends FormRequest
 {
+    use ResolvesCurrentUser;
+
     public function authorize(): bool
     {
         return true;
@@ -38,7 +41,7 @@ class StoreIssueTemplateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $organizationId = app(CurrentOrganization::class)->for($this->user())?->id;
+        $organizationId = app(CurrentOrganization::class)->for($this->currentUser())?->id;
 
         /** @var IssueTemplate|null $template */
         $template = $this->route('template');

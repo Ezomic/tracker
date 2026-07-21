@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Concerns\NormalizesGithubRepos;
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Services\CurrentOrganization;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Rule;
 class StoreProjectRequest extends FormRequest
 {
     use NormalizesGithubRepos;
+    use ResolvesCurrentUser;
 
     public function authorize(): bool
     {
@@ -37,7 +39,7 @@ class StoreProjectRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::exists('categories', 'id')
-                    ->where('organization_id', app(CurrentOrganization::class)->for($this->user())?->id),
+                    ->where('organization_id', app(CurrentOrganization::class)->for($this->currentUser())?->id),
             ],
         ];
     }

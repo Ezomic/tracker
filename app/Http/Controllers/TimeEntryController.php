@@ -23,7 +23,7 @@ class TimeEntryController extends Controller
 
         $action->handle(
             $issue,
-            $request->user(),
+            $this->currentUser($request),
             $request->validated('duration'),
             $request->validated('spent_on'),
             $request->validated('note'),
@@ -40,7 +40,7 @@ class TimeEntryController extends Controller
 
         $reported = $action->handle(
             $issue,
-            $request->user(),
+            $this->currentUser($request),
             $request->integer('minutes'),
             $request->validated('billr_client_name'),
             $reportAction,
@@ -58,7 +58,7 @@ class TimeEntryController extends Controller
         abort_unless($timeEntry->issue_id === $issue->id, 404);
 
         // You can always remove your own entry; otherwise it takes project admin.
-        if ($timeEntry->user_id !== $request->user()->id) {
+        if ($timeEntry->user_id !== $this->currentUser($request)->id) {
             $this->authorize('delete', $issue);
         } else {
             $this->authorize('view', $issue);

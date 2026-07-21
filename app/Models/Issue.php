@@ -43,6 +43,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
  * @property string|null $archive_reason
+ * @property-read Project $project
+ * @property-read User|null $owner
+ * @property-read User|null $assignee
+ * @property-read Issue|null $parent
  */
 // owner_id is deliberately not fillable: it is stamped once, at creation.
 #[ObservedBy([IssueObserver::class])]

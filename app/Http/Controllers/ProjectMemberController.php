@@ -33,7 +33,7 @@ class ProjectMemberController extends Controller
             ];
         });
 
-        $canManage = $request->user()->can('manageMembers', $project);
+        $canManage = $this->currentUser($request)->can('manageMembers', $project);
 
         return Inertia::render('projects/Members', [
             'project' => [
@@ -44,7 +44,7 @@ class ProjectMemberController extends Controller
             // Only managers add people, and only from the organization's roster.
             'assignable' => $canManage ? $this->assignableMembers($project) : [],
             'canManage' => $canManage,
-            'currentUserId' => $request->user()->id,
+            'currentUserId' => $this->currentUser($request)->id,
         ]);
     }
 

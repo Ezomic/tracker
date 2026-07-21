@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Settings;
 
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\Category;
 use App\Services\CurrentOrganization;
 use Closure;
@@ -13,6 +14,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateCategoryRequest extends FormRequest
 {
+    use ResolvesCurrentUser;
+
     public function authorize(): bool
     {
         return true;
@@ -25,7 +28,7 @@ class UpdateCategoryRequest extends FormRequest
     {
         /** @var Category $category */
         $category = $this->route('category');
-        $organizationId = app(CurrentOrganization::class)->for($this->user())?->id;
+        $organizationId = app(CurrentOrganization::class)->for($this->currentUser())?->id;
 
         return [
             'name' => ['required', 'string', 'max:255'],

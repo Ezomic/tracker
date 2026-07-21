@@ -40,6 +40,18 @@ class CurrentOrganization
         return $organization;
     }
 
+    /**
+     * The current organization, required: aborts when the user belongs to none.
+     */
+    public function require(User $user): Organization
+    {
+        $organization = $this->for($user);
+
+        abort_if($organization === null, 403);
+
+        return $organization;
+    }
+
     public function set(Organization $organization): void
     {
         $this->session->put(self::KEY, $organization->id);

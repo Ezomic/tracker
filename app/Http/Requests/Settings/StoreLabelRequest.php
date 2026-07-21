@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Settings;
 
 use App\Enums\LabelColor;
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Services\CurrentOrganization;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
 
 class StoreLabelRequest extends FormRequest
 {
+    use ResolvesCurrentUser;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -34,7 +37,7 @@ class StoreLabelRequest extends FormRequest
                 'string',
                 'max:50',
                 Rule::unique('labels', 'name')
-                    ->where('organization_id', app(CurrentOrganization::class)->for($this->user())?->id),
+                    ->where('organization_id', app(CurrentOrganization::class)->for($this->currentUser())?->id),
             ],
             'color' => ['required', Rule::enum(LabelColor::class)],
         ];
