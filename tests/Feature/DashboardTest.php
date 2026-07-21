@@ -152,3 +152,18 @@ it('computes the weekly trend only once per dashboard load', function () {
 
     DB::disableQueryLog();
 });
+
+it('counts issue statuses in a single grouped query', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project);
+
+    DB::enableQueryLog();
+    $this->actingAs($user)->get('/dashboard')->assertOk();
+
+    $grouped = collect(DB::getQueryLog())
+        ->filter(fn (array $q): bool => str_contains($q['query'], 'group by "status"'));
+
+    expect($grouped)->toHaveCount(1);
+
+    DB::disableQueryLog();
+});
