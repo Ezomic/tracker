@@ -15,6 +15,8 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/projects', [ProjectController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
 // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
