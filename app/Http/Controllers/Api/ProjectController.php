@@ -18,7 +18,7 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         return response()->json(
-            Project::query()->visibleTo($this->currentUser($request))->orderBy('key')->get(['key', 'name', 'color'])
+            Project::query()->visibleTo($this->currentUser($request))->notArchived()->orderBy('key')->get(['key', 'name', 'color'])
         );
     }
 
@@ -41,6 +41,26 @@ class ProjectController extends Controller
         return response()->json($this->payload($project->refresh()));
     }
 
+    public function destroy(Project $project): JsonResponse
+    {
+        $this->authorize('delete', $project);
+
+        if (! $project->isArchived()) {
+            $project->forceFill(['archived_at' => now()])->save();
+        }
+
+        return response()->json($this->payload($project));
+    }
+
+    public function restore(Project $project): JsonResponse
+    {
+        $this->authorize('delete', $project);
+
+        $project->forceFill(['archived_at' => null])->save();
+
+        return response()->json($this->payload($project));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -55,6 +75,7 @@ class ProjectController extends Controller
             'githubRepos' => $project->github_repos ?? [],
             'productionUrl' => $project->production_url,
             'archiveAfterDays' => $project->archive_after_days,
+            'archivedAt' => $project->archived_at?->toIso8601String(),
             'url' => url('/'.$project->key.'/tickets'),
         ];
     }

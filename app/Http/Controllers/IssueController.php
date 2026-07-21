@@ -67,6 +67,7 @@ class IssueController extends Controller
             'projects' => Project::query()
                 ->visibleTo($user)
                 ->inOrganization($organization)
+                ->notArchived()
                 ->orderBy('key')
                 ->get()
                 ->map(fn (Project $project) => [

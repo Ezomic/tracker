@@ -74,6 +74,7 @@ class HandleInertiaRequests extends Middleware
                 ]),
             'sidebarProjects' => fn () => $request->user()
                 ? $request->user()->projects()
+                    ->notArchived()
                     ->inOrganization($organization)
                     ->wherePivot('is_favorite', true)
                     ->select(['projects.id', 'key', 'name', 'color'])
@@ -102,6 +103,7 @@ class HandleInertiaRequests extends Middleware
             // modal (which can be opened from any page).
             'newIssueProjects' => fn () => $request->user()
                 ? $request->user()->projects()
+                    ->notArchived()
                     ->inOrganization($organization)
                     ->select(['projects.id', 'key', 'name'])
                     ->orderBy('key')

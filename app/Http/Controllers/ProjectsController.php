@@ -37,6 +37,7 @@ class ProjectsController extends Controller
                 ->values()
                 ->all(),
             'projects' => $this->currentUser($request)->projects()
+                ->notArchived()
                 ->inOrganization($organization)
                 ->withCount([
                     'issues',
