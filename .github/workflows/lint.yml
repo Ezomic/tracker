@@ -51,3 +51,6 @@ jobs:
 
       - name: Lint frontend
         run: npm run lint:check
+
+      - name: Frontend unit tests
+        run: npm run test:unit
