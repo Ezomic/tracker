@@ -7,6 +7,7 @@ namespace App\Actions;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Support\Cast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -47,7 +48,7 @@ class ReassignIssuesAction
                     ->orderBy('number')
                     ->get();
 
-                foreach (array_diff($identifiers, $issues->pluck('identifier')->all()) as $notFound) {
+                foreach (array_diff($identifiers, Cast::strings($issues->pluck('identifier')->all())) as $notFound) {
                     $missing[] = $notFound;
                 }
 

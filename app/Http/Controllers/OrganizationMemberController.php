@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -88,7 +89,7 @@ class OrganizationMemberController extends Controller
         /** @var Pivot $pivot */
         $pivot = $user->getAttribute('pivot');
 
-        return OrganizationRole::from((string) $pivot->getAttribute('role'));
+        return OrganizationRole::from(Cast::string($pivot->getAttribute('role')));
     }
 
     private function guardManageable(Request $request, Organization $organization, User $user): void

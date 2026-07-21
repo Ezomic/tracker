@@ -50,36 +50,36 @@ class IssueController extends Controller
 
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
     {
-        $project = Project::where('key', $request->validated('project'))->firstOrFail();
+        $project = Project::where('key', $request->string('project')->toString())->firstOrFail();
 
         $this->authorize('createIssue', $project);
 
-        $template = $this->resolveTemplate($project, $request->validated('template'));
-        $priority = $request->validated('priority');
+        $template = $this->resolveTemplate($project, $request->string('template')->toString() ?: null);
+        $priority = $request->string('priority')->toString() ?: null;
+        $estimate = $request->string('estimate')->toString() ?: null;
+        $labels = $this->stringList($request->validated('labels'));
 
         $issue = $action->handle(
             project: $project,
-            title: $request->validated('title'),
-            type: IssueType::from($request->validated('type')),
-            description: $request->validated('description') ?? $template?->description,
-            parent: $this->resolveParent($request->validated('parent')),
+            title: $request->string('title')->toString(),
+            type: IssueType::from($request->string('type')->toString()),
+            description: ($request->string('description')->toString() ?: null) ?? $template?->description,
+            parent: $this->resolveParent($request->string('parent')->toString() ?: null),
             owner: $this->currentUser($request),
-            assignee: $this->resolveAssignee($request->validated('assignee')),
+            assignee: $this->resolveAssignee($request->string('assignee')->toString() ?: null),
             priority: $priority !== null ? IssuePriority::from($priority) : $template?->priority,
         );
 
         // Explicit labels replace the template's; the template only fills the gap.
-        $labels = $request->validated('labels');
-
-        if ($labels !== null && $labels !== []) {
+        if ($labels !== []) {
             $issue->labels()->sync($this->resolveLabelIds($project, $labels));
         } elseif ($template !== null) {
             $issue->labels()->sync($template->labels->pluck('id')->all());
         }
 
-        if ($request->validated('estimate') !== null) {
+        if ($estimate !== null) {
             $issue->forceFill([
-                'estimate_minutes' => Duration::toMinutes($request->validated('estimate')),
+                'estimate_minutes' => Duration::toMinutes($estimate),
             ])->save();
         }
 
@@ -132,23 +132,23 @@ class IssueController extends Controller
         }
 
         if ($request->has('parent')) {
-            $attributes['parent_id'] = $this->resolveParent($request->validated('parent'))?->id;
+            $attributes['parent_id'] = $this->resolveParent($request->string('parent')->toString() ?: null)?->id;
         }
 
         if ($request->has('type')) {
-            $attributes['type'] = IssueType::from($request->validated('type'));
+            $attributes['type'] = IssueType::from($request->string('type')->toString());
         }
 
         if ($request->has('priority')) {
-            $attributes['priority'] = IssuePriority::from($request->validated('priority'));
+            $attributes['priority'] = IssuePriority::from($request->string('priority')->toString());
         }
 
         if ($request->has('assignee')) {
-            $attributes['assignee_id'] = $this->resolveAssignee($request->validated('assignee'))?->id;
+            $attributes['assignee_id'] = $this->resolveAssignee($request->string('assignee')->toString() ?: null)?->id;
         }
 
         if ($request->has('estimate')) {
-            $estimate = $request->validated('estimate');
+            $estimate = $request->string('estimate')->toString() ?: null;
             $attributes['estimate_minutes'] = $estimate === null ? null : Duration::toMinutes($estimate);
         }
 
@@ -158,7 +158,7 @@ class IssueController extends Controller
         // alone here, unlike the web endpoint where the whole form is submitted
         // and an omission means "none" — a partial patch must stay partial.
         if ($request->has('labels')) {
-            $issue->syncLabelsWithActivity($this->resolveLabelIds($issue->project, $request->validated('labels', [])));
+            $issue->syncLabelsWithActivity($this->resolveLabelIds($issue->project, $this->stringList($request->validated('labels', []))));
         }
 
         return response()->json(
@@ -170,7 +170,7 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $status = IssueStatus::from($request->validated('status'));
+        $status = IssueStatus::from($request->string('status')->toString());
 
         $issue->forceFill([
             'status' => $status,

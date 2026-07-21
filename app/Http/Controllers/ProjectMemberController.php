@@ -8,6 +8,7 @@ use App\Http\Requests\StoreProjectMemberRequest;
 use App\Http\Requests\UpdateProjectMemberRequest;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\Cast;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class ProjectMemberController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'level' => (string) $pivot->getAttribute('level'),
+                'level' => Cast::string($pivot->getAttribute('level')),
                 'ownIssuesOnly' => (bool) $pivot->getAttribute('own_issues_only'),
             ];
         });
@@ -52,7 +53,7 @@ class ProjectMemberController extends Controller
     {
         $this->authorize('manageMembers', $project);
 
-        $user = $this->guardOrganizationMember($project, (int) $request->validated('user_id'));
+        $user = $this->guardOrganizationMember($project, $request->integer('user_id'));
 
         if ($project->hasMember($user)) {
             return back()->withErrors(['user_id' => __('They already have access to this project.')]);

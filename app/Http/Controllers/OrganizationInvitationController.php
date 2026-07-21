@@ -25,7 +25,7 @@ class OrganizationInvitationController extends Controller
         $organization = $this->currentOrganization($request, $current);
         $this->authorize('manageMembers', $organization);
 
-        $email = Str::lower($request->validated('email'));
+        $email = Str::lower($request->string('email')->toString());
         $existing = User::query()->where('email', $email)->first();
 
         if ($existing !== null && $organization->hasMember($existing)) {
@@ -37,9 +37,9 @@ class OrganizationInvitationController extends Controller
         $action->handle(
             $organization,
             $email,
-            OrganizationRole::from($request->validated('role')),
+            OrganizationRole::from($request->string('role')->toString()),
             $project,
-            $project === null ? null : ProjectLevel::from($request->validated('level')),
+            $project === null ? null : ProjectLevel::from($request->string('level')->toString()),
             $this->currentUser($request),
         );
 

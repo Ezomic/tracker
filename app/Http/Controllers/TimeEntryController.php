@@ -24,9 +24,9 @@ class TimeEntryController extends Controller
         $action->handle(
             $issue,
             $this->currentUser($request),
-            $request->validated('duration'),
-            $request->validated('spent_on'),
-            $request->validated('note'),
+            $request->string('duration')->toString(),
+            $request->string('spent_on')->toString() ?: null,
+            $request->string('note')->toString() ?: null,
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Time logged.')]);
@@ -42,7 +42,7 @@ class TimeEntryController extends Controller
             $issue,
             $this->currentUser($request),
             $request->integer('minutes'),
-            $request->validated('billr_client_name'),
+            $request->string('billr_client_name')->toString() ?: null,
             $reportAction,
         );
 

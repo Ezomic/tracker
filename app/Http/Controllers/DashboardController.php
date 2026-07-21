@@ -10,6 +10,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -84,7 +85,7 @@ class DashboardController extends Controller
                 'key' => $project->key,
                 'name' => $project->name,
                 'color' => $project->color,
-                'count' => (int) $project->getAttribute('active_count'),
+                'count' => Cast::int($project->getAttribute('active_count')),
             ])
             ->filter(fn (array $row): bool => $row['count'] > 0)
             ->all();
@@ -162,7 +163,7 @@ class DashboardController extends Controller
             $weekEnd = $weekStart->addWeek();
 
             $openedCount = $opened
-                ->filter(fn (CarbonImmutable $date): bool => $date >= $weekStart && $date < $weekEnd)
+                ->filter(fn (mixed $date): bool => $date instanceof CarbonImmutable && $date >= $weekStart && $date < $weekEnd)
                 ->count();
 
             $completedInWeek = $completed

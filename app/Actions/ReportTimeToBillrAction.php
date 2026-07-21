@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\Issue;
+use App\Support\Cast;
 use Illuminate\Support\Facades\Http;
 
 class ReportTimeToBillrAction
@@ -35,8 +36,8 @@ class ReportTimeToBillrAction
             $payload['project_name'] = $project->name;
         }
 
-        $response = Http::withToken(config('services.billr.token'))
-            ->baseUrl(config('services.billr.base_url'))
+        $response = Http::withToken(Cast::string(config('services.billr.token')))
+            ->baseUrl(Cast::string(config('services.billr.base_url')))
             ->post('/api/time-entries', $payload)
             ->throw();
 

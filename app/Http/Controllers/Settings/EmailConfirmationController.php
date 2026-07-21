@@ -37,7 +37,7 @@ class EmailConfirmationController extends Controller
     {
         $user = $this->currentUser($request);
 
-        $result = $this->codes->verify($this->cacheKey($user->id), $request->validated('code'));
+        $result = $this->codes->verify($this->cacheKey($user->id), $request->string('code')->toString());
 
         if ($result === CodeVerification::Expired) {
             return back()->withErrors(['code' => 'This code has expired. Request a new one.']);

@@ -38,6 +38,9 @@ class StoreIssueWebRequest extends FormRequest
      */
     public function rules(): array
     {
+        $organizationId = Project::query()->whereKey($this->input('project_id'))->value('organization_id');
+        $organizationId = is_int($organizationId) ? $organizationId : null;
+
         return [
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -51,10 +54,7 @@ class StoreIssueWebRequest extends FormRequest
             'template_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('issue_templates', 'id')->where(
-                    'organization_id',
-                    Project::query()->whereKey($this->input('project_id'))->value('organization_id'),
-                ),
+                Rule::exists('issue_templates', 'id')->where('organization_id', $organizationId),
             ],
         ];
     }

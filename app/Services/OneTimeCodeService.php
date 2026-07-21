@@ -31,15 +31,17 @@ class OneTimeCodeService
     public function verify(string $key, string $code): CodeVerification
     {
         $entry = Cache::get($key);
+        $hash = is_array($entry) ? ($entry['hash'] ?? null) : null;
+        $attempts = is_array($entry) ? ($entry['attempts'] ?? null) : null;
 
-        if ($entry === null || $entry['attempts'] >= self::MAX_ATTEMPTS) {
+        if (! is_string($hash) || ! is_int($attempts) || $attempts >= self::MAX_ATTEMPTS) {
             Cache::forget($key);
 
             return CodeVerification::Expired;
         }
 
-        if (! Hash::check($code, $entry['hash'])) {
-            Cache::put($key, [...$entry, 'attempts' => $entry['attempts'] + 1], now()->addMinutes(self::TTL_MINUTES));
+        if (! Hash::check($code, $hash)) {
+            Cache::put($key, ['hash' => $hash, 'attempts' => $attempts + 1], now()->addMinutes(self::TTL_MINUTES));
 
             return CodeVerification::Incorrect;
         }

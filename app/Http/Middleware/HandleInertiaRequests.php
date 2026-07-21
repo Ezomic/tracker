@@ -9,6 +9,7 @@ use App\Models\Issue;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -90,10 +91,10 @@ class HandleInertiaRequests extends Middleware
                         'name' => $project->name,
                         'color' => $project->color,
                         'counts' => [
-                            'backlog' => (int) $project->getAttribute('backlog_count'),
-                            'in_progress' => (int) $project->getAttribute('in_progress_count'),
-                            'in_review' => (int) $project->getAttribute('in_review_count'),
-                            'done' => (int) $project->getAttribute('done_count'),
+                            'backlog' => Cast::int($project->getAttribute('backlog_count')),
+                            'in_progress' => Cast::int($project->getAttribute('in_progress_count')),
+                            'in_review' => Cast::int($project->getAttribute('in_review_count')),
+                            'done' => Cast::int($project->getAttribute('done_count')),
                         ],
                     ])
                 : [],

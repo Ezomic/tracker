@@ -30,7 +30,7 @@ class EmailLoginCodeController extends Controller
 
     public function store(StoreLoginCodeRequest $request): RedirectResponse
     {
-        $email = Str::lower($request->validated('email'));
+        $email = Str::lower($request->string('email')->toString());
 
         if (User::query()->where('email', $email)->exists()) {
             $code = $this->codes->issue($this->cacheKey($email));
@@ -58,11 +58,11 @@ class EmailLoginCodeController extends Controller
     {
         $email = $request->session()->get('login-code-email');
 
-        if ($email === null) {
+        if (! is_string($email)) {
             return to_route('login.code.create');
         }
 
-        $result = $this->codes->verify($this->cacheKey($email), $request->validated('code'));
+        $result = $this->codes->verify($this->cacheKey($email), $request->string('code')->toString());
 
         if ($result === CodeVerification::Expired) {
             return back()->withErrors(['code' => 'This code has expired. Request a new one.']);

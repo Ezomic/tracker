@@ -7,6 +7,7 @@ namespace App\Http\Requests\Settings;
 use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\Category;
 use App\Services\CurrentOrganization;
+use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,7 +42,7 @@ class UpdateCategoryRequest extends FormRequest
                         return;
                     }
 
-                    if ((int) $value === $category->id || in_array((int) $value, $category->descendantIds(), true)) {
+                    if (Cast::int($value) === $category->id || in_array(Cast::int($value), $category->descendantIds(), true)) {
                         $fail(__('A category cannot be moved inside itself.'));
                     }
                 },

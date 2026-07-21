@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\OrganizationRole;
 use App\Enums\ProjectLevel;
+use App\Support\Cast;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -105,7 +106,7 @@ class Project extends Model
         /** @var Pivot $pivot */
         $pivot = $member->getAttribute('pivot');
 
-        return ProjectLevel::from((string) $pivot->getAttribute('level'));
+        return ProjectLevel::from(Cast::string($pivot->getAttribute('level')));
     }
 
     /**
