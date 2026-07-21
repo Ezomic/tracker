@@ -13,8 +13,7 @@ use Carbon\CarbonImmutable;
 
 function recurringTemplate(Project $project, array $attributes = []): IssueTemplate
 {
-    return IssueTemplate::query()->create(array_merge([
-        'organization_id' => $project->organization_id,
+    $template = IssueTemplate::query()->create(array_merge([
         'name' => 'Weekly chores',
         'description' => 'Do the chores',
         'type' => IssueType::Fix,
@@ -23,6 +22,11 @@ function recurringTemplate(Project $project, array $attributes = []): IssueTempl
         'target_project_id' => $project->id,
         'next_run_at' => CarbonImmutable::now()->subDay(),
     ], $attributes));
+
+    // organization_id is stamped via the relationship, not mass-assigned.
+    $template->forceFill(['organization_id' => $project->organization_id])->save();
+
+    return $template;
 }
 
 it('spawns an issue from a due template with its defaults', function () {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -45,6 +46,13 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // Surface N+1 lazy loads and silently discarded mass-assignments during
+        // development and tests; stay lenient in prod. Missing-attribute strictness
+        // is deliberately left off: the app legitimately selects partial columns.
+        $strict = ! app()->isProduction();
+        Model::preventLazyLoading($strict);
+        Model::preventSilentlyDiscardingAttributes($strict);
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
