@@ -36,6 +36,23 @@ type Column = {
 
 const columns: Column[] = [
     {
+        status: 'backlog',
+        dot: 'bg-muted-foreground/50',
+        count: 2,
+        tickets: [
+            {
+                id: 'SHOP-45',
+                title: 'Address autocomplete at checkout',
+                priority: 'medium',
+            },
+            {
+                id: 'SHOP-44',
+                title: 'Gift card redemption',
+                priority: 'low',
+            },
+        ],
+    },
+    {
         status: 'in_progress',
         dot: 'bg-primary',
         count: 2,
@@ -291,11 +308,11 @@ const features = computed(() => [
                             tracker.thijssensoftware.nl / SHOP
                         </span>
                     </div>
-                    <div class="grid sm:grid-cols-3">
+                    <div class="grid lg:grid-cols-4">
                         <div
                             v-for="column in columns"
                             :key="column.status"
-                            class="border-b border-border p-3.5 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
+                            class="border-b border-border p-3.5 last:border-b-0 lg:border-r lg:border-b-0 lg:last:border-r-0"
                         >
                             <div
                                 class="mb-3 flex items-center gap-2 text-xs text-muted-foreground"
