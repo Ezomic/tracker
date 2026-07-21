@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Actions\ConfirmIssueTimeAction;
 use App\Actions\LogTimeAction;
-use App\Actions\ReportTimeToBillrAction;
 use App\Http\Requests\ConfirmTimeRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
 use App\Models\Issue;
@@ -34,21 +33,18 @@ class TimeEntryController extends Controller
         return back();
     }
 
-    public function confirmTime(ConfirmTimeRequest $request, Issue $issue, ConfirmIssueTimeAction $action, ReportTimeToBillrAction $reportAction): RedirectResponse
+    public function confirmTime(ConfirmTimeRequest $request, Issue $issue, ConfirmIssueTimeAction $action): RedirectResponse
     {
         $this->authorize('update', $issue);
 
-        $reported = $action->handle(
+        $action->handle(
             $issue,
             $this->currentUser($request),
             $request->integer('minutes'),
             $request->string('billr_client_name')->toString() ?: null,
-            $reportAction,
         );
 
-        Inertia::flash('toast', $reported
-            ? ['type' => 'success', 'message' => __('Time confirmed.')]
-            : ['type' => 'error', 'message' => __('Time confirmed, but reporting it to Billr failed.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Time confirmed.')]);
 
         return back();
     }
