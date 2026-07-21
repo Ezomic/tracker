@@ -21,6 +21,9 @@ Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->m
 Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/labels', [LabelController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/labels', [LabelController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::patch('/labels/{label}', [LabelController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::delete('/labels/{label}', [LabelController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/members', [MemberController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues', [IssueController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues/{issue}', [IssueController::class, 'show'])->middleware(['auth:sanctum', 'throttle:60,1']);
