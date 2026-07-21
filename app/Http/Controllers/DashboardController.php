@@ -55,16 +55,17 @@ class DashboardController extends Controller
      */
     private function statusCounts(User $user): array
     {
-        $count = fn (IssueStatus $status): int => $this->scoped($user)
+        $counts = $this->scoped($user)
             ->notArchived()
-            ->where('status', $status->value)
-            ->count();
+            ->groupBy('status')
+            ->selectRaw('status, count(*) as aggregate')
+            ->pluck('aggregate', 'status');
 
         return [
-            'backlog' => $count(IssueStatus::Backlog),
-            'in_progress' => $count(IssueStatus::InProgress),
-            'in_review' => $count(IssueStatus::InReview),
-            'done' => $count(IssueStatus::Done),
+            'backlog' => Cast::int($counts->get(IssueStatus::Backlog->value)),
+            'in_progress' => Cast::int($counts->get(IssueStatus::InProgress->value)),
+            'in_review' => Cast::int($counts->get(IssueStatus::InReview->value)),
+            'done' => Cast::int($counts->get(IssueStatus::Done->value)),
         ];
     }
 
