@@ -46,7 +46,9 @@ defineProps<{
 
     <PasskeyVerify />
 
-    <div class="mt-4 flex flex-wrap items-center justify-center gap-1 text-center text-sm text-muted-foreground">
+    <div
+        class="mt-4 flex flex-wrap items-center justify-center gap-1 text-center text-sm text-muted-foreground"
+    >
         <span>{{ $t('auth.newHere') }}</span>
         <TextLink :href="register()">{{ $t('auth.createAccount') }}</TextLink>
     </div>
