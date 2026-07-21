@@ -1,0 +1,19 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": [
+            "app/Actions",
+            "app/Enums",
+            "app/Services",
+            "app/Support"
+        ]
+    },
+    "mutators": {
+        "@default": true
+    },
+    "logs": {
+        "text": "php://stderr"
+    },
+    "minMsi": 0,
+    "minCoveredMsi": 0
+}
