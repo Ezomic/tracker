@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\AddCommentAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LogTimeAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
+use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
@@ -181,6 +184,39 @@ class IssueController extends Controller
         ])->save();
 
         return response()->json($this->payload($issue->refresh()));
+    }
+
+    public function listComments(Request $request, Issue $issue): JsonResponse
+    {
+        $this->authorize('view', $issue);
+
+        $comments = $issue->comments()
+            ->with('user:id,name')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn (Comment $comment): array => [
+                'id' => $comment->id,
+                'body' => $comment->body,
+                'user' => $comment->user?->name,
+                'createdAt' => $comment->created_at->toIso8601String(),
+            ]);
+
+        return response()->json($comments);
+    }
+
+    public function storeComment(StoreCommentRequest $request, Issue $issue, AddCommentAction $action): JsonResponse
+    {
+        // Anyone who can see the issue can comment on it.
+        $this->authorize('view', $issue);
+
+        $comment = $action->handle($issue, $this->currentUser($request), $request->string('body')->toString());
+
+        return response()->json([
+            'id' => $comment->id,
+            'body' => $comment->body,
+            'user' => $this->currentUser($request)->name,
+            'createdAt' => $comment->created_at->toIso8601String(),
+        ], 201);
     }
 
     public function listTime(Request $request, Issue $issue): JsonResponse
