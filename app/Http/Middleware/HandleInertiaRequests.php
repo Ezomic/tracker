@@ -72,7 +72,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $each->name,
                     'slug' => $each->slug,
                 ]),
-            'sidebarProjects' => fn () => $request->user()
+            'sidebarProjects' => fn () => $request->user() !== null
                 ? $request->user()->projects()
                     ->notArchived()
                     ->inOrganization($organization)
@@ -101,7 +101,7 @@ class HandleInertiaRequests extends Middleware
                 : [],
             // Every project the user can file against, for the sidebar's new-issue
             // modal (which can be opened from any page).
-            'newIssueProjects' => fn () => $request->user()
+            'newIssueProjects' => fn () => $request->user() !== null
                 ? $request->user()->projects()
                     ->notArchived()
                     ->inOrganization($organization)
@@ -115,7 +115,7 @@ class HandleInertiaRequests extends Middleware
                     ])
                 : [],
             'currentProjectId' => fn () => $this->currentProjectId($request),
-            'notifications' => fn () => $request->user()
+            'notifications' => fn () => $request->user() !== null
                 ? $request->user()->notifications()->latest()->limit(15)->get()->map(fn ($notification) => [
                     'id' => $notification->id,
                     'data' => $notification->data,
@@ -123,7 +123,7 @@ class HandleInertiaRequests extends Middleware
                     'createdAt' => $notification->created_at?->toIso8601String(),
                 ])
                 : [],
-            'unreadNotificationsCount' => fn () => $request->user()
+            'unreadNotificationsCount' => fn () => $request->user() !== null
                 ? $request->user()->unreadNotifications()->count()
                 : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

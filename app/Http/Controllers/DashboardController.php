@@ -224,7 +224,7 @@ class DashboardController extends Controller
                     return null;
                 }
 
-                return (float) $created->diffInDays($closed, true);
+                return $created->diffInDays($closed, true);
             })
             ->filter(fn (?float $days): bool => $days !== null)
             ->median();
