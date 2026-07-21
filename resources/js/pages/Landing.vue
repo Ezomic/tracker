@@ -431,9 +431,18 @@ const features = computed(() => [
 
         <footer class="border-t border-border">
             <div
-                class="mx-auto flex max-w-5xl items-center justify-between px-6 py-6 font-mono text-xs text-muted-foreground/70"
+                class="mx-auto flex max-w-5xl flex-col items-center gap-3 px-6 py-6 text-center font-mono text-xs text-muted-foreground/70 sm:flex-row sm:justify-between sm:gap-4 sm:text-left"
             >
                 <span>© {{ new Date().getFullYear() }} Thijssen Software</span>
+                <span class="order-last sm:order-none">
+                    {{ $t('landing.footerSuite') }}
+                    <a
+                        href="https://id.thijssensoftware.nl"
+                        class="text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+                    >
+                        {{ $t('landing.footerSuiteLink') }}
+                    </a>
+                </span>
                 <span>tracker · self-hosted</span>
             </div>
         </footer>
