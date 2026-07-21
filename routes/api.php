@@ -27,6 +27,8 @@ Route::get('/issues/{issue}', [IssueController::class, 'show'])->middleware(['au
 Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/issues/{issue}', [IssueController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::get('/issues/{issue}/comments', [IssueController::class, 'listComments'])->middleware(['auth:sanctum', 'throttle:60,1']);
+Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::get('/issues/{issue}/time', [IssueController::class, 'listTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::post('/issues/{issue}/time', [IssueController::class, 'logTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
 Route::delete('/issues/{issue}/time/{timeEntry}', [IssueController::class, 'deleteTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
