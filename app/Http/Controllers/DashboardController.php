@@ -45,8 +45,8 @@ class DashboardController extends Controller
             'activeByProject' => $this->activeByProject($user),
             'attention' => $this->attention($user),
             'board' => $this->board($user),
-            'trend' => $this->trend($user),
-            'metrics' => $this->metrics($user, $counts),
+            'trend' => $trend = $this->trend($user),
+            'metrics' => $this->metrics($counts, $trend),
         ]);
     }
 
@@ -182,11 +182,11 @@ class DashboardController extends Controller
 
     /**
      * @param  array{backlog: int, in_progress: int, in_review: int, done: int}  $counts
+     * @param  list<array{label: string, opened: int, completed: int, cycle: float|null}>  $weeks
      * @return array<string, mixed>
      */
-    private function metrics(User $user, array $counts): array
+    private function metrics(array $counts, array $weeks): array
     {
-        $weeks = $this->trend($user);
         $current = $weeks[self::TREND_WEEKS - 1];
         $previous = $weeks[self::TREND_WEEKS - 2];
 
