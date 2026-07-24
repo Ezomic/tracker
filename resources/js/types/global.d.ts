@@ -1,5 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { AppNotification } from '@/types/issue';
+import type { PortalApp } from '@/types/portal';
 import type {
     OrganizationSummary,
     Project,
@@ -32,6 +33,7 @@ declare module '@inertiajs/core' {
             currentProjectId: number | null;
             notifications: AppNotification[];
             unreadNotificationsCount: number;
+            portalApps: PortalApp[];
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

@@ -9,6 +9,7 @@ use App\Models\Issue;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Services\CurrentOrganization;
+use App\Services\Portal\IdPortalClient;
 use App\Support\Cast;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -126,6 +127,9 @@ class HandleInertiaRequests extends Middleware
             'unreadNotificationsCount' => fn () => $request->user() !== null
                 ? $request->user()->unreadNotifications()->count()
                 : 0,
+            'portalApps' => fn () => $request->user() === null
+                ? []
+                : app(IdPortalClient::class)->appsFor($request->user()),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

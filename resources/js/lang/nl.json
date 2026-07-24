@@ -159,6 +159,13 @@
         "minutesAgo": "{count} min geleden",
         "hoursAgo": "{count} u geleden"
     },
+    "portal": {
+        "label": "Apps",
+        "title": "Jouw apps",
+        "description": "Ga naar een andere Thijssensoftware-app waar je toegang toe hebt.",
+        "empty": "Geen apps beschikbaar.",
+        "current": "Huidige"
+    },
     "list": {
         "title": "Tickets",
         "project": "Project",
