@@ -159,6 +159,13 @@
         "minutesAgo": "{count}m ago",
         "hoursAgo": "{count}h ago"
     },
+    "portal": {
+        "label": "Apps",
+        "title": "Your apps",
+        "description": "Jump to another Thijssensoftware app you have access to.",
+        "empty": "No apps available.",
+        "current": "Current"
+    },
     "list": {
         "title": "Tickets",
         "project": "Project",
