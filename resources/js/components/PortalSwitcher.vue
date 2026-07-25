@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/vue3';
 import { LayoutGrid } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AppIcon from '@/components/AppIcon.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -79,12 +80,11 @@ const apps = computed<PortalApp[]>(() => page.props.portalApps ?? []);
                             : 'hover:border-primary/40 hover:bg-accent/60'
                     "
                 >
-                    <span
-                        class="flex size-11 items-center justify-center rounded-lg text-base font-semibold text-white"
-                        :style="{ backgroundColor: app.accent ?? '#6b7280' }"
-                    >
-                        {{ app.initials }}
-                    </span>
+                    <AppIcon
+                        :launch-url="app.launch_url"
+                        :initials="app.initials"
+                        :accent="app.accent"
+                    />
                     <span class="text-sm font-medium">{{ app.name }}</span>
                     <span
                         v-if="app.current"
