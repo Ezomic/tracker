@@ -3,25 +3,24 @@
 declare(strict_types=1);
 
 use App\Enums\ProjectLevel;
+use App\Models\Category;
 use App\Models\Project;
 use App\Models\User;
 
-it('lists the projects the user belongs to with favorite state', function () {
+it('lists the projects the user belongs to, ordered by key', function () {
     $user = User::factory()->create();
     $thi = Project::factory()->create(['key' => 'THI']);
     $cms = Project::factory()->create(['key' => 'CMS']);
-    $thi->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => true]);
-    $cms->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => false]);
+    $thi->members()->attach($user->id, ['level' => ProjectLevel::Admin->value]);
+    $cms->members()->attach($user->id, ['level' => ProjectLevel::Admin->value]);
 
     $this->actingAs($user)
         ->get('/projects')
         ->assertInertia(fn ($page) => $page
             ->component('projects/Index')
             ->has('projects', 2)
-            ->where('projects.0.key', 'THI')
-            ->where('projects.0.isFavorite', true)
-            ->where('projects.1.key', 'CMS')
-            ->where('projects.1.isFavorite', false)
+            ->where('projects.0.key', 'CMS')
+            ->where('projects.1.key', 'THI')
         );
 });
 
@@ -34,32 +33,22 @@ it('does not list projects the user is not a member of', function () {
         ->assertInertia(fn ($page) => $page->has('projects', 0));
 });
 
-it('toggles a project favorite for the current user', function () {
-    $user = User::factory()->create();
-    $project = Project::factory()->create(['key' => 'THI']);
-    $project->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => true]);
+it('shares the user projects to the sidebar grouped by category', function () {
+    [$organization, $user] = organizationWith();
+    $category = Category::factory()->for($organization)->create(['name' => 'Clients']);
 
-    $favorite = fn () => (bool) $user->projects()->find($project->id)->getAttribute('pivot')->getAttribute('is_favorite');
-
-    $this->actingAs($user)->patch('/projects/THI/favorite')->assertRedirect();
-    expect($favorite())->toBeFalse();
-
-    $this->actingAs($user)->patch('/projects/THI/favorite');
-    expect($favorite())->toBeTrue();
-});
-
-it('only shares favorited projects to the sidebar', function () {
-    $user = User::factory()->create();
-    $thi = Project::factory()->create(['key' => 'THI']);
-    $cms = Project::factory()->create(['key' => 'CMS']);
-    $thi->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => true]);
-    $cms->members()->attach($user->id, ['level' => ProjectLevel::Admin->value, 'is_favorite' => false]);
+    projectInOrganization($organization, $user, ['key' => 'THI', 'category_id' => $category->id]);
+    projectInOrganization($organization, $user, ['key' => 'CMS']);
 
     $this->actingAs($user)
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->has('sidebarProjects', 1)
-            ->where('sidebarProjects.0.key', 'THI')
+            ->has('sidebarCategories.tree', 1)
+            ->where('sidebarCategories.tree.0.name', 'Clients')
+            ->has('sidebarCategories.tree.0.projects', 1)
+            ->where('sidebarCategories.tree.0.projects.0.key', 'THI')
+            ->has('sidebarCategories.uncategorized', 1)
+            ->where('sidebarCategories.uncategorized.0.key', 'CMS')
         );
 });
 

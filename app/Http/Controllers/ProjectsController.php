@@ -13,7 +13,6 @@ use App\Models\Project;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,7 +45,6 @@ class ProjectsController extends Controller
                         ->where('status', '!=', IssueStatus::Done->value),
                 ])
                 ->withSum('timeEntries', 'minutes')
-                ->orderByPivot('is_favorite', 'desc')
                 ->orderBy('key')
                 ->get()
                 ->map(function (Project $project): array {
@@ -61,7 +59,6 @@ class ProjectsController extends Controller
                         'color' => $project->color,
                         'categoryId' => $project->category_id,
                         'role' => Cast::string($pivot->getAttribute('role')),
-                        'isFavorite' => (bool) $pivot->getAttribute('is_favorite'),
                         'githubRepos' => $project->github_repos ?? [],
                         'productionUrl' => $project->production_url,
                         'archiveAfterDays' => $project->archive_after_days,
@@ -93,18 +90,5 @@ class ProjectsController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project updated.')]);
 
         return to_route('projects.index');
-    }
-
-    public function toggleFavorite(Request $request, Project $project): RedirectResponse
-    {
-        $this->authorize('view', $project);
-
-        $member = $this->currentUser($request)->projects()->find($project->id);
-        $pivot = $member?->getAttribute('pivot');
-        $current = $pivot instanceof Model && (bool) $pivot->getAttribute('is_favorite');
-
-        $this->currentUser($request)->projects()->updateExistingPivot($project->id, ['is_favorite' => ! $current]);
-
-        return back();
     }
 }

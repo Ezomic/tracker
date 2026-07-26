@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\IssueStatus;
+use App\Models\Category;
 use App\Models\Issue;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\User;
 use App\Services\CurrentOrganization;
 use App\Services\Portal\IdPortalClient;
 use App\Support\Cast;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -73,33 +76,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $each->name,
                     'slug' => $each->slug,
                 ]),
-            'sidebarProjects' => fn () => $request->user() !== null
-                ? $request->user()->projects()
-                    ->notArchived()
-                    ->inOrganization($organization)
-                    ->wherePivot('is_favorite', true)
-                    ->select(['projects.id', 'key', 'name', 'color'])
-                    ->withCount([
-                        'issues as backlog_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Backlog->value),
-                        'issues as in_progress_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InProgress->value),
-                        'issues as in_review_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InReview->value),
-                        'issues as done_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Done->value),
-                    ])
-                    ->orderBy('key')
-                    ->get()
-                    ->map(fn (Project $project) => [
-                        'id' => $project->id,
-                        'key' => $project->key,
-                        'name' => $project->name,
-                        'color' => $project->color,
-                        'counts' => [
-                            'backlog' => Cast::int($project->getAttribute('backlog_count')),
-                            'in_progress' => Cast::int($project->getAttribute('in_progress_count')),
-                            'in_review' => Cast::int($project->getAttribute('in_review_count')),
-                            'done' => Cast::int($project->getAttribute('done_count')),
-                        ],
-                    ])
-                : [],
+            'sidebarCategories' => fn () => $this->sidebarCategories($request->user(), $organization),
             // Every project the user can file against, for the sidebar's new-issue
             // modal (which can be opened from any page).
             'newIssueProjects' => fn () => $request->user() !== null
@@ -132,6 +109,64 @@ class HandleInertiaRequests extends Middleware
                 : app(IdPortalClient::class)->appsFor($request->user()),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * The organization's category tree for the sidebar: each category (in
+     * depth-first order, with `depth` for indentation) carries the user's
+     * launchable projects assigned directly to it, plus a separate bucket for
+     * projects with no category.
+     *
+     * @return array{tree: array<int, array{id: int, name: string, parentId: int|null, depth: int, projects: array<int, array<string, mixed>>}>, uncategorized: array<int, array<string, mixed>>}
+     */
+    private function sidebarCategories(?User $user, ?Organization $organization): array
+    {
+        if ($user === null) {
+            return ['tree' => [], 'uncategorized' => []];
+        }
+
+        $projects = $user->projects()
+            ->notArchived()
+            ->inOrganization($organization)
+            ->select(['projects.id', 'key', 'name', 'color', 'category_id'])
+            ->withCount([
+                'issues as backlog_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Backlog->value),
+                'issues as in_progress_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InProgress->value),
+                'issues as in_review_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InReview->value),
+                'issues as done_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Done->value),
+            ])
+            ->orderBy('key')
+            ->get();
+
+        $map = fn (Project $project): array => [
+            'id' => $project->id,
+            'key' => $project->key,
+            'name' => $project->name,
+            'color' => $project->color,
+            'counts' => [
+                'backlog' => Cast::int($project->getAttribute('backlog_count')),
+                'in_progress' => Cast::int($project->getAttribute('in_progress_count')),
+                'in_review' => Cast::int($project->getAttribute('in_review_count')),
+                'done' => Cast::int($project->getAttribute('done_count')),
+            ],
+        ];
+
+        $byCategory = $projects->groupBy('category_id');
+
+        $tree = Category::orderedTree($organization)
+            ->map(fn (Category $category): array => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'parentId' => $category->parent_id,
+                'depth' => Cast::int($category->getAttribute('depth')),
+                'projects' => $byCategory->get($category->id, new Collection)->map($map)->values()->all(),
+            ])
+            ->values()
+            ->all();
+
+        $uncategorized = $projects->whereNull('category_id')->map($map)->values()->all();
+
+        return ['tree' => $tree, 'uncategorized' => $uncategorized];
     }
 
     /**

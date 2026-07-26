@@ -23,7 +23,6 @@ class CreateProjectAction
 
             $project->members()->attach($owner->id, [
                 'level' => ProjectLevel::Admin->value,
-                'is_favorite' => true,
             ]);
 
             return $project;

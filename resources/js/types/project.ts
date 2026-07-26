@@ -13,6 +13,19 @@ export interface SidebarProject {
     counts: SidebarProjectCounts;
 }
 
+export interface SidebarCategory {
+    id: number;
+    name: string;
+    parentId: number | null;
+    depth: number;
+    projects: SidebarProject[];
+}
+
+export interface SidebarCategories {
+    tree: SidebarCategory[];
+    uncategorized: SidebarProject[];
+}
+
 export interface ProjectRepoLink {
     name: string;
     url: string;
@@ -66,7 +79,6 @@ export interface Project {
     color: string;
     categoryId: number | null;
     level: ProjectLevel;
-    isFavorite: boolean;
     githubRepos: string[];
     productionUrl: string | null;
     archiveAfterDays: number | null;

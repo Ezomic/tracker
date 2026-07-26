@@ -11,8 +11,8 @@ import {
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLogo from '@/components/AppLogo.vue';
+import NavCategories from '@/components/NavCategories.vue';
 import NavMain from '@/components/NavMain.vue';
-import NavProjects from '@/components/NavProjects.vue';
 import NavUser from '@/components/NavUser.vue';
 import NewIssueDialog from '@/components/NewIssueDialog.vue';
 import OrganizationSwitcher from '@/components/OrganizationSwitcher.vue';
@@ -29,13 +29,13 @@ import { useCommandPalette } from '@/composables/useCommandPalette';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
 import { index as projectsIndex } from '@/routes/projects';
-import type { NavItem, Project, SidebarProject } from '@/types';
+import type { NavItem, Project, SidebarCategories } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
 const { t } = useI18n();
 const page = usePage();
-const projects = computed<SidebarProject[]>(
-    () => page.props.sidebarProjects ?? [],
+const categories = computed<SidebarCategories>(
+    () => page.props.sidebarCategories ?? { tree: [], uncategorized: [] },
 );
 
 const newIssueOpen = ref(false);
@@ -112,7 +112,11 @@ const mainNavItems = computed<NavItem[]>(() => [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavProjects :projects="projects" />
+            <NavCategories
+                :tree="categories.tree"
+                :uncategorized="categories.uncategorized"
+                :current-project-id="currentProjectId"
+            />
         </SidebarContent>
 
         <SidebarFooter>

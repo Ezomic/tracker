@@ -47,7 +47,6 @@ class ProjectMemberController extends Controller
 
         $project->members()->attach($user->id, [
             'level' => $request->validated('level'),
-            'is_favorite' => false,
         ]);
 
         return response()->json(['id' => $user->id, 'level' => $request->string('level')->toString()], 201);

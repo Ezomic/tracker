@@ -26,8 +26,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('projects', [ProjectsController::class, 'index'])->name('projects.index');
     Route::post('projects', [ProjectsController::class, 'store'])->name('projects.store');
     Route::patch('projects/{project}', [ProjectsController::class, 'update'])->name('projects.update');
-    Route::patch('projects/{project:key}/favorite', [ProjectsController::class, 'toggleFavorite'])
-        ->name('projects.favorite');
 
     Route::get('projects/{project:key}/members', [ProjectMemberController::class, 'index'])
         ->name('projects.members.index');

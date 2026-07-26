@@ -54,7 +54,6 @@ return new class extends Migration
             'project_id' => $projectId,
             'user_id' => $founder->id,
             $levelColumn => $levelValue,
-            'is_favorite' => true,
             'created_at' => $now,
             'updated_at' => $now,
         ]);

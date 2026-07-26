@@ -58,7 +58,7 @@ it('updates and removes a member', function () {
     [$org, $owner] = organizationWith();
     $project = projectInOrganization($org, $owner, ['key' => 'SHOP']);
     $member = orgMemberFor($project);
-    $project->members()->attach($member->id, ['level' => ProjectLevel::Read->value, 'is_favorite' => false]);
+    $project->members()->attach($member->id, ['level' => ProjectLevel::Read->value]);
 
     $this->actingAs($owner, 'sanctum')
         ->patchJson("/api/projects/SHOP/members/{$member->id}", ['level' => 'write', 'own_issues_only' => true])
@@ -76,7 +76,7 @@ it('forbids a non-admin member from managing members', function () {
     [$org, $owner] = organizationWith();
     $project = projectInOrganization($org, $owner, ['key' => 'SHOP']);
     $writer = orgMemberFor($project);
-    $project->members()->attach($writer->id, ['level' => ProjectLevel::Write->value, 'is_favorite' => false]);
+    $project->members()->attach($writer->id, ['level' => ProjectLevel::Write->value]);
     $target = orgMemberFor($project);
 
     $this->actingAs($writer, 'sanctum')

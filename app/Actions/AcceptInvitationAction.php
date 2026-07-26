@@ -29,7 +29,6 @@ class AcceptInvitationAction
             if ($project !== null && $invitation->level !== null && ! $project->hasMember($user)) {
                 $project->members()->attach($user->id, [
                     'level' => $invitation->level->value,
-                    'is_favorite' => true,
                 ]);
             }
 

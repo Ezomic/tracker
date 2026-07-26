@@ -50,8 +50,8 @@ it('shares projects to authenticated pages', function () {
     $this->actingAs(member($thi))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->has('sidebarProjects', 1)
-            ->where('sidebarProjects.0.key', 'THI')
-            ->where('sidebarProjects.0.color', '#d85a30')
+            ->has('sidebarCategories.uncategorized', 1)
+            ->where('sidebarCategories.uncategorized.0.key', 'THI')
+            ->where('sidebarCategories.uncategorized.0.color', '#d85a30')
         );
 });
