@@ -26,6 +26,11 @@ const props = defineProps<{
 
 const STORAGE_KEY = 'sidebar:expandedCategories';
 
+// Reserved expand-state key for the synthetic "Uncategorized" section. It is not
+// a real category (real ids start at 1), just a collapsible view of projects
+// with no category.
+const UNCATEGORIZED_KEY = 0;
+
 function loadExpanded(): Record<number, boolean> {
     if (typeof localStorage === 'undefined') {
         return {};
@@ -68,6 +73,13 @@ watch(
     () => props.currentProjectId,
     (id) => {
         if (id === null) {
+            return;
+        }
+
+        // Current project sits directly in the uncategorized bucket.
+        if (props.uncategorized.some((project) => project.id === id)) {
+            expanded.value = { ...expanded.value, [UNCATEGORIZED_KEY]: true };
+
             return;
         }
 
@@ -141,22 +153,49 @@ watch(
                     </CollapsibleContent>
                 </SidebarMenuItem>
             </Collapsible>
-        </SidebarMenu>
 
-        <template v-if="uncategorized.length">
-            <SidebarGroupLabel class="mt-2">
-                {{ $t('nav.uncategorized') }}
-            </SidebarGroupLabel>
-            <SidebarMenu>
-                <SidebarMenuSub class="mx-0 border-0 px-0">
-                    <SidebarMenuSubItem
-                        v-for="project in uncategorized"
-                        :key="project.id"
-                    >
-                        <NavProjectLink :project="project" />
-                    </SidebarMenuSubItem>
-                </SidebarMenuSub>
-            </SidebarMenu>
-        </template>
+            <Collapsible
+                v-if="uncategorized.length"
+                as-child
+                :open="expanded[UNCATEGORIZED_KEY] ?? false"
+                @update:open="
+                    (open: boolean) => setOpen(UNCATEGORIZED_KEY, open)
+                "
+            >
+                <SidebarMenuItem>
+                    <CollapsibleTrigger as-child>
+                        <SidebarMenuButton
+                            :style="indent(0)"
+                            :tooltip="$t('nav.uncategorized')"
+                        >
+                            <ChevronRight
+                                class="size-4 shrink-0 text-muted-foreground transition-transform duration-200"
+                                :class="{
+                                    'rotate-90': expanded[UNCATEGORIZED_KEY],
+                                }"
+                            />
+                            <span class="truncate">
+                                {{ $t('nav.uncategorized') }}
+                            </span>
+                            <span
+                                class="ml-auto text-xs text-muted-foreground tabular-nums"
+                            >
+                                {{ uncategorized.length }}
+                            </span>
+                        </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            <SidebarMenuSubItem
+                                v-for="project in uncategorized"
+                                :key="project.id"
+                            >
+                                <NavProjectLink :project="project" />
+                            </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+            </Collapsible>
+        </SidebarMenu>
     </SidebarGroup>
 </template>
