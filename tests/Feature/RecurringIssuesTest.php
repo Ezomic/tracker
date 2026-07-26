@@ -43,7 +43,8 @@ it('spawns an issue from a due template with its defaults', function () {
     expect($issue->title)->toBe('Weekly chores')
         ->and($issue->type)->toBe(IssueType::Fix)
         ->and($issue->priority)->toBe(IssuePriority::High)
-        ->and($issue->labels->pluck('id')->all())->toBe([$label->id]);
+        ->and($issue->labels->pluck('id')->all())->toBe([$label->id])
+        ->and($issue->template_id)->toBe($template->id);
 });
 
 it('advances next_run_at to a single future occurrence even after a long gap', function () {

@@ -175,7 +175,56 @@ it('applies a template priority and labels when filing an issue', function () {
     $issue = Issue::query()->firstOrFail();
     expect($issue->priority)->toBe(IssuePriority::High)
         ->and($issue->description)->toBe("## Steps\nEdited by the user")
-        ->and($issue->labels->pluck('id')->all())->toBe([$label->id]);
+        ->and($issue->labels->pluck('id')->all())->toBe([$label->id])
+        ->and($issue->template_id)->toBe($template->id);
+});
+
+it('records no template when filing a blank issue', function () {
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+
+    $this->actingAs($owner)->post('/issues', [
+        'project_id' => $project->id,
+        'title' => 'Blank one',
+        'type' => 'feature',
+        'template_id' => '',
+    ])->assertRedirect('/issues/THI-1');
+
+    expect(Issue::query()->firstOrFail()->template_id)->toBeNull();
+});
+
+it('shows the source template on the issue detail page', function () {
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+    $template = IssueTemplate::factory()->for($org)->create(['name' => 'Bug report']);
+
+    $this->actingAs($owner)->post('/issues', [
+        'project_id' => $project->id,
+        'title' => 'From a template',
+        'type' => 'fix',
+        'template_id' => $template->id,
+    ]);
+
+    $this->actingAs($owner)->get('/issues/THI-1')
+        ->assertInertia(fn ($page) => $page
+            ->component('issues/Show')
+            ->where('issue.template.name', 'Bug report')
+        );
+});
+
+it('shows no template on an issue filed without one', function () {
+    [$org, $owner] = organizationWith();
+    $project = projectInOrganization($org, $owner, ['key' => 'THI']);
+
+    $this->actingAs($owner)->post('/issues', [
+        'project_id' => $project->id,
+        'title' => 'Blank',
+        'type' => 'feature',
+        'template_id' => '',
+    ]);
+
+    $this->actingAs($owner)->get('/issues/THI-1')
+        ->assertInertia(fn ($page) => $page->where('issue.template', null));
 });
 
 it('files a blank issue with no template', function () {

@@ -74,6 +74,7 @@ class IssueController extends Controller
             owner: $this->currentUser($request),
             assignee: $this->resolveAssignee($request->string('assignee')->toString() ?: null),
             priority: $priority !== null ? IssuePriority::from($priority) : $template?->priority,
+            template: $template,
         );
 
         // Explicit labels replace the template's; the template only fills the gap.

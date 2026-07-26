@@ -207,6 +207,7 @@
         "noProject": "No project",
         "owner": "Owner",
         "unknown": "Unknown",
+        "template": "Template",
         "estimatePlaceholder": "e.g. 4h 30m",
         "invoiceable": "Invoiceable",
         "archivedBanner": "Archived:",

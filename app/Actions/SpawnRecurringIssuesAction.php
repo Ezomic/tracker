@@ -46,6 +46,7 @@ class SpawnRecurringIssuesAction
                 $template->type ?? IssueType::Feature,
                 $template->description,
                 priority: $template->priority,
+                template: $template,
             );
 
             $issue->labels()->sync($template->labels->pluck('id')->all());

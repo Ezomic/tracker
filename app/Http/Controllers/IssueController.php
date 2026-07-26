@@ -147,6 +147,7 @@ class IssueController extends Controller
             parent: $parent,
             owner: $this->currentUser($request),
             priority: $template?->priority,
+            template: $template,
         );
 
         if ($template !== null) {
@@ -163,7 +164,7 @@ class IssueController extends Controller
         $this->authorize('view', $issue);
 
         $issue->load([
-            'project', 'owner', 'assignee', 'parent', 'labels',
+            'project', 'owner', 'assignee', 'parent', 'labels', 'template',
             'children' => fn ($query) => $query->orderBy('number'),
             'timeEntries' => fn ($query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
             'comments' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
@@ -399,6 +400,9 @@ class IssueController extends Controller
             'confirmedMinutes' => $issue->confirmed_minutes,
             'confirmedAt' => $issue->confirmed_at?->toIso8601String(),
             'type' => $issue->type->value,
+            'template' => $issue->relationLoaded('template') && $issue->template !== null
+                ? ['name' => $issue->template->name]
+                : null,
             'priority' => $issue->priority->value,
             'status' => $issue->status->value,
             'branchName' => $issue->branch_name,
