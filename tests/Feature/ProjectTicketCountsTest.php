@@ -21,11 +21,11 @@ it('shares a per-status ticket breakdown per project', function () {
     $this->actingAs(member($project))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->where('sidebarProjects.0.key', 'THI')
-            ->where('sidebarProjects.0.counts.backlog', 2)
-            ->where('sidebarProjects.0.counts.in_progress', 1)
-            ->where('sidebarProjects.0.counts.in_review', 1)
-            ->where('sidebarProjects.0.counts.done', 3)
+            ->where('sidebarCategories.uncategorized.0.key', 'THI')
+            ->where('sidebarCategories.uncategorized.0.counts.backlog', 2)
+            ->where('sidebarCategories.uncategorized.0.counts.in_progress', 1)
+            ->where('sidebarCategories.uncategorized.0.counts.in_review', 1)
+            ->where('sidebarCategories.uncategorized.0.counts.done', 3)
         );
 });
 
@@ -35,10 +35,10 @@ it('reports zero counts for a project with no tickets', function () {
     $this->actingAs(member($project))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->where('sidebarProjects.0.counts.backlog', 0)
-            ->where('sidebarProjects.0.counts.in_progress', 0)
-            ->where('sidebarProjects.0.counts.in_review', 0)
-            ->where('sidebarProjects.0.counts.done', 0)
+            ->where('sidebarCategories.uncategorized.0.counts.backlog', 0)
+            ->where('sidebarCategories.uncategorized.0.counts.in_progress', 0)
+            ->where('sidebarCategories.uncategorized.0.counts.in_review', 0)
+            ->where('sidebarCategories.uncategorized.0.counts.done', 0)
         );
 });
 
@@ -50,7 +50,7 @@ it('still shares the sidebar breakdown on the projects page', function () {
         ->get('/projects')
         ->assertInertia(fn ($page) => $page
             ->component('projects/Index')
-            ->where('sidebarProjects.0.key', 'THI')
-            ->where('sidebarProjects.0.counts.in_progress', 1)
+            ->where('sidebarCategories.uncategorized.0.key', 'THI')
+            ->where('sidebarCategories.uncategorized.0.counts.in_progress', 1)
         );
 });

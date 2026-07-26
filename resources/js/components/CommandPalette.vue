@@ -37,9 +37,17 @@ type IssueResult = {
 const { open, close, toggle } = useCommandPalette();
 const { t } = useI18n();
 const page = usePage();
-const projects = computed<SidebarProject[]>(
-    () => page.props.sidebarProjects ?? [],
-);
+const projects = computed<SidebarProject[]>(() => {
+    const categories = page.props.sidebarCategories ?? {
+        tree: [],
+        uncategorized: [],
+    };
+
+    return [
+        ...categories.tree.flatMap((category) => category.projects),
+        ...categories.uncategorized,
+    ];
+});
 
 const query = ref('');
 const selected = ref(0);

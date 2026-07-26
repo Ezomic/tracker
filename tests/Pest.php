@@ -66,7 +66,7 @@ function joinProjects(User $user, Project|array $projects, ProjectLevel $level =
 {
     foreach (is_array($projects) ? $projects : [$projects] as $project) {
         $project->members()->syncWithoutDetaching([
-            $user->id => ['level' => $level->value, 'is_favorite' => true],
+            $user->id => ['level' => $level->value],
         ]);
     }
 

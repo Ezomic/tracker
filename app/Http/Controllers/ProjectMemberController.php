@@ -61,7 +61,6 @@ class ProjectMemberController extends Controller
 
         $project->members()->attach($user->id, [
             'level' => $request->validated('level'),
-            'is_favorite' => false,
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member added.')]);

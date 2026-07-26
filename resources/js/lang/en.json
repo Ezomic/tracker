@@ -28,7 +28,7 @@
         "allIssues": "All issues",
         "board": "Board",
         "projects": "Projects",
-        "favorites": "Favorites",
+        "uncategorized": "Uncategorized",
         "search": "Search",
         "newIssue": "New issue",
         "toggleSidebar": "Toggle sidebar",
@@ -309,8 +309,6 @@
         "sortMostOpen": "Most open",
         "sortName": "Name",
         "sortMostLogged": "Most logged",
-        "allProjects": "All projects",
-        "favorites": "Favorites",
         "uncategorized": "Uncategorized",
         "key": "Key",
         "keyLocked": "The key can't change once a project has issues.",
@@ -329,9 +327,7 @@
         "links": "Links",
         "documentation": "Documentation",
         "production": "Production",
-        "repositories": "Repositories",
-        "favorite": "Favorite",
-        "unfavorite": "Unfavorite"
+        "repositories": "Repositories"
     },
     "archiveDuration": {
         "never": "Never",

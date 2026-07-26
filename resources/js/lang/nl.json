@@ -28,7 +28,7 @@
         "allIssues": "Alle tickets",
         "board": "Bord",
         "projects": "Projecten",
-        "favorites": "Favorieten",
+        "uncategorized": "Zonder categorie",
         "search": "Zoeken",
         "newIssue": "Nieuw ticket",
         "toggleSidebar": "Zijbalk wisselen",
@@ -309,8 +309,6 @@
         "sortMostOpen": "Meeste open",
         "sortName": "Naam",
         "sortMostLogged": "Meeste tijd",
-        "allProjects": "Alle projecten",
-        "favorites": "Favorieten",
         "uncategorized": "Zonder categorie",
         "key": "Sleutel",
         "keyLocked": "De sleutel kan niet meer wijzigen zodra een project tickets heeft.",
@@ -329,9 +327,7 @@
         "links": "Links",
         "documentation": "Documentatie",
         "production": "Productie",
-        "repositories": "Repositories",
-        "favorite": "Favoriet maken",
-        "unfavorite": "Favoriet verwijderen"
+        "repositories": "Repositories"
     },
     "archiveDuration": {
         "never": "Nooit",

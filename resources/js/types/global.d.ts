@@ -4,7 +4,7 @@ import type { PortalApp } from '@/types/portal';
 import type {
     OrganizationSummary,
     Project,
-    SidebarProject,
+    SidebarCategories,
 } from '@/types/project';
 
 // Extend ImportMeta interface for Vite...
@@ -28,7 +28,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             currentOrganization: OrganizationSummary | null;
             organizations: OrganizationSummary[];
-            sidebarProjects: SidebarProject[];
+            sidebarCategories: SidebarCategories;
             newIssueProjects: Pick<Project, 'id' | 'key' | 'name'>[];
             currentProjectId: number | null;
             notifications: AppNotification[];

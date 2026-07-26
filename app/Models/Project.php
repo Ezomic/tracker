@@ -89,7 +89,7 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot('level', 'is_favorite', 'own_issues_only')
+            ->withPivot('level', 'own_issues_only')
             ->withTimestamps();
     }
 

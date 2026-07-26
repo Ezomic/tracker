@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Archive, Clock, Plus, Search, Star, Users } from '@lucide/vue';
+import { Form, Head, Link } from '@inertiajs/vue3';
+import { Archive, Clock, Plus, Search, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
@@ -31,7 +31,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { formatDuration } from '@/lib/duration';
-import { board, favorite, index } from '@/routes/projects';
+import { board, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
 import type { Project, ProjectCategory } from '@/types';
 
@@ -111,27 +111,16 @@ interface ProjectGroup {
 }
 
 const groups = computed<ProjectGroup[]>(() => {
-    const favorites = filtered.value.filter((project) => project.isFavorite);
-    const rest = filtered.value.filter((project) => !project.isFavorite);
     const result: ProjectGroup[] = [];
-
-    if (favorites.length > 0) {
-        result.push({
-            key: 'favorites',
-            label: t('projects.favorites'),
-            depth: 0,
-            items: favorites,
-        });
-    }
 
     // No categories defined: keep the simple single "All projects" list.
     if (props.categories.length === 0) {
-        if (rest.length > 0) {
+        if (filtered.value.length > 0) {
             result.push({
                 key: 'all',
-                label: favorites.length > 0 ? t('projects.allProjects') : '',
+                label: '',
                 depth: 0,
-                items: rest,
+                items: filtered.value,
             });
         }
 
@@ -141,7 +130,7 @@ const groups = computed<ProjectGroup[]>(() => {
     const byCategory = new Map<number, Project[]>();
     const uncategorized: Project[] = [];
 
-    for (const project of rest) {
+    for (const project of filtered.value) {
         if (project.categoryId === null) {
             uncategorized.push(project);
             continue;
@@ -227,14 +216,6 @@ function archiveLabel(days: number | null): string {
             14: t('archiveDuration.twoWeeks'),
             30: t('archiveDuration.oneMonth'),
         }[days] ?? t('archiveDuration.days', { n: days })
-    );
-}
-
-function toggleFavorite(project: Project) {
-    router.patch(
-        favorite(project.key).url,
-        {},
-        { preserveScroll: true, preserveState: true },
     );
 }
 </script>
@@ -489,25 +470,6 @@ function toggleFavorite(project: Project) {
                     </div>
 
                     <div class="flex shrink-0 items-center gap-1">
-                        <button
-                            type="button"
-                            class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent"
-                            :aria-label="
-                                project.isFavorite
-                                    ? $t('projects.unfavorite')
-                                    : $t('projects.favorite')
-                            "
-                            @click="toggleFavorite(project)"
-                        >
-                            <Star
-                                class="size-4"
-                                :class="
-                                    project.isFavorite
-                                        ? 'fill-amber-400 text-amber-400'
-                                        : ''
-                                "
-                            />
-                        </button>
                         <div
                             class="flex items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100"
                         >
