@@ -56,6 +56,7 @@ export interface Issue {
     confirmedMinutes: number | null;
     confirmedAt: string | null;
     type: 'feature' | 'fix';
+    template: { name: string } | null;
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     status: 'backlog' | 'in_progress' | 'in_review' | 'done';
     branchName: string;

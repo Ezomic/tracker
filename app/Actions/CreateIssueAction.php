@@ -8,6 +8,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
+use App\Models\IssueTemplate;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,9 @@ use Illuminate\Support\Str;
 
 class CreateIssueAction
 {
-    public function handle(Project $project, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null, ?User $owner = null, ?User $assignee = null, ?IssuePriority $priority = null): Issue
+    public function handle(Project $project, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null, ?User $owner = null, ?User $assignee = null, ?IssuePriority $priority = null, ?IssueTemplate $template = null): Issue
     {
-        return DB::transaction(function () use ($project, $title, $type, $description, $parent, $owner, $assignee, $priority) {
+        return DB::transaction(function () use ($project, $title, $type, $description, $parent, $owner, $assignee, $priority, $template) {
             $number = DB::select(
                 'update projects set next_number = next_number + 1 where id = ? returning next_number',
                 [$project->id]
@@ -38,6 +39,7 @@ class CreateIssueAction
                 'owner_id' => $owner?->id,
                 'assignee_id' => $assignee?->id,
                 'parent_id' => $parent?->id,
+                'template_id' => $template?->id,
                 'number' => $number,
                 'identifier' => $identifier,
                 'title' => $title,

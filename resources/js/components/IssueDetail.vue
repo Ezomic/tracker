@@ -5,6 +5,7 @@ import {
     ArchiveRestore,
     Check,
     Clock,
+    FileText,
     GitBranch,
     GitCommit,
     GitPullRequest,
@@ -827,6 +828,16 @@ const statusDot: Record<Issue['status'], string> = {
                 </Label>
                 <p class="text-sm">
                     {{ issue.owner?.name ?? $t('issue.unknown') }}
+                </p>
+            </div>
+
+            <div v-if="issue.template" class="grid gap-1.5">
+                <Label class="text-xs text-muted-foreground">
+                    {{ $t('issue.template') }}
+                </Label>
+                <p class="inline-flex items-center gap-1.5 text-sm">
+                    <FileText class="size-4 shrink-0 text-muted-foreground" />
+                    <span class="truncate">{{ issue.template.name }}</span>
                 </p>
             </div>
 

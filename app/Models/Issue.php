@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $confirmed_minutes
  * @property Carbon|null $confirmed_at
  * @property IssueType $type
+ * @property int|null $template_id
  * @property IssuePriority $priority
  * @property IssueStatus $status
  * @property string $branch_name
@@ -48,6 +49,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $owner
  * @property-read User|null $assignee
  * @property-read Issue|null $parent
+ * @property-read IssueTemplate|null $template
  */
 // owner_id is deliberately not fillable: it is stamped once, at creation.
 #[ObservedBy([IssueObserver::class])]
@@ -89,6 +91,16 @@ class Issue extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Issue::class, 'parent_id');
+    }
+
+    /**
+     * The template this issue was filed from, if any.
+     *
+     * @return BelongsTo<IssueTemplate, $this>
+     */
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(IssueTemplate::class);
     }
 
     /**
