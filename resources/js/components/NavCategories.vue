@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronRight } from '@lucide/vue';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import NavProjectLink from '@/components/NavProjectLink.vue';
 import {
     Collapsible,
@@ -16,6 +16,7 @@ import {
     SidebarMenuSub,
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+import { visibleCategories } from '@/lib/categoryTree';
 import type { SidebarCategory, SidebarProject } from '@/types';
 
 const props = defineProps<{
@@ -67,6 +68,12 @@ function indent(depth: number): Record<string, string> {
     return { paddingLeft: `${0.5 + depth * 0.75}rem` };
 }
 
+// Hide any category whose ancestor chain isn't fully expanded, so collapsing a
+// parent hides its whole subtree (the tree is rendered as a flat list).
+const visibleTree = computed(() =>
+    visibleCategories(props.tree, expanded.value),
+);
+
 // Auto-expand the category holding the current project, plus its ancestors, so
 // the active project is always visible on navigation.
 watch(
@@ -114,7 +121,7 @@ watch(
         <SidebarGroupLabel>{{ $t('nav.projects') }}</SidebarGroupLabel>
         <SidebarMenu>
             <Collapsible
-                v-for="category in tree"
+                v-for="category in visibleTree"
                 :key="category.id"
                 as-child
                 :open="expanded[category.id] ?? false"
