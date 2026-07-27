@@ -38,6 +38,26 @@ it('scopes a saved view to a project when given one', function () {
     expect(SavedView::query()->firstOrFail()->project_id)->toBe($project->id);
 });
 
+it('rejects a saved view pinned to a project the user cannot access', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project, ProjectLevel::Write);
+    $foreign = Project::factory()->create(['key' => 'CMS']);
+
+    $this->actingAs($user)->post('/saved-views', [
+        'name' => 'Sneaky',
+        'project_id' => $foreign->id,
+        'criteria' => [],
+    ])->assertSessionHasErrors('project_id');
+
+    $this->actingAs($user)->post('/saved-views', [
+        'name' => 'Sneaky criteria',
+        'project_id' => null,
+        'criteria' => ['project_id' => $foreign->id],
+    ])->assertSessionHasErrors('criteria.project_id');
+
+    expect(SavedView::query()->count())->toBe(0);
+});
+
 it('shares only the user global and current-project views on the list', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $user = member($project, ProjectLevel::Write);

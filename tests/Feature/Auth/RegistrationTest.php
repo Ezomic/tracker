@@ -25,7 +25,7 @@ it('creates an unverified account and emails a code', function () {
         ->and($user->name)->toBe('Ada Lovelace')
         ->and($user->email_verified_at)->toBeNull();
 
-    Mail::assertSent(LoginCodeMail::class, fn ($mail) => $mail->hasTo('ada@example.com'));
+    Mail::assertQueued(LoginCodeMail::class, fn ($mail) => $mail->hasTo('ada@example.com'));
     expect(session('login-code-email'))->toBe('ada@example.com');
 });
 
@@ -39,7 +39,7 @@ it('does not create a duplicate account for an existing email but still emails a
     expect(User::query()->where('email', 'taken@example.com')->count())->toBe(1)
         ->and($existing->fresh()->name)->toBe('Original');
 
-    Mail::assertSent(LoginCodeMail::class, fn ($mail) => $mail->hasTo('taken@example.com'));
+    Mail::assertQueued(LoginCodeMail::class, fn ($mail) => $mail->hasTo('taken@example.com'));
 });
 
 it('requires a name and a valid email', function () {
