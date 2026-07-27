@@ -34,7 +34,7 @@ it('sends a confirmation code and renders the confirm page', function () {
         ->assertInertia(fn ($page) => $page->component('settings/ConfirmEmail')
             ->where('email', $user->email));
 
-    Mail::assertSent(LoginCodeMail::class, fn ($mail) => $mail->hasTo($user->email));
+    Mail::assertQueued(LoginCodeMail::class, fn ($mail) => $mail->hasTo($user->email));
 });
 
 it('confirms with the correct code and sets the session marker', function () {

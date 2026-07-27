@@ -15,7 +15,7 @@ it('sends a login code to an existing user and redirects to verify', function ()
     $this->post('/login/code', ['email' => 'user@example.com'])
         ->assertRedirect(route('login.code.verify'));
 
-    Mail::assertSent(LoginCodeMail::class, fn ($mail) => $mail->hasTo('user@example.com'));
+    Mail::assertQueued(LoginCodeMail::class, fn ($mail) => $mail->hasTo('user@example.com'));
     expect(session('login-code-email'))->toBe('user@example.com');
 });
 
@@ -25,7 +25,7 @@ it('does not send an email for an unknown address but still redirects the same w
     $this->post('/login/code', ['email' => 'nobody@example.com'])
         ->assertRedirect(route('login.code.verify'));
 
-    Mail::assertNothingSent();
+    Mail::assertNothingQueued();
     expect(session('login-code-email'))->toBe('nobody@example.com');
 });
 
