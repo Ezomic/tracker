@@ -106,7 +106,10 @@ class HandleInertiaRequests extends Middleware
                 : 0,
             'portalApps' => fn () => $request->user() === null
                 ? []
-                : app(IdPortalClient::class)->appsFor($request->user()),
+                : app(IdPortalClient::class)->appsFor($request->user())['apps'],
+            'portalCategories' => fn () => $request->user() === null
+                ? []
+                : app(IdPortalClient::class)->appsFor($request->user())['categories'],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

@@ -16,12 +16,22 @@ it('opens the portal app switcher from the navbar', function () {
 
     Http::fake([
         'id.example.test/oauth/token' => Http::response(['access_token' => 'token', 'expires_in' => 900]),
-        'id.example.test/api/portal/apps' => Http::response(['applications' => [
-            ['slug' => 'billr', 'name' => 'Billr', 'initials' => 'B', 'accent' => '#3B82F6', 'launch_url' => 'https://billr.test'],
-            ['slug' => 'finance', 'name' => 'Finance', 'initials' => 'F', 'accent' => '#14B8A6', 'launch_url' => 'https://finance.test'],
-            ['slug' => 'tracker', 'name' => 'Tracker', 'initials' => 'T', 'accent' => '#7C6BF0', 'launch_url' => 'https://tracker.test'],
-            ['slug' => 'zero', 'name' => 'Zero', 'initials' => 'Z', 'accent' => '#3B82F6', 'launch_url' => 'https://zero.test'],
-        ]]),
+        'id.example.test/api/portal/apps' => Http::response([
+            'applications' => [
+                ['slug' => 'billr', 'name' => 'Billr', 'initials' => 'B', 'accent' => '#3B82F6', 'launch_url' => 'https://billr.test'],
+                ['slug' => 'finance', 'name' => 'Finance', 'initials' => 'F', 'accent' => '#14B8A6', 'launch_url' => 'https://finance.test'],
+                ['slug' => 'tracker', 'name' => 'Tracker', 'initials' => 'T', 'accent' => '#7C6BF0', 'launch_url' => 'https://tracker.test'],
+                ['slug' => 'zero', 'name' => 'Zero', 'initials' => 'Z', 'accent' => '#3B82F6', 'launch_url' => 'https://zero.test'],
+            ],
+            'categories' => [
+                [
+                    'category' => 'Games',
+                    'apps' => [
+                        ['slug' => 'chess', 'name' => 'Chess', 'initials' => 'C', 'accent' => '#F59E0B', 'launch_url' => 'https://chess.test'],
+                    ],
+                ],
+            ],
+        ]),
     ]);
 
     $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
@@ -36,6 +46,8 @@ it('opens the portal app switcher from the navbar', function () {
         ->assertSee('Billr')
         ->assertSee('Finance')
         ->assertSee('Zero')
+        ->assertSee('Games')
+        ->assertSee('Chess')
         ->assertSee('Current')
         ->screenshot(false, 'portal-switcher-modal')
         ->assertNoJavascriptErrors();
