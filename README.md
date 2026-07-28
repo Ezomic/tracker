@@ -17,17 +17,23 @@ It replaced Linear once that hit its free-tier active-issue cap. The goals were 
 **Projects and issues**
 
 - Projects with a short key (`TRACK`, `CMS`) and per-project sequential numbering (`TRACK-42`)
+- Projects organised into a hierarchical **category tree** in the sidebar; uncategorised projects sit in their own collapsible group
 - Issues with type, priority, status, description, labels, owner (reporter) and assignee
 - Epics: one level of parent/child, with progress on the epic
-- Board and list views, filtering, and a command palette (`⌘K`)
-- Ticket templates per project, prefilling the description plus default type, priority and labels
+- Board, list and a three-view dashboard (Focus / Metrics / Board), filtering, and a command palette (`⌘K`)
+- **Saved views** — store the current filters as a named, reusable view
+- **Time tracking** — log time against issues, confirm billable minutes, and report them to Billr; issues can be marked invoiceable
+- Organisation-wide **ticket templates** that prefill the description plus default type, priority and labels; the template a ticket was filed from is shown on the issue
+- **Recurring templates** — file an issue automatically on a cadence into a target project
+- **Notifications and @mentions** on issues and comments
 - Auto-archive of done issues, per project (never, 1 day, 1 week, or custom)
 
 **Multi-tenancy**
 
 - Open registration: name and email, no password
-- Each signup gets their own workspace and sees only their own projects
-- Per-project roles: **Owner** (full control), **Admin** (settings, members, issues), **Member** (issues)
+- Each signup gets their own organisation (workspace) and sees only projects they belong to
+- Two-tier access: an **organisation role** (**Owner**, **Admin**, **Member**, **Guest**) plus an optional **per-project grant** (**Read**, **Write**, **Admin**). The effective access on a project is the higher of the two, so owners/admins get admin everywhere while a Guest is sandboxed to the projects they are granted
+- Templates and labels live on the organisation, defined once and shared across its projects
 - Invite people by email with a tokenized link that expires; existing accounts join on click, newcomers register first and land back on the invite
 
 **Auth (passwordless)**
@@ -39,12 +45,13 @@ It replaced Linear once that hit its free-tier active-issue cap. The goals were 
 
 - GitHub webhook links pull requests to issues by branch name
 - Per-project GitHub repos, production URL, and docs links
+- Portal app-switcher in the navbar: jump to the other Thijssensoftware apps you can access, fetched per-user from Thijssensoftware ID
 - JSON API with Sanctum tokens
 - CSV import/export, and scheduled SQLite backups
 
 ## Stack
 
-PHP 8.3+ · Laravel 13 · Inertia 3 · Vue 3 (`<script setup lang="ts">`) · TypeScript · Tailwind v4 · shadcn-vue (Reka UI) · Vite · Laravel Wayfinder · Fortify (passkeys) · Sanctum · Pest · PHPStan (Larastan) level 7 · Pint · ESLint + Prettier
+PHP 8.3+ · Laravel 13 · Inertia 3 · Vue 3 (`<script setup lang="ts">`) · TypeScript · Tailwind v4 · shadcn-vue (Reka UI) · Vite · Laravel Wayfinder · Fortify (passkeys) · Sanctum · Pest (+ Infection mutation testing) · Vitest · PHPStan (Larastan) level 9 · Pint · ESLint + Prettier
 
 SQLite by default. The database is a file; back it up and you have moved the app.
 
@@ -80,7 +87,7 @@ There is no password to log in with. Locally, `MAIL_MAILER=log`, so request an e
 | `composer test`        | Clear config, lint, PHPStan, then Pest                        |
 | `composer ci:check`    | Everything CI runs: JS lint, format, types, and the PHP suite |
 | `composer lint`        | Pint (fix)                                                    |
-| `composer types:check` | PHPStan level 7                                               |
+| `composer types:check` | PHPStan level 9                                               |
 | `npm run dev`          | Vite only                                                     |
 | `npm run build`        | Build assets, and regenerate Wayfinder routes/actions         |
 | `npm run types:check`  | `vue-tsc --noEmit`                                            |
@@ -91,13 +98,21 @@ There is no password to log in with. Locally, `MAIL_MAILER=log`, so request an e
 
 Conventions worth knowing before changing things:
 
-- **Actions** (`app/Actions`) hold business logic, one public `handle()` each: `CreateIssueAction`, `SendProjectInvitationAction`, `ArchiveDoneIssuesAction`.
+- **Actions** (`app/Actions`) hold business logic, one public `handle()` each: `CreateIssueAction`, `SendOrganizationInvitationAction`, `ArchiveDoneIssuesAction`.
 - **Form Requests** validate; controllers stay thin.
 - **Policies** enforce access. `ProjectPolicy` and `IssuePolicy` are the source of truth for who can do what.
 - **Everything is membership-scoped.** `Project::visibleTo($user)` and `Issue::visibleTo($user)` scope every read; writes are authorized. A query that forgets this leaks across tenants, so scope first and ask questions later.
 - **Guarded data migrations** are how production data gets changed, since there is no shell on the box. They guard on a row existing so fresh and test databases no-op. See `database/migrations/*backfill*` and `*populate*`.
 - **`CarbonImmutable`** for dates, `#[Fillable]` attributes over `$fillable` arrays, and no inline SQL.
 - **The app name is pinned in code**, not read from `APP_NAME`. See `AppServiceProvider`.
+
+## Security
+
+- Passwordless by design: one-time email codes (`random_int`, hashed at rest, short TTL, attempt-capped), passkeys, and Thijssensoftware ID SSO. Invitation links are random tokens stored hashed, with expiry and email binding.
+- Access is membership-scoped everywhere (`visibleTo` on reads, policies on writes); labels/categories/templates are scoped to their owning organisation.
+- Session cookies are `Secure` by default in production (`config/session.php`), `HttpOnly`, `SameSite=lax`.
+- Login-code emails are **queued**, so delivery depends on the queue worker running (`composer dev` locally; a systemd unit in production). If codes stop arriving, check the worker first.
+- A white-box source audit lives in [`docs/security-audit-2026-07-27.md`](docs/security-audit-2026-07-27.md).
 
 ## API
 
@@ -126,6 +141,8 @@ curl -X POST https://tracker.thijssensoftware.nl/api/issues \
 ```
 
 Only projects you are a member of are visible, on the API as much as in the UI.
+
+Beyond issues, the API also exposes CRUD for **projects** and their **members**, plus the organisation's **templates**, **categories** and **labels** (`/api/projects`, `/api/projects/{key}/members`, `/api/templates`, `/api/categories`, `/api/labels`, `/api/members`).
 
 ## Artisan commands
 
