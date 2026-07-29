@@ -18,12 +18,12 @@ class LabelController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'project' => ['sometimes', 'string', 'exists:projects,key'],
         ]);
 
-        $organization = isset($validated['project'])
-            ? Project::query()->where('key', $validated['project'])->firstOrFail()->organization
+        $organization = $request->filled('project')
+            ? Project::query()->where('key', $request->string('project')->toString())->firstOrFail()->organization
             : Organization::query()->visibleTo($this->currentUser($request))->orderBy('name')->first();
 
         abort_if($organization === null, 404);

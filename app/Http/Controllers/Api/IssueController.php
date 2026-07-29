@@ -32,14 +32,14 @@ class IssueController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'project' => ['sometimes', 'string', 'exists:projects,key'],
         ]);
 
         $query = Issue::query()->visibleTo($this->currentUser($request))->notArchived()->with(['project', 'parent', 'owner', 'assignee', 'labels']);
 
-        if (isset($validated['project'])) {
-            $query->whereRelation('project', 'key', $validated['project']);
+        if ($request->filled('project')) {
+            $query->whereRelation('project', 'key', $request->string('project')->toString());
         }
 
         $issues = $query->orderBy('project_id')->orderBy('number')->get();

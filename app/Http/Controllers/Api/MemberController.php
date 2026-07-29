@@ -14,11 +14,11 @@ class MemberController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'project' => ['required', 'string', 'exists:projects,key'],
         ]);
 
-        $project = Project::query()->where('key', $validated['project'])->firstOrFail();
+        $project = Project::query()->where('key', $request->string('project')->toString())->firstOrFail();
 
         $this->authorize('view', $project);
 

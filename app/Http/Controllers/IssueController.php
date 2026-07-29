@@ -27,6 +27,7 @@ use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use App\Support\Duration;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -165,11 +166,11 @@ class IssueController extends Controller
 
         $issue->load([
             'project', 'owner', 'assignee', 'parent', 'labels', 'template',
-            'children' => fn ($query) => $query->orderBy('number'),
-            'timeEntries' => fn ($query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
-            'comments' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
-            'activities' => fn ($query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
-            'commits' => fn ($query) => $query->orderBy('committed_at')->orderBy('id'),
+            'children' => fn (Relation $query) => $query->orderBy('number'),
+            'timeEntries' => fn (Relation $query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
+            'comments' => fn (Relation $query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
+            'activities' => fn (Relation $query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
+            'commits' => fn (Relation $query) => $query->orderBy('committed_at')->orderBy('id'),
         ]);
         $issue->loadSum('timeEntries', 'minutes');
 
@@ -232,7 +233,7 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $issue->update($request->safe()->except(['labels', 'estimate']));
+        $issue->update(collect($request->validated())->except(['labels', 'estimate'])->all());
         $issue->syncLabelsWithActivity($this->intList($request->validated('labels', [])));
 
         if ($request->has('estimate')) {

@@ -7,6 +7,7 @@ namespace App\Models;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -116,17 +117,27 @@ class Category extends Model
             ->get(['id', 'parent_id'])
             ->groupBy('parent_id');
 
-        $collect = function (int $parentId) use (&$collect, $byParent): array {
-            $ids = [];
+        return $this->collectDescendants($this->id, $byParent);
+    }
 
-            foreach ($byParent->get($parentId, collect()) as $child) {
-                $ids[] = $child->id;
-                $ids = array_merge($ids, $collect($child->id));
-            }
+    /**
+     * @param  Collection<array-key, EloquentCollection<int, Category>>  $byParent
+     * @return list<int>
+     */
+    private function collectDescendants(int $parentId, Collection $byParent): array
+    {
+        $ids = [];
+        $children = $byParent->get($parentId);
 
+        if (! $children instanceof Collection) {
             return $ids;
-        };
+        }
 
-        return array_values($collect($this->id));
+        foreach ($children as $child) {
+            $ids[] = $child->id;
+            $ids = array_merge($ids, $this->collectDescendants($child->id, $byParent));
+        }
+
+        return $ids;
     }
 }

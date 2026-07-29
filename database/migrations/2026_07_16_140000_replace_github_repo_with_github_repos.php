@@ -38,7 +38,8 @@ return new class extends Migration
             ->whereNotNull('github_repos')
             ->orderBy('id')
             ->each(function (object $project) {
-                $repos = json_decode((string) $project->github_repos, true);
+                $reposJson = $project->github_repos;
+                $repos = json_decode(is_string($reposJson) ? $reposJson : '', true);
 
                 DB::table('projects')
                     ->where('id', $project->id)

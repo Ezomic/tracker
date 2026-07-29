@@ -19,10 +19,11 @@ class CreateIssueAction
     public function handle(Project $project, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null, ?User $owner = null, ?User $assignee = null, ?IssuePriority $priority = null, ?IssueTemplate $template = null): Issue
     {
         return DB::transaction(function () use ($project, $title, $type, $description, $parent, $owner, $assignee, $priority, $template) {
-            $number = DB::select(
+            $row = (array) DB::selectOne(
                 'update projects set next_number = next_number + 1 where id = ? returning next_number',
                 [$project->id]
-            )[0]->next_number;
+            );
+            $number = is_numeric($row['next_number'] ?? null) ? (int) $row['next_number'] : 0;
 
             $identifier = "{$project->key}-{$number}";
             $slug = (string) Str::of($title)->slug()->limit(50, '');

@@ -27,7 +27,7 @@ class Mentions
         )));
 
         if ($handles === []) {
-            return collect();
+            return new Collection;
         }
 
         return $project->members()
