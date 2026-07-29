@@ -29,6 +29,9 @@ class EnsureEmailConfirmed
         'passkey.destroy',
     ];
 
+    /**
+     * @param  Closure(Request): Response  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->routeIs(...self::GATED_ROUTES) || self::confirmedRecently($request)) {

@@ -14,7 +14,7 @@ parameters:
     excludePaths:
         - config/sanctum.php
 
-    level: 9
+    level: 10
 
     # phpstan-strict-rules, minus the rules that fight Laravel idioms:
     # strictCalls (Eloquent builder methods are static-but-called-dynamically),

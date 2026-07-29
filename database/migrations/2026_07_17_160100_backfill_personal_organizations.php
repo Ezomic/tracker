@@ -23,11 +23,14 @@ return new class extends Migration
         $orgIdByUser = [];
 
         foreach ($users as $user) {
+            $userId = is_numeric($user->id) ? (int) $user->id : 0;
+            $userName = is_string($user->name) ? $user->name : '';
+
             // The founder's org is the real company; everyone else gets one
             // named after them.
             $name = $user->email === self::FOUNDER_EMAIL
                 ? 'Thijssen Software'
-                : $user->name;
+                : $userName;
 
             $orgId = DB::table('organizations')->insertGetId([
                 'name' => $name,
@@ -44,7 +47,7 @@ return new class extends Migration
                 'updated_at' => $now,
             ]);
 
-            $orgIdByUser[$user->id] = $orgId;
+            $orgIdByUser[$userId] = $orgId;
         }
 
         $ownerships = DB::table('project_user')
@@ -52,13 +55,15 @@ return new class extends Migration
             ->get(['project_id', 'user_id']);
 
         foreach ($ownerships as $ownership) {
-            if (! isset($orgIdByUser[$ownership->user_id])) {
+            $ownerId = is_numeric($ownership->user_id) ? (int) $ownership->user_id : 0;
+
+            if (! isset($orgIdByUser[$ownerId])) {
                 continue;
             }
 
             DB::table('projects')
                 ->where('id', $ownership->project_id)
-                ->update(['organization_id' => $orgIdByUser[$ownership->user_id]]);
+                ->update(['organization_id' => $orgIdByUser[$ownerId]]);
         }
     }
 

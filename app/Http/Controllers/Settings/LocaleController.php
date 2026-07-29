@@ -14,11 +14,11 @@ class LocaleController extends Controller
 {
     public function update(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'locale' => ['required', 'string', Rule::in(Cast::strings(config('app.supported_locales', ['en'])))],
         ]);
 
-        $this->currentUser($request)->update(['locale' => $validated['locale']]);
+        $this->currentUser($request)->update(['locale' => $request->string('locale')->toString()]);
 
         return back();
     }

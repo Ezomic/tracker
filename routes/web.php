@@ -11,8 +11,9 @@ use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\TimeEntryController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::inertia('/', 'Landing')->name('home');
+Route::get('/', fn () => Inertia::render('Landing'))->name('home');
 
 // Public: the accept flow handles guests by sending them to log in or register first.
 Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');

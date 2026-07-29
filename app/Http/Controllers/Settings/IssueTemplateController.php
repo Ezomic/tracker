@@ -52,7 +52,7 @@ class IssueTemplateController extends Controller
         $organization = $this->current->require($this->currentUser($request));
         $this->authorize('update', $organization);
 
-        $template = $organization->issueTemplates()->create($request->safe()->except('labels'));
+        $template = $organization->issueTemplates()->create(collect($request->validated())->except('labels')->all());
         $template->labels()->sync($this->intList($request->validated('labels', [])));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Template created.')]);
@@ -66,7 +66,7 @@ class IssueTemplateController extends Controller
         $this->authorize('update', $organization);
         $this->guardBelongsToOrganization($organization, $template);
 
-        $template->update($request->safe()->except('labels'));
+        $template->update(collect($request->validated())->except('labels')->all());
         $template->labels()->sync($this->intList($request->validated('labels', [])));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Template updated.')]);
