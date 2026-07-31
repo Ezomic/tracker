@@ -63,12 +63,14 @@ const comparison = computed(() => {
     <section
         class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
     >
-        <header class="mb-4 flex items-center justify-between gap-3">
+        <header
+            class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+        >
             <h2 class="text-sm font-medium">
                 {{ t('dashboard.completedPerWeekTitle') }}
             </h2>
             <span
-                class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium"
+                class="inline-flex w-fit items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium"
             >
                 {{ t('dashboard.thisWeek') }}
                 <b class="tabular-nums">{{ comparison.current }}</b>
@@ -97,46 +99,48 @@ const comparison = computed(() => {
         </p>
 
         <template v-else>
-            <div
-                class="flex items-end gap-3.5"
-                :style="{ height: `${CHART_HEIGHT + 32}px` }"
-            >
+            <div class="overflow-x-auto">
                 <div
-                    v-for="col in columns"
-                    :key="col.label"
-                    class="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
+                    class="flex min-w-[480px] items-end gap-2.5 sm:min-w-0 sm:gap-3.5"
+                    :style="{ height: `${CHART_HEIGHT + 32}px` }"
                 >
-                    <span class="text-xs font-semibold tabular-nums">{{
-                        col.total
-                    }}</span>
                     <div
-                        class="flex w-full max-w-[46px] flex-col-reverse overflow-hidden rounded-[5px]"
-                        :class="
-                            col.current
-                                ? 'outline-2 outline-offset-2 outline-primary'
-                                : ''
-                        "
-                        :style="{ height: `${col.barHeight}px` }"
+                        v-for="col in columns"
+                        :key="col.label"
+                        class="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
                     >
+                        <span class="text-xs font-semibold tabular-nums">{{
+                            col.total
+                        }}</span>
                         <div
-                            v-for="seg in col.segments"
-                            :key="seg.key"
-                            :style="{
-                                height: `${seg.height}%`,
-                                backgroundColor: seg.color,
-                            }"
-                            :title="seg.title"
-                        />
+                            class="flex w-full max-w-[46px] flex-col-reverse overflow-hidden rounded-[5px]"
+                            :class="
+                                col.current
+                                    ? 'outline-2 outline-offset-2 outline-primary'
+                                    : ''
+                            "
+                            :style="{ height: `${col.barHeight}px` }"
+                        >
+                            <div
+                                v-for="seg in col.segments"
+                                :key="seg.key"
+                                :style="{
+                                    height: `${seg.height}%`,
+                                    backgroundColor: seg.color,
+                                }"
+                                :title="seg.title"
+                            />
+                        </div>
+                        <span
+                            class="text-[11px] whitespace-nowrap"
+                            :class="
+                                col.current
+                                    ? 'font-semibold text-primary'
+                                    : 'text-muted-foreground'
+                            "
+                            >{{ col.label }}</span
+                        >
                     </div>
-                    <span
-                        class="text-[11px] whitespace-nowrap"
-                        :class="
-                            col.current
-                                ? 'font-semibold text-primary'
-                                : 'text-muted-foreground'
-                        "
-                        >{{ col.label }}</span
-                    >
                 </div>
             </div>
 

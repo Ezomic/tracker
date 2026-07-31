@@ -41,7 +41,9 @@ function cellStyle(
     <section
         class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
     >
-        <header class="mb-3 flex items-center justify-between gap-3">
+        <header
+            class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+        >
             <h2 class="text-sm font-medium">
                 {{ t('dashboard.matrixTitle') }}
             </h2>
@@ -62,7 +64,7 @@ function cellStyle(
                 <thead>
                     <tr>
                         <th
-                            class="px-2.5 py-2 text-left text-xs font-medium text-muted-foreground"
+                            class="sticky left-0 z-10 bg-card px-2.5 py-2 text-left text-xs font-medium text-muted-foreground"
                         >
                             {{ t('dashboard.project') }}
                         </th>
@@ -87,7 +89,9 @@ function cellStyle(
                         :key="series.key"
                         class="hover:bg-muted"
                     >
-                        <td class="px-2.5 py-2 whitespace-nowrap">
+                        <td
+                            class="sticky left-0 z-10 bg-card px-2.5 py-2 whitespace-nowrap"
+                        >
                             <span class="flex items-center gap-2">
                                 <span
                                     class="size-2.5 rounded-[3px]"
@@ -128,7 +132,7 @@ function cellStyle(
                 <tfoot>
                     <tr>
                         <td
-                            class="border-t border-border px-2.5 py-2 font-semibold"
+                            class="sticky left-0 z-10 border-t border-border bg-card px-2.5 py-2 font-semibold"
                         >
                             {{ t('dashboard.allProjects') }}
                         </td>

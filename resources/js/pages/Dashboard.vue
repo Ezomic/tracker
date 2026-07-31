@@ -75,7 +75,7 @@ const cycleValue = computed(() =>
     </div>
 
     <div v-else class="flex h-full flex-1 flex-col gap-4 p-4">
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
             <StatTile
                 :label="t('dashboard.statOpen')"
                 :value="stats.open"
