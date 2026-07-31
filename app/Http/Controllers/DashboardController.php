@@ -88,7 +88,11 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return list<array{key: string, name: string, color: string, count: int}>
+     * Active (open, non-archived) ticket counts per project, capped at the top
+     * projects with the rest folded into a single "Other" entry so the donut
+     * and legend stay readable when many projects are in flight.
+     *
+     * @return list<array<string, mixed>>
      */
     private function activeByProject(User $user): array
     {
@@ -105,11 +109,27 @@ class DashboardController extends Controller
                 'name' => $project->name,
                 'color' => $project->color,
                 'count' => Cast::int($project->getAttribute('active_count')),
+                'other' => false,
             ])
             ->filter(fn (array $row): bool => $row['count'] > 0)
-            ->all();
+            ->values();
 
-        return array_values($rows);
+        $rest = $rows->slice(self::TOP_PROJECTS);
+
+        if ($rest->isEmpty()) {
+            return array_values($rows->all());
+        }
+
+        return [
+            ...$rows->take(self::TOP_PROJECTS)->all(),
+            [
+                'key' => 'other',
+                'name' => 'Other ('.$rest->count().')',
+                'color' => null,
+                'count' => Cast::int($rest->sum('count')),
+                'other' => true,
+            ],
+        ];
     }
 
     /**

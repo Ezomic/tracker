@@ -13,9 +13,15 @@ const props = withDefaults(
     },
 );
 
+const OTHER_COLOR = 'var(--muted-foreground)';
+
+function color(project: ActiveByProject): string {
+    return project.color ?? OTHER_COLOR;
+}
+
 const segments = computed(() =>
     props.projects.map((project) => ({
-        color: project.color,
+        color: color(project),
         value: project.count,
     })),
 );
@@ -59,9 +65,13 @@ const total = computed(() =>
             >
                 <span
                     class="size-2.5 shrink-0 rounded-[3px]"
-                    :style="{ backgroundColor: project.color }"
+                    :style="{ backgroundColor: color(project) }"
                 />
-                <span class="min-w-0 flex-1 truncate">{{ project.name }}</span>
+                <span
+                    class="min-w-0 flex-1 truncate"
+                    :class="project.other ? 'text-muted-foreground italic' : ''"
+                    >{{ project.name }}</span
+                >
                 <span
                     class="shrink-0 font-semibold text-muted-foreground tabular-nums"
                 >

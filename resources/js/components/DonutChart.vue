@@ -53,7 +53,7 @@ const arcs = computed(() => {
             cy="18"
             r="15.915"
             fill="none"
-            :stroke="arc.color"
+            :style="{ stroke: arc.color }"
             :stroke-width="thickness"
             :stroke-dasharray="`${arc.dash} ${100 - arc.dash}`"
             :stroke-dashoffset="arc.offset"

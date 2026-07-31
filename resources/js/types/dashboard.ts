@@ -21,8 +21,9 @@ export interface StatusBreakdown {
 export interface ActiveByProject {
     key: string;
     name: string;
-    color: string;
+    color: string | null;
     count: number;
+    other: boolean;
 }
 
 export interface IssueRow {
