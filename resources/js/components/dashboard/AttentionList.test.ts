@@ -11,6 +11,7 @@ function row(overrides: Partial<IssueRow> = {}): IssueRow {
         projectName: 'Shop',
         projectColor: '#d85a30',
         status: 'in_progress',
+        priority: 'none',
         ageDays: 2,
         stale: false,
         timestamp: null,
@@ -50,5 +51,17 @@ describe('AttentionList', () => {
         expect(
             mountList([row({ status: 'in_review', stale: false })]).text(),
         ).toContain('In review');
+    });
+
+    it('flags an urgent row with a priority chip', () => {
+        expect(mountList([row({ priority: 'urgent' })]).text()).toContain(
+            'Urgent',
+        );
+    });
+
+    it('does not render a priority chip for a low-priority row', () => {
+        expect(mountList([row({ priority: 'low' })]).text()).not.toContain(
+            'Low',
+        );
     });
 });

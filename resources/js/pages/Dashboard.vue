@@ -1,34 +1,38 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { FolderPlus } from '@lucide/vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import BoardView from '@/components/dashboard/BoardView.vue';
-import FocusView from '@/components/dashboard/FocusView.vue';
-import MetricsView from '@/components/dashboard/MetricsView.vue';
+import ActiveProjects from '@/components/dashboard/ActiveProjects.vue';
+import AttentionList from '@/components/dashboard/AttentionList.vue';
+import CompletedPerWeek from '@/components/dashboard/CompletedPerWeek.vue';
+import Panel from '@/components/dashboard/Panel.vue';
+import ProjectWeekMatrix from '@/components/dashboard/ProjectWeekMatrix.vue';
+import StatTile from '@/components/dashboard/StatTile.vue';
+import StatusThroughput from '@/components/dashboard/StatusThroughput.vue';
+import TimePanel from '@/components/dashboard/TimePanel.vue';
 import { Button } from '@/components/ui/button';
-import { useDashboardView } from '@/composables/useDashboardView';
 import { dashboard } from '@/routes';
 import { index as projectsIndex } from '@/routes/projects';
 import type {
     ActiveByProject,
-    BoardColumns,
+    CompletedByWeek,
     DashboardMetrics,
     DashboardStats,
-    DashboardView,
+    DashboardTime,
     IssueRow,
     StatusBreakdown,
-    TrendPoint,
 } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     stats: DashboardStats;
     statusBreakdown: StatusBreakdown;
     hasProjects: boolean;
     activeByProject: ActiveByProject[];
     attention: IssueRow[];
-    board: BoardColumns;
-    trend: TrendPoint[];
+    completedByWeek: CompletedByWeek;
     metrics: DashboardMetrics;
+    time: DashboardTime;
 }>();
 
 defineOptions({
@@ -38,13 +42,10 @@ defineOptions({
 });
 
 const { t } = useI18n();
-const { view, setView } = useDashboardView();
 
-const tabs: { key: DashboardView; label: string }[] = [
-    { key: 'focus', label: 'dashboard.viewFocus' },
-    { key: 'metrics', label: 'dashboard.viewMetrics' },
-    { key: 'board', label: 'dashboard.viewBoard' },
-];
+const cycleValue = computed(() =>
+    props.metrics.cycleDays === null ? '—' : `${props.metrics.cycleDays}d`,
+);
 </script>
 
 <template>
@@ -74,52 +75,59 @@ const tabs: { key: DashboardView; label: string }[] = [
     </div>
 
     <div v-else class="flex h-full flex-1 flex-col gap-4 p-4">
-        <div class="flex items-center justify-between gap-3">
-            <div
-                class="inline-flex rounded-lg border border-sidebar-border/70 bg-card p-0.5 dark:border-sidebar-border"
-                role="tablist"
-                :aria-label="$t('dashboard.viewLabel')"
-            >
-                <button
-                    v-for="tab in tabs"
-                    :key="tab.key"
-                    type="button"
-                    role="tab"
-                    :aria-selected="view === tab.key"
-                    class="rounded-[7px] px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    :class="
-                        view === tab.key
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
-                    "
-                    @click="setView(tab.key)"
-                >
-                    {{ t(tab.label) }}
-                </button>
-            </div>
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatTile
+                :label="t('dashboard.statOpen')"
+                :value="stats.open"
+                :hint="
+                    t('dashboard.openBreakdown', {
+                        inProgress: stats.in_progress,
+                        inReview: stats.in_review,
+                    })
+                "
+            />
+            <StatTile
+                hero
+                :label="t('dashboard.completedPerWeek')"
+                :value="metrics.completed"
+                :delta="metrics.completedDelta"
+                :spark="metrics.completedSpark"
+                accent="text-primary"
+            />
+            <StatTile
+                :label="t('dashboard.medianCycle')"
+                :value="cycleValue"
+                :delta="metrics.cycleDelta"
+                delta-unit="d"
+                invert
+                :spark="metrics.cycleSpark"
+                accent="text-emerald-500"
+            />
+            <StatTile
+                :label="t('dashboard.wipLoad')"
+                :value="metrics.wip"
+                :hint="t('dashboard.urgentOpen', { count: stats.urgentOpen })"
+            />
         </div>
 
-        <FocusView
-            v-if="view === 'focus'"
-            :stats="stats"
-            :status-breakdown="statusBreakdown"
-            :active-by-project="activeByProject"
-            :attention="attention"
-            :metrics="metrics"
-        />
-        <MetricsView
-            v-else-if="view === 'metrics'"
-            :metrics="metrics"
-            :trend="trend"
-            :status-breakdown="statusBreakdown"
-            :active-by-project="activeByProject"
-            :attention="attention"
-        />
-        <BoardView
-            v-else
-            :board="board"
-            :status-breakdown="statusBreakdown"
-            :metrics="metrics"
-        />
+        <CompletedPerWeek :data="completedByWeek" />
+
+        <ProjectWeekMatrix :data="completedByWeek" />
+
+        <TimePanel :time="time" />
+
+        <div class="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
+            <Panel :title="t('dashboard.attentionTitle')">
+                <AttentionList :rows="attention" />
+            </Panel>
+            <div class="flex flex-col gap-4">
+                <Panel :title="t('dashboard.activeByProject')">
+                    <ActiveProjects :projects="activeByProject" />
+                </Panel>
+                <Panel :title="t('dashboard.statusBreakdown')">
+                    <StatusThroughput :breakdown="statusBreakdown" />
+                </Panel>
+            </div>
+        </div>
     </div>
 </template>

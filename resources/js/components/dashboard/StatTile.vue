@@ -12,6 +12,7 @@ const props = withDefaults(
         accent?: string;
         hero?: boolean;
         spark?: number[];
+        hint?: string;
     }>(),
     {
         delta: null,
@@ -20,6 +21,7 @@ const props = withDefaults(
         accent: 'text-muted-foreground',
         hero: false,
         spark: () => [],
+        hint: '',
     },
 );
 
@@ -80,8 +82,11 @@ const deltaLabel = computed(() => {
         <span class="text-2xl leading-none font-semibold tabular-nums">
             {{ value }}
         </span>
-        <div :class="accent">
-            <Sparkline v-if="spark.length" :values="spark" />
+        <div v-if="spark.length" :class="accent">
+            <Sparkline :values="spark" />
         </div>
+        <p v-else-if="hint" class="text-xs text-muted-foreground">
+            {{ hint }}
+        </p>
     </div>
 </template>
