@@ -98,6 +98,28 @@ it('counts active tickets per project excluding done and archived', function () 
         ->assertInertia(fn ($page) => $page
             ->where('activeByProject.0.key', 'THI')
             ->where('activeByProject.0.count', 6)
+            ->where('activeByProject.0.other', false)
+        );
+});
+
+it('caps active-by-project at the top six and folds the rest into Other', function () {
+    $projects = collect(range(1, 8))->map(fn (int $n): Project => Project::factory()->create(['key' => "P{$n}"]));
+    $user = member($projects->all());
+
+    // Give each project a distinct active count: P1 => 8 ... P8 => 1.
+    $projects->each(fn (Project $project, int $index) => Issue::factory()
+        ->for($project)
+        ->count(8 - $index)
+        ->create(['status' => IssueStatus::InProgress]));
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->has('activeByProject', 7)
+            ->where('activeByProject.0.count', 8)
+            ->where('activeByProject.6.other', true)
+            ->where('activeByProject.6.name', 'Other (2)')
+            ->where('activeByProject.6.count', 3) // the two smallest: 2 + 1
         );
 });
 
