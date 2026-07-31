@@ -6,25 +6,25 @@ use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
 
-it('lets a signed-in user switch dashboard views', function () {
+it('renders the unified dashboard for a signed-in user', function () {
     $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
     $user = member($project);
     Issue::factory()->for($project)->count(2)->create(['status' => IssueStatus::Backlog]);
     Issue::factory()->for($project)->create(['status' => IssueStatus::InReview]);
+    Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Done,
+        'closed_at' => now(),
+    ]);
 
     $this->actingAs($user);
 
     $page = visit('/dashboard');
 
-    // The Focus view is the default.
     $page->assertSee('Needs your attention')
         ->assertSee('Active tickets by project')
-        ->assertDontSee('Opened vs completed');
-
-    // Switching to Metrics is client-side; its trend chart + WIP tile appear.
-    $page->click('Metrics')
-        ->assertSee('Opened vs completed')
-        ->assertSee('WIP load');
+        ->assertSee('Completed per week')
+        ->assertSee('Tickets done by project, week by week')
+        ->assertSee("This week's time");
 
     $page->assertNoJavascriptErrors();
 });

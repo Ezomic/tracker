@@ -1,6 +1,6 @@
-export type DashboardView = 'focus' | 'metrics' | 'board';
-
 export type IssueStatusKey = 'backlog' | 'in_progress' | 'in_review' | 'done';
+
+export type IssuePriorityKey = 'none' | 'low' | 'medium' | 'high' | 'urgent';
 
 export interface DashboardStats {
     open: number;
@@ -8,6 +8,7 @@ export interface DashboardStats {
     in_review: number;
     done: number;
     archived: number;
+    urgentOpen: number;
 }
 
 export interface StatusBreakdown {
@@ -30,34 +31,55 @@ export interface IssueRow {
     projectName: string;
     projectColor: string;
     status: IssueStatusKey;
+    priority: IssuePriorityKey;
     ageDays: number;
     stale: boolean;
     timestamp: string | null;
 }
 
-export interface BoardColumns {
-    backlog: IssueRow[];
-    in_progress: IssueRow[];
-    in_review: IssueRow[];
-    done: IssueRow[];
+export interface CompletedSeries {
+    key: string;
+    name: string;
+    color: string | null;
+    values: number[];
+    total: number;
+    other: boolean;
 }
 
-export interface TrendPoint {
-    label: string;
-    opened: number;
-    completed: number;
-    cycle: number | null;
+export interface CompletedByWeek {
+    weeks: string[];
+    series: CompletedSeries[];
+    weekTotals: number[];
+    grandTotal: number;
 }
 
 export interface DashboardMetrics {
     completed: number;
     completedDelta: number;
-    opened: number;
-    openedDelta: number;
     wip: number;
     cycleDays: number | null;
     cycleDelta: number | null;
     completedSpark: number[];
-    openedSpark: number[];
     cycleSpark: number[];
+}
+
+export interface LoggedProject {
+    key: string;
+    name: string;
+    color: string;
+    minutes: number;
+}
+
+export interface EstimateAccuracy {
+    pct: number | null;
+    overPct: number | null;
+    direction: 'over' | 'under' | 'none';
+    sampleSize: number;
+}
+
+export interface DashboardTime {
+    loggedThisWeek: number;
+    loggedPreviousWeek: number;
+    loggedByProject: LoggedProject[];
+    accuracy: EstimateAccuracy;
 }

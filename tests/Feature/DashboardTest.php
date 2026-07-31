@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -40,8 +42,11 @@ it('lets authenticated users visit an empty dashboard', function () {
             ->where('stats.open', 0)
             ->where('activeByProject', [])
             ->where('attention', [])
-            ->where('board.backlog', [])
-            ->has('trend', 8)
+            ->where('completedByWeek.series', [])
+            ->where('completedByWeek.grandTotal', 0)
+            ->has('completedByWeek.weeks', 8)
+            ->where('metrics.completed', 0)
+            ->where('time.loggedThisWeek', 0)
         );
 });
 
@@ -56,9 +61,33 @@ it('renders stats and status breakdown', function () {
             ->where('stats.in_review', 1)
             ->where('stats.done', 4)
             ->where('stats.archived', 1)
+            ->where('stats.urgentOpen', 0)
             ->where('statusBreakdown.backlog', 3)
             ->where('statusBreakdown.done', 4)
         );
+});
+
+it('counts open urgent issues, excluding done and archived ones', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+
+    Issue::factory()->for($project)->count(2)->create([
+        'status' => IssueStatus::InProgress,
+        'priority' => IssuePriority::Urgent,
+    ]);
+    Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Done,
+        'priority' => IssuePriority::Urgent,
+        'closed_at' => now(),
+    ]);
+    Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Backlog,
+        'priority' => IssuePriority::Urgent,
+        'archived_at' => now(),
+    ]);
+
+    $this->actingAs(member($project))
+        ->get('/dashboard')
+        ->assertInertia(fn ($page) => $page->where('stats.urgentOpen', 2));
 });
 
 it('counts active tickets per project excluding done and archived', function () {
@@ -72,18 +101,20 @@ it('counts active tickets per project excluding done and archived', function () 
         );
 });
 
-it('surfaces the users own open issues, stalest first, flagging stale ones', function () {
+it('orders the attention list by priority first, then staleness', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $user = member($project);
 
     $stale = Issue::factory()->for($project)->create([
         'status' => IssueStatus::Backlog,
+        'priority' => IssuePriority::Low,
         'assignee_id' => $user->id,
     ]);
     $stale->forceFill(['updated_at' => now()->subDays(20)])->save();
 
-    Issue::factory()->for($project)->create([
+    $urgent = Issue::factory()->for($project)->create([
         'status' => IssueStatus::InProgress,
+        'priority' => IssuePriority::Urgent,
         'owner_id' => $user->id,
     ]);
 
@@ -94,26 +125,63 @@ it('surfaces the users own open issues, stalest first, flagging stale ones', fun
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
             ->has('attention', 2)
-            ->where('attention.0.identifier', $stale->identifier)
-            ->where('attention.0.stale', true)
-            ->where('attention.1.stale', false)
+            ->where('attention.0.identifier', $urgent->identifier)
+            ->where('attention.0.priority', 'urgent')
+            ->where('attention.1.identifier', $stale->identifier)
+            ->where('attention.1.stale', true)
         );
 });
 
-it('groups board columns by status', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $review = Issue::factory()->for($project)->create(['status' => IssueStatus::InReview]);
-    $done = Issue::factory()->for($project)->create([
+it('buckets completed issues into weekly per-project series', function () {
+    $a = Project::factory()->create(['key' => 'AAA']);
+    $b = Project::factory()->create(['key' => 'BBB']);
+    $user = member([$a, $b]);
+
+    Issue::factory()->for($a)->count(2)->create([
         'status' => IssueStatus::Done,
-        'closed_at' => now()->subDay(),
+        'closed_at' => now(),
+    ]);
+    Issue::factory()->for($b)->create([
+        'status' => IssueStatus::Done,
+        'closed_at' => now()->subWeek(),
+    ]);
+    // Archived done issue: excluded from the weekly counts.
+    Issue::factory()->for($a)->create([
+        'status' => IssueStatus::Done,
+        'closed_at' => now(),
+        'archived_at' => now(),
     ]);
 
-    $this->actingAs(member($project))
+    $this->actingAs($user)
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
-            ->where('board.in_review.0.identifier', $review->identifier)
-            ->where('board.done.0.identifier', $done->identifier)
-            ->where('board.backlog', [])
+            ->where('completedByWeek.series.0.key', 'AAA')
+            ->where('completedByWeek.series.0.total', 2)
+            ->where('completedByWeek.series.0.values.7', 2)
+            ->where('completedByWeek.series.1.key', 'BBB')
+            ->where('completedByWeek.series.1.values.6', 1)
+            ->where('completedByWeek.weekTotals.7', 2)
+            ->where('completedByWeek.weekTotals.6', 1)
+            ->where('completedByWeek.grandTotal', 3)
+        );
+});
+
+it('rolls completed projects beyond the top six into an Other series', function () {
+    $projects = collect(range(1, 7))
+        ->map(fn (int $n): Project => Project::factory()->create(['key' => "P{$n}"]));
+
+    $projects->each(fn (Project $project) => Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Done,
+        'closed_at' => now(),
+    ]));
+
+    $this->actingAs(member($projects->all()))
+        ->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->has('completedByWeek.series', 7)
+            ->where('completedByWeek.series.6.other', true)
+            ->where('completedByWeek.series.6.name', 'Other (1)')
+            ->where('completedByWeek.grandTotal', 7)
         );
 });
 
@@ -130,27 +198,38 @@ it('reports weekly metrics and a work-in-progress load', function () {
     $this->actingAs(member($project))
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
-            ->has('trend', 8)
+            ->has('completedByWeek.weekTotals', 8)
             ->where('metrics.completed', 1)
             ->where('metrics.wip', 3)
         );
 });
 
-it('computes the weekly trend only once per dashboard load', function () {
+it('summarises time logged this week and estimate accuracy', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $user = member($project);
 
-    DB::enableQueryLog();
-    $this->actingAs($user)->get('/dashboard')->assertOk();
+    $done = Issue::factory()->for($project)->create([
+        'status' => IssueStatus::Done,
+        'closed_at' => now(),
+        'estimate_minutes' => 120,
+    ]);
+    TimeEntry::factory()->for($done)->create(['minutes' => 180, 'spent_on' => now()]);
 
-    // The completed-trend query selects exactly created_at + closed_at; before
-    // the fix metrics() re-ran trend(), so it appeared twice.
-    $trendQueries = collect(DB::getQueryLog())
-        ->filter(fn (array $q): bool => str_contains($q['query'], 'select "created_at", "closed_at" from "issues"'));
+    $wip = Issue::factory()->for($project)->create(['status' => IssueStatus::InProgress]);
+    TimeEntry::factory()->for($wip)->create(['minutes' => 60, 'spent_on' => now()->subWeek()]);
 
-    expect($trendQueries)->toHaveCount(1);
-
-    DB::disableQueryLog();
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->where('time.loggedThisWeek', 180)
+            ->where('time.loggedPreviousWeek', 60)
+            ->where('time.loggedByProject.0.key', 'THI')
+            ->where('time.loggedByProject.0.minutes', 180)
+            ->where('time.accuracy.pct', 50)
+            ->where('time.accuracy.overPct', 50)
+            ->where('time.accuracy.direction', 'over')
+            ->where('time.accuracy.sampleSize', 1)
+        );
 });
 
 it('counts issue statuses in a single grouped query', function () {

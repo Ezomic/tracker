@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { priorityChip } from '@/lib/issuePriority';
 import { staleChipClass, statusChipClass } from '@/lib/issueStatus';
 import type { IssueRow } from '@/types';
 
@@ -41,6 +42,13 @@ function ageLabel(row: IssueRow): string {
             :key="row.identifier"
             class="flex items-center gap-3 border-t border-sidebar-border/70 py-2.5 first:border-t-0 dark:border-sidebar-border"
         >
+            <span
+                v-if="priorityChip(row.priority)"
+                class="shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-wide uppercase"
+                :class="priorityChip(row.priority) ?? ''"
+            >
+                {{ $t(`priority.${row.priority}`) }}
+            </span>
             <span
                 class="shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-wide"
                 :class="
