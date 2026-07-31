@@ -135,15 +135,18 @@ class DashboardController extends Controller
     }
 
     /**
-     * Done, non-archived issues closed within the trailing window, with their
-     * project and the total time logged against them.
+     * Done issues closed within the trailing window, with their project and the
+     * total time logged against them.
+     *
+     * Archived issues are deliberately included: completion is a historical fact
+     * keyed on closed_at, and archiving is board cleanup that must not erase a
+     * week's throughput. (Current-state figures elsewhere stay non-archived.)
      *
      * @return EloquentCollection<int, Issue>
      */
     private function completedIssues(User $user): EloquentCollection
     {
         return $this->scoped($user)
-            ->notArchived()
             ->where('status', IssueStatus::Done->value)
             ->whereNotNull('closed_at')
             ->where('closed_at', '>=', $this->windowStart())

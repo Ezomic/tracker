@@ -132,7 +132,7 @@ it('orders the attention list by priority first, then staleness', function () {
         );
 });
 
-it('buckets completed issues into weekly per-project series', function () {
+it('buckets completed issues into weekly per-project series, including archived ones', function () {
     $a = Project::factory()->create(['key' => 'AAA']);
     $b = Project::factory()->create(['key' => 'BBB']);
     $user = member([$a, $b]);
@@ -145,7 +145,7 @@ it('buckets completed issues into weekly per-project series', function () {
         'status' => IssueStatus::Done,
         'closed_at' => now()->subWeek(),
     ]);
-    // Archived done issue: excluded from the weekly counts.
+    // Archived done issue: still counts in its completion week (completion is historical).
     Issue::factory()->for($a)->create([
         'status' => IssueStatus::Done,
         'closed_at' => now(),
@@ -156,13 +156,13 @@ it('buckets completed issues into weekly per-project series', function () {
         ->get('/dashboard')
         ->assertInertia(fn ($page) => $page
             ->where('completedByWeek.series.0.key', 'AAA')
-            ->where('completedByWeek.series.0.total', 2)
-            ->where('completedByWeek.series.0.values.7', 2)
+            ->where('completedByWeek.series.0.total', 3)
+            ->where('completedByWeek.series.0.values.7', 3)
             ->where('completedByWeek.series.1.key', 'BBB')
             ->where('completedByWeek.series.1.values.6', 1)
-            ->where('completedByWeek.weekTotals.7', 2)
+            ->where('completedByWeek.weekTotals.7', 3)
             ->where('completedByWeek.weekTotals.6', 1)
-            ->where('completedByWeek.grandTotal', 3)
+            ->where('completedByWeek.grandTotal', 4)
         );
 });
 
