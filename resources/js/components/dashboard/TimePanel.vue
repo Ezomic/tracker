@@ -23,7 +23,9 @@ const maxLogged = computed(() =>
     <section
         class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
     >
-        <header class="mb-4 flex items-center justify-between gap-3">
+        <header
+            class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+        >
             <h2 class="text-sm font-medium">{{ t('dashboard.timeTitle') }}</h2>
             <span class="text-xs text-muted-foreground">{{
                 t('dashboard.timeHint')
