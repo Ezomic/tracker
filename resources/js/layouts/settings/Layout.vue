@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
+import { index as indexApiTokens } from '@/routes/api-tokens';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as indexCategories } from '@/routes/categories';
 import { index as indexLabels } from '@/routes/labels';
@@ -32,6 +33,7 @@ const navGroups = computed<NavGroup[]>(() =>
             items: [
                 { title: t('settingsNav.profile'), href: editProfile() },
                 { title: t('settingsNav.security'), href: editSecurity() },
+                { title: t('settingsNav.apiTokens'), href: indexApiTokens() },
                 { title: t('settingsNav.appearance'), href: editAppearance() },
                 { title: t('settingsNav.language'), href: editLanguage() },
             ],
