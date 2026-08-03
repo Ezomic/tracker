@@ -6,12 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\ArchiveIssueAction;
 use App\Actions\CreateIssueAction;
+use App\Actions\MoveIssueToStateAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Requests\ArchiveIssueRequest;
 use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
+use App\Http\Requests\UpdateIssueStateRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Activity;
 use App\Models\Comment;
@@ -19,10 +21,13 @@ use App\Models\Commit;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Label;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\ProjectType;
 use App\Models\SavedView;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Models\WorkflowState;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use App\Support\Duration;
@@ -251,12 +256,13 @@ class IssueController extends Controller
             $this->authorize('view', $project);
         }
 
+        $organization = $current->for($this->currentUser($request));
         $showArchived = $request->boolean('archived');
 
         return Inertia::render('issues/Board', [
             'issues' => Issue::query()
                 ->visibleTo($this->currentUser($request))
-                ->inOrganization($current->for($this->currentUser($request)))
+                ->inOrganization($organization)
                 ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
                 ->withCount(['children', 'children as children_done_count' => fn (Builder $children) => $children->where('status', IssueStatus::Done)])
                 ->withSum('timeEntries', 'minutes')
@@ -270,8 +276,50 @@ class IssueController extends Controller
                 'name' => $project->name,
                 'links' => $project->links(),
             ],
+            'workflowStates' => $this->boardStates($project, $organization),
             'showArchived' => $showArchived,
         ]);
+    }
+
+    /**
+     * The lanes the board renders: the viewed project's type, or the
+     * organization's default type when viewing all projects. Empty means the
+     * board falls back to the legacy status columns.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function boardStates(?Project $project, ?Organization $organization): array
+    {
+        $type = $project !== null
+            ? $project->projectType
+            : ProjectType::query()
+                ->where('organization_id', $organization?->id)
+                ->where('is_default', true)
+                ->first();
+
+        if ($type === null) {
+            return [];
+        }
+
+        return array_values($type->states
+            ->map(fn (WorkflowState $state): array => [
+                'id' => $state->id,
+                'name' => $state->name,
+                'color' => $state->color,
+                'category' => $state->category->value,
+            ])
+            ->all());
+    }
+
+    public function updateState(UpdateIssueStateRequest $request, Issue $issue, MoveIssueToStateAction $action): RedirectResponse
+    {
+        $this->authorize('update', $issue);
+
+        $state = WorkflowState::query()->findOrFail($request->integer('workflow_state_id'));
+
+        $action->handle($issue, $state);
+
+        return back();
     }
 
     public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): RedirectResponse
@@ -406,6 +454,7 @@ class IssueController extends Controller
                 : null,
             'priority' => $issue->priority->value,
             'status' => $issue->status->value,
+            'workflowStateId' => $issue->workflow_state_id,
             'branchName' => $issue->branch_name,
             'branchUrl' => $repoBase !== null ? $repoBase.'/tree/'.$issue->branch_name : null,
             'commitsUrl' => $repoBase !== null ? $repoBase.'/commits/'.$issue->branch_name : null,

@@ -40,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $template_id
  * @property IssuePriority $priority
  * @property IssueStatus $status
+ * @property int|null $workflow_state_id
  * @property string $branch_name
  * @property string|null $github_pr_url
  * @property Carbon|null $closed_at

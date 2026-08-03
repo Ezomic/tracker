@@ -59,6 +59,7 @@ export interface Issue {
     template: { name: string } | null;
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
     status: 'backlog' | 'in_progress' | 'in_review' | 'done';
+    workflowStateId: number | null;
     branchName: string;
     branchUrl: string | null;
     commitsUrl: string | null;
