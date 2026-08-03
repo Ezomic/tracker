@@ -68,6 +68,17 @@ class Issue extends Model
     }
 
     /**
+     * The board lane this issue sits in, from its project's type. Nullable
+     * until the workflow-states cutover completes; `status` stays authoritative.
+     *
+     * @return BelongsTo<WorkflowState, $this>
+     */
+    public function workflowState(): BelongsTo
+    {
+        return $this->belongsTo(WorkflowState::class);
+    }
+
+    /**
      * The reporter — stamped when the issue is filed.
      *
      * @return BelongsTo<User, $this>
