@@ -59,6 +59,14 @@ class Organization extends Model
     }
 
     /**
+     * @return HasMany<ProjectType, $this>
+     */
+    public function projectTypes(): HasMany
+    {
+        return $this->hasMany(ProjectType::class);
+    }
+
+    /**
      * @return HasMany<Invitation, $this>
      */
     public function invitations(): HasMany

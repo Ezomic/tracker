@@ -58,6 +58,14 @@ class Project extends Model
     }
 
     /**
+     * @return BelongsTo<ProjectType, $this>
+     */
+    public function projectType(): BelongsTo
+    {
+        return $this->belongsTo(ProjectType::class);
+    }
+
+    /**
      * @return HasMany<Issue, $this>
      */
     public function issues(): HasMany
