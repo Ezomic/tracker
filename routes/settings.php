@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\OrganizationInvitationController;
 use App\Http\Controllers\OrganizationMemberController;
+use App\Http\Controllers\Settings\ApiTokenController;
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\EmailConfirmationController;
 use App\Http\Controllers\Settings\IssueTemplateController;
@@ -56,6 +57,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/security/confirm', [EmailConfirmationController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('security.confirm.store');
+
+    Route::get('settings/api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
+    Route::post('settings/api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store');
+    Route::delete('settings/api-tokens/{token}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
 
     Route::get('settings/appearance', fn () => Inertia::render('settings/Appearance'))->name('appearance.edit');
 
