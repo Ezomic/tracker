@@ -92,7 +92,11 @@ async function copyToken(value: string) {
                     >
                         <Check v-if="copied" class="size-4" />
                         <Copy v-else class="size-4" />
-                        {{ copied ? $t('apiTokens.copied') : $t('apiTokens.copy') }}
+                        {{
+                            copied
+                                ? $t('apiTokens.copied')
+                                : $t('apiTokens.copy')
+                        }}
                     </Button>
                 </div>
             </AlertDescription>
