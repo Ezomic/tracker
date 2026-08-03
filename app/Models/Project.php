@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int|null $organization_id
  * @property int|null $category_id
+ * @property int|null $project_type_id
  * @property string $key
  * @property string $name
  * @property string|null $description

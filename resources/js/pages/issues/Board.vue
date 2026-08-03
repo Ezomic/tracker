@@ -13,12 +13,20 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { getInitials } from '@/composables/useInitials';
 import { formatDuration } from '@/lib/duration';
-import { board, show, updateStatus } from '@/routes/issues';
+import { board, show, updateState, updateStatus } from '@/routes/issues';
 import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
+
+interface WorkflowStateColumn {
+    id: number;
+    name: string;
+    color: string;
+    category: string;
+}
 
 const props = defineProps<{
     issues: Issue[];
     project?: { key: string; name: string; links: ProjectLinksType } | null;
+    workflowStates: WorkflowStateColumn[];
     showArchived: boolean;
 }>();
 
@@ -43,25 +51,63 @@ defineOptions({
     },
 });
 
-const columns: { status: Issue['status']; dot: string; accent: string }[] = [
-    {
-        status: 'backlog',
-        dot: 'bg-muted-foreground/50',
-        accent: 'bg-muted-foreground/30',
-    },
-    { status: 'in_progress', dot: 'bg-primary', accent: 'bg-primary' },
-    { status: 'in_review', dot: 'bg-sky-500', accent: 'bg-sky-500' },
-    { status: 'done', dot: 'bg-emerald-500', accent: 'bg-emerald-500' },
+interface BoardColumn {
+    key: string;
+    label: string;
+    color: string | null;
+    colorClass: string;
+    match: (issue: Issue) => boolean;
+    drop: (issue: Issue) => void;
+}
+
+const RELOAD = { preserveScroll: true, preserveState: true, only: ['issues'] };
+
+const LEGACY_COLUMNS: { status: Issue['status']; dot: string }[] = [
+    { status: 'backlog', dot: 'bg-muted-foreground/50' },
+    { status: 'in_progress', dot: 'bg-primary' },
+    { status: 'in_review', dot: 'bg-sky-500' },
+    { status: 'done', dot: 'bg-emerald-500' },
 ];
 
-const issuesByStatus = computed(() => {
-    const grouped = new Map<Issue['status'], Issue[]>();
+// Lanes come from the project's type; without one we fall back to the four
+// legacy statuses so an untyped project still has a working board.
+const columns = computed<BoardColumn[]>(() => {
+    if (props.workflowStates.length) {
+        return props.workflowStates.map((state) => ({
+            key: `state-${state.id}`,
+            label: state.name,
+            color: state.color,
+            colorClass: '',
+            match: (issue: Issue) => issue.workflowStateId === state.id,
+            drop: (issue: Issue) =>
+                router.patch(
+                    updateState.url({ issue: issue.identifier }),
+                    { workflow_state_id: state.id },
+                    RELOAD,
+                ),
+        }));
+    }
 
-    for (const column of columns) {
-        grouped.set(
-            column.status,
-            props.issues.filter((issue) => issue.status === column.status),
-        );
+    return LEGACY_COLUMNS.map((column) => ({
+        key: column.status,
+        label: t(`status.${column.status}`),
+        color: null,
+        colorClass: column.dot,
+        match: (issue: Issue) => issue.status === column.status,
+        drop: (issue: Issue) =>
+            router.patch(
+                updateStatus.url({ issue: issue.identifier }),
+                { status: column.status },
+                RELOAD,
+            ),
+    }));
+});
+
+const issuesByColumn = computed(() => {
+    const grouped = new Map<string, Issue[]>();
+
+    for (const column of columns.value) {
+        grouped.set(column.key, props.issues.filter(column.match));
     }
 
     return grouped;
@@ -79,7 +125,7 @@ function hasMeta(issue: Issue): boolean {
 }
 
 const draggingId = ref<string | null>(null);
-const dragOverStatus = ref<Issue['status'] | null>(null);
+const dragOverKey = ref<string | null>(null);
 
 function onDragStart(event: DragEvent, issue: Issue) {
     draggingId.value = issue.identifier;
@@ -88,23 +134,19 @@ function onDragStart(event: DragEvent, issue: Issue) {
 
 function onDragEnd() {
     draggingId.value = null;
-    dragOverStatus.value = null;
+    dragOverKey.value = null;
 }
 
-function onDrop(event: DragEvent, status: Issue['status']) {
-    dragOverStatus.value = null;
+function onDrop(event: DragEvent, column: BoardColumn) {
+    dragOverKey.value = null;
     const identifier = event.dataTransfer?.getData('text/plain');
     const issue = props.issues.find((i) => i.identifier === identifier);
 
-    if (!issue || issue.status === status) {
+    if (!issue || column.match(issue)) {
         return;
     }
 
-    router.patch(
-        updateStatus.url({ issue: issue.identifier }),
-        { status },
-        { preserveScroll: true, preserveState: true, only: ['issues'] },
-    );
+    column.drop(issue);
 }
 </script>
 
@@ -127,46 +169,54 @@ function onDrop(event: DragEvent, status: Issue['status']) {
             </Label>
         </div>
 
-        <div
-            class="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <div class="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-1">
             <div
                 v-for="column in columns"
-                :key="column.status"
-                class="flex min-h-0 flex-col overflow-hidden rounded-xl border transition-colors"
+                :key="column.key"
+                class="flex min-h-0 w-72 shrink-0 flex-col overflow-hidden rounded-xl border transition-colors"
                 :class="
-                    dragOverStatus === column.status
+                    dragOverKey === column.key
                         ? 'border-primary/50 ring-2 ring-primary/30'
                         : 'border-sidebar-border/70 dark:border-sidebar-border'
                 "
-                @dragover.prevent="dragOverStatus = column.status"
-                @dragleave="dragOverStatus = null"
-                @drop="onDrop($event, column.status)"
+                @dragover.prevent="dragOverKey = column.key"
+                @dragleave="dragOverKey = null"
+                @drop="onDrop($event, column)"
             >
-                <div class="h-1 w-full shrink-0" :class="column.accent" />
+                <div
+                    class="h-1 w-full shrink-0"
+                    :class="column.colorClass"
+                    :style="
+                        column.color ? { backgroundColor: column.color } : {}
+                    "
+                />
 
                 <h2
                     class="flex shrink-0 items-center gap-2 px-3 py-2.5 text-xs font-medium"
                 >
-                    <span class="size-2 rounded-full" :class="column.dot" />
-                    <span class="tracking-tight">
-                        {{ $t(`status.${column.status}`) }}
-                    </span>
+                    <span
+                        class="size-2 rounded-full"
+                        :class="column.colorClass"
+                        :style="
+                            column.color
+                                ? { backgroundColor: column.color }
+                                : {}
+                        "
+                    />
+                    <span class="tracking-tight">{{ column.label }}</span>
                     <span
                         class="ml-auto inline-flex min-w-5 justify-center rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums"
                     >
-                        {{ issuesByStatus.get(column.status)?.length }}
+                        {{ issuesByColumn.get(column.key)?.length }}
                     </span>
                 </h2>
 
                 <div
                     class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-muted/30 p-2 transition-colors"
-                    :class="
-                        dragOverStatus === column.status ? 'bg-accent/40' : ''
-                    "
+                    :class="dragOverKey === column.key ? 'bg-accent/40' : ''"
                 >
                     <Link
-                        v-for="issue in issuesByStatus.get(column.status)"
+                        v-for="issue in issuesByColumn.get(column.key)"
                         :key="issue.identifier"
                         :href="show({ issue: issue.identifier })"
                         draggable="true"
@@ -293,7 +343,7 @@ function onDrop(event: DragEvent, status: Issue['status']) {
                     </Link>
 
                     <p
-                        v-if="issuesByStatus.get(column.status)?.length === 0"
+                        v-if="issuesByColumn.get(column.key)?.length === 0"
                         class="px-2 py-6 text-center text-xs text-muted-foreground/60"
                     >
                         {{ $t('board.emptyColumn') }}
