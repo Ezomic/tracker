@@ -19,7 +19,11 @@ class CreateProjectAction
     {
         return DB::transaction(function () use ($attributes, $owner, $organization): Project {
             $project = Project::create($attributes);
-            $project->forceFill(['organization_id' => $organization?->id])->save();
+            $defaultType = $organization?->projectTypes()->where('is_default', true)->first();
+            $project->forceFill([
+                'organization_id' => $organization?->id,
+                'project_type_id' => $defaultType?->id,
+            ])->save();
 
             $project->members()->attach($owner->id, [
                 'level' => ProjectLevel::Admin->value,
