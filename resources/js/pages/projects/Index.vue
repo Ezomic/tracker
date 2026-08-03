@@ -33,11 +33,12 @@ import {
 import { formatDuration } from '@/lib/duration';
 import { board, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
-import type { Project, ProjectCategory } from '@/types';
+import type { Project, ProjectCategory, ProjectTypeOption } from '@/types';
 
 const props = defineProps<{
     projects: Project[];
     categories: ProjectCategory[];
+    projectTypes: ProjectTypeOption[];
 }>();
 
 defineOptions({
@@ -494,6 +495,7 @@ function archiveLabel(days: number | null): string {
                                 :project="project"
                                 :palette="palette"
                                 :categories="categories"
+                                :project-types="projectTypes"
                                 :used-colors="
                                     projects
                                         .filter(

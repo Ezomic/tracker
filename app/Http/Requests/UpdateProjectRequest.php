@@ -40,6 +40,11 @@ class UpdateProjectRequest extends FormRequest
                 'integer',
                 Rule::exists('categories', 'id')->where('organization_id', $project->organization_id),
             ],
+            'project_type_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('project_types', 'id')->where('organization_id', $project->organization_id),
+            ],
             'key' => $project->hasIssues()
                 ? ['prohibited']
                 : ['required', 'string', 'regex:/^[A-Z]{2,10}$/', 'unique:projects,key,'.$project->id],

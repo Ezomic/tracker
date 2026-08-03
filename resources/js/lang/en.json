@@ -374,6 +374,8 @@
         "productionUrl": "Production URL",
         "githubRepos": "GitHub repos",
         "category": "Category",
+        "type": "Project type",
+        "typeHint": "Sets the board lanes. Existing issues move to the matching lane of the new type.",
         "autoArchive": "Auto-archive done issues",
         "addProject": "Add project",
         "editProject": "Edit project",

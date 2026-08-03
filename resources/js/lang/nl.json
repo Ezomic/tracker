@@ -374,6 +374,8 @@
         "productionUrl": "Productie-URL",
         "githubRepos": "GitHub-repositories",
         "category": "Categorie",
+        "type": "Projecttype",
+        "typeHint": "Bepaalt de bordbanen. Bestaande tickets verhuizen naar de bijbehorende baan van het nieuwe type.",
         "autoArchive": "Afgeronde tickets automatisch archiveren",
         "addProject": "Project toevoegen",
         "editProject": "Project bewerken",
