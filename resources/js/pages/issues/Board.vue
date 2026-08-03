@@ -186,7 +186,9 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                 <div
                     class="h-1 w-full shrink-0"
                     :class="column.colorClass"
-                    :style="column.color ? { backgroundColor: column.color } : {}"
+                    :style="
+                        column.color ? { backgroundColor: column.color } : {}
+                    "
                 />
 
                 <h2
@@ -196,7 +198,9 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                         class="size-2 rounded-full"
                         :class="column.colorClass"
                         :style="
-                            column.color ? { backgroundColor: column.color } : {}
+                            column.color
+                                ? { backgroundColor: column.color }
+                                : {}
                         "
                     />
                     <span class="tracking-tight">{{ column.label }}</span>
