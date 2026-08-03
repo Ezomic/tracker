@@ -26,13 +26,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { Project, ProjectCategory } from '@/types';
+import type { Project, ProjectCategory, ProjectTypeOption } from '@/types';
 
 const props = defineProps<{
     project: Project;
     palette: string[];
     usedColors?: string[];
     categories?: ProjectCategory[];
+    projectTypes?: ProjectTypeOption[];
 }>();
 
 const color = ref(props.project.color);
@@ -154,6 +155,46 @@ const description = ref(props.project.description ?? '');
                         </SelectContent>
                     </Select>
                     <InputError :message="errors.category_id" />
+                </div>
+
+                <div
+                    v-if="projectTypes && projectTypes.length > 0"
+                    class="grid gap-2"
+                >
+                    <Label :for="`project-type-${project.id}`">{{
+                        $t('projects.type')
+                    }}</Label>
+                    <Select
+                        name="project_type_id"
+                        :default-value="
+                            project.projectTypeId === null
+                                ? ''
+                                : String(project.projectTypeId)
+                        "
+                    >
+                        <SelectTrigger
+                            :id="`project-type-${project.id}`"
+                            class="w-full"
+                        >
+                            <SelectValue :placeholder="$t('common.none')" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">{{
+                                $t('common.none')
+                            }}</SelectItem>
+                            <SelectItem
+                                v-for="type in projectTypes"
+                                :key="type.id"
+                                :value="String(type.id)"
+                            >
+                                {{ type.name }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-sm text-muted-foreground">
+                        {{ $t('projects.typeHint') }}
+                    </p>
+                    <InputError :message="errors.project_type_id" />
                 </div>
 
                 <div class="grid gap-2">

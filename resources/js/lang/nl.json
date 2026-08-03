@@ -67,7 +67,34 @@
         "members": "Leden",
         "categories": "Categorieën",
         "labels": "Labels",
-        "templates": "Sjablonen"
+        "templates": "Sjablonen",
+        "projectTypes": "Projecttypes"
+    },
+    "projectTypes": {
+        "title": "Projecttypes",
+        "description": "Een projecttype bepaalt de bordbanen die zijn projecten gebruiken. Elke baan hoort bij een categorie waar de app mee rekent.",
+        "newType": "Nieuw type",
+        "namePlaceholder": "bijv. Support",
+        "descriptionPlaceholder": "Waar dit type voor is (optioneel)",
+        "lanes": "Banen",
+        "addLane": "Baan toevoegen",
+        "lanePlaceholder": "Baannaam",
+        "default": "Standaard",
+        "defaultLane": "Standaardbaan voor nieuwe tickets",
+        "makeDefault": "Maak standaard",
+        "save": "Type opslaan",
+        "deleteType": "Type verwijderen",
+        "inUse": "In gebruik door {count} project(en)",
+        "empty": "Nog geen projecttypes.",
+        "confirmDelete": "Dit projecttype verwijderen?",
+        "category": "Categorie"
+    },
+    "statusCategory": {
+        "backlog": "Backlog",
+        "unstarted": "Niet gestart",
+        "started": "Gestart",
+        "completed": "Voltooid",
+        "canceled": "Geannuleerd"
     },
     "apiTokens": {
         "title": "API-tokens",
@@ -347,6 +374,8 @@
         "productionUrl": "Productie-URL",
         "githubRepos": "GitHub-repositories",
         "category": "Categorie",
+        "type": "Projecttype",
+        "typeHint": "Bepaalt de bordbanen. Bestaande tickets verhuizen naar de bijbehorende baan van het nieuwe type.",
         "autoArchive": "Afgeronde tickets automatisch archiveren",
         "addProject": "Project toevoegen",
         "editProject": "Project bewerken",

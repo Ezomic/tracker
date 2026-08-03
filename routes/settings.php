@@ -9,6 +9,7 @@ use App\Http\Controllers\Settings\IssueTemplateController;
 use App\Http\Controllers\Settings\LabelController;
 use App\Http\Controllers\Settings\LocaleController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\ProjectTypeController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,6 +31,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::patch('settings/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('settings/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+    Route::get('settings/project-types', [ProjectTypeController::class, 'index'])->name('project-types.index');
+    Route::post('settings/project-types', [ProjectTypeController::class, 'store'])->name('project-types.store');
+    Route::patch('settings/project-types/{projectType}', [ProjectTypeController::class, 'update'])->name('project-types.update');
+    Route::delete('settings/project-types/{projectType}', [ProjectTypeController::class, 'destroy'])->name('project-types.destroy');
 
     Route::get('settings/templates', [IssueTemplateController::class, 'index'])->name('templates.index');
     Route::get('settings/template-options', [IssueTemplateController::class, 'options'])->name('templates.options');

@@ -78,6 +78,7 @@ export interface Project {
     description: string | null;
     color: string;
     categoryId: number | null;
+    projectTypeId: number | null;
     level: ProjectLevel;
     githubRepos: string[];
     productionUrl: string | null;
@@ -87,6 +88,11 @@ export interface Project {
     issuesCount: number;
     loggedMinutes: number;
     keyLocked: boolean;
+}
+
+export interface ProjectTypeOption {
+    id: number;
+    name: string;
 }
 
 export interface ProjectCategory {

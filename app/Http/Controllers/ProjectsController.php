@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\ChangeProjectTypeAction;
 use App\Actions\CreateProjectAction;
 use App\Enums\IssueStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Category;
 use App\Models\Project;
+use App\Models\ProjectType;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,6 +37,16 @@ class ProjectsController extends Controller
                 ])
                 ->values()
                 ->all(),
+            'projectTypes' => ProjectType::query()
+                ->where('organization_id', $organization?->id)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (ProjectType $type): array => [
+                    'id' => $type->id,
+                    'name' => $type->name,
+                ])
+                ->all(),
             'projects' => $this->currentUser($request)->projects()
                 ->notArchived()
                 ->inOrganization($organization)
@@ -58,6 +70,7 @@ class ProjectsController extends Controller
                         'description' => $project->description,
                         'color' => $project->color,
                         'categoryId' => $project->category_id,
+                        'projectTypeId' => $project->project_type_id,
                         'role' => Cast::string($pivot->getAttribute('role')),
                         'githubRepos' => $project->github_repos ?? [],
                         'productionUrl' => $project->production_url,
@@ -81,11 +94,20 @@ class ProjectsController extends Controller
         return to_route('projects.index');
     }
 
-    public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
+    public function update(UpdateProjectRequest $request, Project $project, ChangeProjectTypeAction $action): RedirectResponse
     {
         $this->authorize('update', $project);
 
-        $project->update($request->validated());
+        $attributes = $request->validated();
+        $selectsType = array_key_exists('project_type_id', $attributes);
+        $typeId = ($attributes['project_type_id'] ?? null) === null ? null : Cast::int($attributes['project_type_id']);
+        unset($attributes['project_type_id']);
+
+        $project->update($attributes);
+
+        if ($selectsType && $typeId !== $project->project_type_id) {
+            $action->handle($project, $typeId === null ? null : ProjectType::find($typeId));
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project updated.')]);
 

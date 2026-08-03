@@ -67,7 +67,34 @@
         "members": "Members",
         "categories": "Categories",
         "labels": "Labels",
-        "templates": "Templates"
+        "templates": "Templates",
+        "projectTypes": "Project types"
+    },
+    "projectTypes": {
+        "title": "Project types",
+        "description": "A project type defines the board lanes its projects use. Each lane maps to a category the app reasons about.",
+        "newType": "New type",
+        "namePlaceholder": "e.g. Support",
+        "descriptionPlaceholder": "What this type is for (optional)",
+        "lanes": "Lanes",
+        "addLane": "Add lane",
+        "lanePlaceholder": "Lane name",
+        "default": "Default",
+        "defaultLane": "Default lane for new issues",
+        "makeDefault": "Make default",
+        "save": "Save type",
+        "deleteType": "Delete type",
+        "inUse": "In use by {count} project(s)",
+        "empty": "No project types yet.",
+        "confirmDelete": "Delete this project type?",
+        "category": "Category"
+    },
+    "statusCategory": {
+        "backlog": "Backlog",
+        "unstarted": "Unstarted",
+        "started": "Started",
+        "completed": "Completed",
+        "canceled": "Canceled"
     },
     "apiTokens": {
         "title": "API tokens",
@@ -347,6 +374,8 @@
         "productionUrl": "Production URL",
         "githubRepos": "GitHub repos",
         "category": "Category",
+        "type": "Project type",
+        "typeHint": "Sets the board lanes. Existing issues move to the matching lane of the new type.",
         "autoArchive": "Auto-archive done issues",
         "addProject": "Add project",
         "editProject": "Edit project",
