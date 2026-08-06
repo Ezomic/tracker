@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectMemberController;
 use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\GithubWebhookController;
+use App\Http\Middleware\AnnounceSunset;
 use App\Http\Middleware\DenyServiceAccounts;
 use App\Http\Middleware\RequireServiceAbility;
 use App\Http\Middleware\VerifyGithubWebhookSignature;
@@ -32,8 +33,10 @@ Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): voi
 
         Route::get('/projects', [ProjectController::class, 'index']);
         Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index']);
-        // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
-        Route::get('/teams', [ProjectController::class, 'index']);
+        // Deprecated alias for /projects, from the projects transition. Now
+        // carries a removal date rather than living on indefinitely.
+        Route::get('/teams', [ProjectController::class, 'index'])
+            ->middleware(AnnounceSunset::class.':2026-09-05,/api/projects');
         Route::get('/templates', [TemplateController::class, 'index']);
         Route::get('/categories', [CategoryController::class, 'index']);
         Route::get('/labels', [LabelController::class, 'index']);
