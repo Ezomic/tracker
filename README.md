@@ -162,6 +162,17 @@ curl -X POST https://tracker.thijssensoftware.nl/api/issues \
 
 Only projects you are a member of are visible, on the API as much as in the UI.
 
+### Compatibility
+
+There is no version prefix, deliberately. Breaking changes ship **additive-first**: the new field
+lands alongside the old, consumers migrate, and the old one is removed no sooner than **30 days**
+later. Anything deprecated is marked here and answers with a `Sunset` header carrying its removal
+date. The reasoning is in [`docs/api-versioning-2026-08-06.md`](docs/api-versioning-2026-08-06.md).
+
+| Deprecated       | Use instead     | Removal      |
+| ---------------- | --------------- | ------------ |
+| `GET /api/teams` | `GET /api/projects` | 2026-09-05 |
+
 ### Filing from another app
 
 An app that files issues automatically can pass `source` and `external_ref` together to make the call idempotent. If an issue in that project already carries the same pair, it is returned with `200` instead of a second one being created with `201`:
