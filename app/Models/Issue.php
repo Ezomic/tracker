@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -164,6 +165,35 @@ class Issue extends Model
         foreach ($removed as $id) {
             $this->recordActivity('label_removed', ['name' => $names[$id] ?? null]);
         }
+    }
+
+    /**
+     * Where this issue came from, when another app filed it. The source-to-URL
+     * mapping is configuration (config/issue_sources.php), so a new filer needs
+     * a config entry rather than a code change. An unmapped source still
+     * renders, just without a link.
+     *
+     * @return array{source: string, label: string, reference: string|null, url: string|null}|null
+     */
+    public function originatingReport(): ?array
+    {
+        if ($this->source === null) {
+            return null;
+        }
+
+        /** @var array{label?: string, url?: string}|null $config */
+        $config = config("issue_sources.{$this->source}");
+
+        $url = $config['url'] ?? null;
+
+        return [
+            'source' => $this->source,
+            'label' => $config['label'] ?? Str::headline($this->source),
+            'reference' => $this->external_ref,
+            'url' => $url !== null && $this->external_ref !== null
+                ? str_replace(':ref', rawurlencode($this->external_ref), $url)
+                : null,
+        ];
     }
 
     /**

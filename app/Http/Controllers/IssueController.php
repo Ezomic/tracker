@@ -466,6 +466,7 @@ class IssueController extends Controller
             ],
             'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
             'externalReporter' => $issue->external_reporter,
+            'originatingReport' => $issue->originatingReport(),
             'assignee' => $this->serializeUser($issue->relationLoaded('assignee') ? $issue->assignee : null),
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),

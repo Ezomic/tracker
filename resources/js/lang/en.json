@@ -288,6 +288,8 @@
         "owner": "Owner",
         "externalReporter": "Reported by",
         "externalReporterHint": "Filed by another app on behalf of someone without an account here.",
+        "reportedFrom": "Reported from",
+        "filedBy": "Filed by {source}",
         "unknown": "Unknown",
         "template": "Template",
         "estimatePlaceholder": "e.g. 4h 30m",

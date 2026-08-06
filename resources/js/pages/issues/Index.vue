@@ -401,6 +401,18 @@ const createOpen = ref(false);
                         {{ issue.childrenCount }} sub
                     </span>
                     <div class="ml-auto flex shrink-0 items-center gap-1.5">
+                        <Badge
+                            v-if="issue.originatingReport"
+                            variant="secondary"
+                            class="font-normal"
+                            :title="
+                                $t('issue.filedBy', {
+                                    source: issue.originatingReport.label,
+                                })
+                            "
+                        >
+                            {{ issue.originatingReport.label }}
+                        </Badge>
                         <LabelBadge
                             v-for="label in issue.labels"
                             :key="label.id"
