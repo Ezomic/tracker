@@ -6,6 +6,7 @@ import {
     Bot,
     Check,
     Clock,
+    ExternalLink,
     FileText,
     GitBranch,
     GitCommit,
@@ -829,6 +830,40 @@ const statusDot: Record<Issue['status'], string> = {
                 </Label>
                 <p class="text-sm">
                     {{ issue.owner?.name ?? $t('issue.unknown') }}
+                </p>
+            </div>
+
+            <div v-if="issue.originatingReport" class="grid gap-1.5">
+                <Label class="text-xs text-muted-foreground">
+                    {{ $t('issue.reportedFrom') }}
+                </Label>
+                <a
+                    v-if="issue.originatingReport.url"
+                    :href="issue.originatingReport.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 text-sm hover:underline"
+                >
+                    <ExternalLink
+                        class="size-4 shrink-0 text-muted-foreground"
+                    />
+                    <span class="truncate"
+                        >{{ issue.originatingReport.label
+                        }}<template v-if="issue.originatingReport.reference">
+                            #{{ issue.originatingReport.reference }}</template
+                        ></span
+                    >
+                </a>
+                <p v-else class="inline-flex items-center gap-1.5 text-sm">
+                    <ExternalLink
+                        class="size-4 shrink-0 text-muted-foreground"
+                    />
+                    <span class="truncate"
+                        >{{ issue.originatingReport.label
+                        }}<template v-if="issue.originatingReport.reference">
+                            #{{ issue.originatingReport.reference }}</template
+                        ></span
+                    >
                 </p>
             </div>
 

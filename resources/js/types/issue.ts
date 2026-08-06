@@ -72,6 +72,13 @@ export interface Issue {
     owner: IssueUser | null;
     /** Set when another app filed this on behalf of someone with no account here. */
     externalReporter: string | null;
+    /** The app that filed it and, where configured, a link back to its record. */
+    originatingReport: {
+        source: string;
+        label: string;
+        reference: string | null;
+        url: string | null;
+    } | null;
     assignee: IssueUser | null;
     createdAt: string;
     archivedAt: string | null;

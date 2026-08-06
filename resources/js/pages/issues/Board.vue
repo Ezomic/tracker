@@ -238,8 +238,21 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                                 {{ issue.identifier }}
                             </span>
                             <Badge
-                                variant="outline"
+                                v-if="issue.originatingReport"
+                                variant="secondary"
                                 class="ml-auto h-5 px-1.5 text-[10px] font-normal"
+                                :title="
+                                    $t('issue.filedBy', {
+                                        source: issue.originatingReport.label,
+                                    })
+                                "
+                            >
+                                {{ issue.originatingReport.label }}
+                            </Badge>
+                            <Badge
+                                variant="outline"
+                                class="h-5 px-1.5 text-[10px] font-normal"
+                                :class="{ 'ml-auto': !issue.originatingReport }"
                             >
                                 {{ $t(`issueType.${issue.type}`) }}
                             </Badge>

@@ -288,6 +288,8 @@
         "owner": "Melder",
         "externalReporter": "Gemeld door",
         "externalReporterHint": "Aangemaakt door een andere app namens iemand zonder account hier.",
+        "reportedFrom": "Gemeld vanuit",
+        "filedBy": "Aangemaakt door {source}",
         "unknown": "Onbekend",
         "template": "Sjabloon",
         "estimatePlaceholder": "bijv. 4u 30m",
