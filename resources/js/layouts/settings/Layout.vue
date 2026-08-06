@@ -16,6 +16,7 @@ import { index as indexMembers } from '@/routes/members';
 import { edit as editProfile } from '@/routes/profile';
 import { index as indexProjectTypes } from '@/routes/project-types';
 import { edit as editSecurity } from '@/routes/security';
+import { index as indexServiceAccounts } from '@/routes/service-accounts';
 import { index as indexTemplates } from '@/routes/templates';
 import type { NavItem } from '@/types';
 
@@ -47,6 +48,10 @@ const navGroups = computed<NavGroup[]>(() =>
                           {
                               title: t('settingsNav.members'),
                               href: indexMembers(),
+                          },
+                          {
+                              title: t('settingsNav.serviceAccounts'),
+                              href: indexServiceAccounts(),
                           },
                       ]
                     : []),

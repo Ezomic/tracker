@@ -71,6 +71,9 @@ class StoreIssueRequest extends FormRequest
             // no ref cannot be deduplicated, a ref with no source is ambiguous.
             'source' => ['nullable', 'string', 'max:64', 'required_with:external_ref'],
             'external_ref' => ['nullable', 'string', 'max:255', 'required_with:source'],
+            // Whoever reported it, when they have no account here. For arbo this
+            // is an HMAC pseudonym, so it is never resolved against users.
+            'external_reporter' => ['nullable', 'string', 'max:255'],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],
             'estimate' => ['nullable', 'string', new DurationRule],
             'labels' => ['nullable', 'array'],

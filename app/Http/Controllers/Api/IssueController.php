@@ -139,6 +139,7 @@ class IssueController extends Controller
             template: $template,
             source: $source,
             externalRef: $externalRef,
+            externalReporter: $request->string('external_reporter')->toString() ?: null,
         );
 
         // Explicit labels replace the template's; the template only fills the gap.
@@ -410,6 +411,7 @@ class IssueController extends Controller
             'assignee' => $issue->assignee?->email,
             'source' => $issue->source,
             'external_ref' => $issue->external_ref,
+            'external_reporter' => $issue->external_reporter,
         ];
     }
 
@@ -469,6 +471,7 @@ class IssueController extends Controller
             'archive_reason' => $issue->archive_reason,
             'source' => $issue->source,
             'external_ref' => $issue->external_ref,
+            'external_reporter' => $issue->external_reporter,
         ];
     }
 }

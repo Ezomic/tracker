@@ -3,6 +3,7 @@ import { Link, router } from '@inertiajs/vue3';
 import {
     Archive,
     ArchiveRestore,
+    Bot,
     Check,
     Clock,
     FileText,
@@ -828,6 +829,19 @@ const statusDot: Record<Issue['status'], string> = {
                 </Label>
                 <p class="text-sm">
                     {{ issue.owner?.name ?? $t('issue.unknown') }}
+                </p>
+            </div>
+
+            <div v-if="issue.externalReporter" class="grid gap-1.5">
+                <Label class="text-xs text-muted-foreground">
+                    {{ $t('issue.externalReporter') }}
+                </Label>
+                <p class="inline-flex items-center gap-1.5 text-sm">
+                    <Bot class="size-4 shrink-0 text-muted-foreground" />
+                    <span class="truncate">{{ issue.externalReporter }}</span>
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    {{ $t('issue.externalReporterHint') }}
                 </p>
             </div>
 

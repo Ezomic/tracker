@@ -465,6 +465,7 @@ class IssueController extends Controller
                 'billrLinked' => $issue->project->billrLinked(),
             ],
             'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
+            'externalReporter' => $issue->external_reporter,
             'assignee' => $this->serializeUser($issue->relationLoaded('assignee') ? $issue->assignee : null),
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),

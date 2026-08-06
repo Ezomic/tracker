@@ -5,8 +5,9 @@ declare(strict_types=1);
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Testing\TestResponse;
 
-function fileExternally(User $user, array $overrides = []): Illuminate\Testing\TestResponse
+function fileExternally(User $user, array $overrides = []): TestResponse
 {
     return test()->actingAs($user, 'sanctum')->postJson('/api/issues', array_merge([
         'project' => 'THI',
