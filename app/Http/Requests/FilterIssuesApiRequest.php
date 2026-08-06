@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests;
+
+use App\Enums\IssuePriority;
+use App\Enums\IssueStatus;
+use App\Enums\IssueType;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+/**
+ * The API's counterpart to FilterIssuesRequest. The web form posts database
+ * ids; API callers only know keys, names and emails, so the filters are
+ * expressed in those terms instead.
+ */
+class FilterIssuesApiRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'project' => ['sometimes', 'string', 'exists:projects,key'],
+            'search' => ['sometimes', 'string', 'max:255'],
+            'status' => ['sometimes', Rule::enum(IssueStatus::class)],
+            'type' => ['sometimes', Rule::enum(IssueType::class)],
+            'priority' => ['sometimes', Rule::enum(IssuePriority::class)],
+            'label' => ['sometimes', 'string', 'max:255'],
+            'assignee' => ['sometimes', 'string', 'max:255'],
+            'parent' => ['sometimes', 'string', 'max:255'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:200'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ];
+    }
+
+    public function perPage(): int
+    {
+        return $this->integer('per_page') ?: 50;
+    }
+}
