@@ -116,7 +116,7 @@ Conventions worth knowing before changing things:
 
 ## API
 
-Authenticate with a Sanctum token (`Authorization: Bearer <token>`). Rate limited to 60 requests per minute.
+Authenticate with a Sanctum token (`Authorization: Bearer <token>`). Reads and writes are throttled separately, per user: **300 reads** and **60 writes** per minute.
 
 ```
 GET    /api/projects

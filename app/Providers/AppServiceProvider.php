@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\Cast;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -40,6 +44,26 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRateLimiting();
+    }
+
+    /**
+     * Reads and writes get separate budgets. A list-then-patch loop over a few
+     * hundred issues, or an ingest burst from another app, would exhaust a
+     * shared 60/minute in seconds on reads that cost almost nothing.
+     */
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('api-read', fn (Request $request): Limit => Limit::perMinute(300)->by($this->apiRateKey($request)));
+
+        RateLimiter::for('api-write', fn (Request $request): Limit => Limit::perMinute(60)->by($this->apiRateKey($request)));
+    }
+
+    private function apiRateKey(Request $request): string
+    {
+        return $request->user()?->id !== null
+            ? 'user:'.$request->user()->id
+            : 'ip:'.Cast::string($request->ip());
     }
 
     /**
