@@ -126,6 +126,7 @@ POST   /api/issues
 PATCH  /api/issues/{identifier}          # reparent
 PATCH  /api/issues/{identifier}/status
 DELETE /api/issues/{identifier}          # soft-archive, reversible
+POST   /api/issues/{identifier}/restore  # undo the archive
 ```
 
 `GET /api/issues` is paginated and returns `{"data": [...], "meta": {...}}`. It takes these filters, combinable:
@@ -140,6 +141,7 @@ DELETE /api/issues/{identifier}          # soft-archive, reversible
 | `label`    | a label name, case-insensitive                   |
 | `assignee` | an email, or `none` for unassigned               |
 | `parent`   | an epic identifier (`TRACK-200`)                 |
+| `archived` | `exclude` (default), `include`, or `only`        |
 | `per_page` | 1 to 200, default 50                             |
 | `page`     | page number                                      |
 

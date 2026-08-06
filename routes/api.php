@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): vo
     Route::post('/issues/{issue}/time', [IssueController::class, 'logTime']);
     Route::delete('/issues/{issue}/time/{timeEntry}', [IssueController::class, 'deleteTime']);
     Route::delete('/issues/{issue}', [IssueController::class, 'destroy']);
+    Route::post('/issues/{issue}/restore', [IssueController::class, 'restore']);
 });
 
 Route::post('/webhooks/github', [GithubWebhookController::class, 'handle'])

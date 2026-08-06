@@ -37,9 +37,18 @@ class FilterIssuesApiRequest extends FormRequest
             'label' => ['sometimes', 'string', 'max:255'],
             'assignee' => ['sometimes', 'string', 'max:255'],
             'parent' => ['sometimes', 'string', 'max:255'],
+            'archived' => ['sometimes', 'string', Rule::in(['exclude', 'include', 'only'])],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:200'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ];
+    }
+
+    /**
+     * Archived issues stay out unless asked for, as they always have.
+     */
+    public function archived(): string
+    {
+        return $this->string('archived')->toString() ?: 'exclude';
     }
 
     public function perPage(): int

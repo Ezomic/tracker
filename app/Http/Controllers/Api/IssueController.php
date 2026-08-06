@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Actions\AddCommentAction;
+use App\Actions\ArchiveIssueAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LogTimeAction;
 use App\Enums\IssuePriority;
@@ -36,7 +37,8 @@ class IssueController extends Controller
     {
         $issues = Issue::query()
             ->visibleTo($this->currentUser($request))
-            ->notArchived()
+            ->when($request->archived() === 'exclude', fn (Builder $query) => $query->notArchived())
+            ->when($request->archived() === 'only', fn (Builder $query) => $query->whereNotNull('archived_at'))
             ->with(['project', 'parent', 'assignee', 'labels'])
             ->when($request->filled('project'), fn (Builder $query) => $query->whereRelation('project', 'key', $request->string('project')->toString()))
             ->when($request->filled('search'), fn (Builder $query) => $this->applySearch($query, $request->string('search')->toString()))
@@ -340,6 +342,24 @@ class IssueController extends Controller
         ]);
     }
 
+    /**
+     * The inverse of destroy(), and gated on the same ability: whoever can
+     * archive an issue can undo it, and nobody else can resurrect what an
+     * admin archived.
+     */
+    public function restore(Issue $issue, ArchiveIssueAction $action): JsonResponse
+    {
+        $this->authorize('delete', $issue);
+
+        $action->unarchive($issue);
+
+        return response()->json([
+            'identifier' => $issue->identifier,
+            'url' => url("/issues/{$issue->identifier}"),
+            'archived_at' => null,
+        ]);
+    }
+
     private function resolveParent(?string $identifier): ?Issue
     {
         return $identifier !== null
@@ -392,6 +412,7 @@ class IssueController extends Controller
             'url' => url("/issues/{$issue->identifier}"),
             'created_at' => $issue->created_at?->toIso8601String(),
             'closed_at' => $issue->closed_at?->toIso8601String(),
+            'archived_at' => $issue->archived_at?->toIso8601String(),
         ];
     }
 
@@ -421,6 +442,8 @@ class IssueController extends Controller
             'url' => url("/issues/{$issue->identifier}"),
             'created_at' => $issue->created_at?->toIso8601String(),
             'closed_at' => $issue->closed_at?->toIso8601String(),
+            'archived_at' => $issue->archived_at?->toIso8601String(),
+            'archive_reason' => $issue->archive_reason,
         ];
     }
 }
