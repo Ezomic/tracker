@@ -67,6 +67,10 @@ class StoreIssueRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
             'description' => ['nullable', 'string'],
+            // An external reference is only meaningful as a pair: a source with
+            // no ref cannot be deduplicated, a ref with no source is ambiguous.
+            'source' => ['nullable', 'string', 'max:64', 'required_with:external_ref'],
+            'external_ref' => ['nullable', 'string', 'max:255', 'required_with:source'],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],
             'estimate' => ['nullable', 'string', new DurationRule],
             'labels' => ['nullable', 'array'],
