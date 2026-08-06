@@ -177,6 +177,14 @@ Retries are therefore safe. Issues filed by hand leave both fields null and are 
 
 `external_reporter` records who reported it when that person has no account here: a name, or a pseudonym the host app computed. It is never resolved against users.
 
+### Webhooks out
+
+A project can push status changes to another app instead of being polled: **Projects → Webhooks**, project admins only. Endpoints must be `https`.
+
+Each delivery is queued, retried with backoff (4 attempts over roughly ten minutes, then dropped), and carries an HMAC SHA-256 of the body in `X-Tracker-Signature-256` plus the event name in `X-Tracker-Event`. Verify the signature the same way tracker verifies GitHub's on the way in. The payload carries `source` and `external_ref`, so a consumer matches it to its own record without storing tracker identifiers.
+
+The signing secret is shown once at creation. The settings page reports the last delivery, its status code and any error, and can send a `ping` to check an endpoint before an issue ever moves.
+
 ### Service accounts
 
 An app that files issues gets a **service account** rather than someone's personal token (Settings → Service accounts, organisation admins only). A service account:

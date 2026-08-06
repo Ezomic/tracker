@@ -672,5 +672,23 @@
         "read": "Lezen",
         "write": "Schrijven",
         "admin": "Beheer"
+    },
+    "webhooks": {
+        "title": "Webhooks",
+        "description": "Laat een andere app weten wanneer een ticket in {project} van status verandert. Aanroepen worden in de wachtrij gezet, ondertekend en opnieuw geprobeerd.",
+        "urlLabel": "Endpoint-URL",
+        "add": "Webhook toevoegen",
+        "secretTitle": "Ondertekeningssleutel",
+        "secretWarning": "Kopieer hem nu. Je kunt hem daarna niet meer bekijken.",
+        "secretUsage": "Elke aanroep bevat een HMAC SHA-256 van de body in de header {header}. Controleer die voordat je de payload vertrouwt.",
+        "copy": "Kopiëren",
+        "copied": "Gekopieerd",
+        "active": "Actief",
+        "test": "Testen",
+        "lastDelivered": "laatst afgeleverd {when}",
+        "neverDelivered": "nooit afgeleverd",
+        "removeConfirm": "De webhook voor {url} verwijderen?",
+        "empty": "Nog geen webhooks",
+        "emptyBody": "Voeg er een toe zodat een andere app statuswijzigingen hoort in plaats van te pollen."
     }
 }

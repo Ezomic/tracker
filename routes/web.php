@@ -8,6 +8,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
+use App\Http\Controllers\ProjectWebhookController;
 use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\TimeEntryController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('projects.members.update');
     Route::delete('projects/{project:key}/members/{user}', [ProjectMemberController::class, 'destroy'])
         ->name('projects.members.destroy');
+
+    Route::get('projects/{project:key}/webhooks', [ProjectWebhookController::class, 'index'])
+        ->name('projects.webhooks.index');
+    Route::post('projects/{project:key}/webhooks', [ProjectWebhookController::class, 'store'])
+        ->name('projects.webhooks.store');
+    Route::post('projects/{project:key}/webhooks/{webhook}/test', [ProjectWebhookController::class, 'test'])
+        ->name('projects.webhooks.test');
+    Route::patch('projects/{project:key}/webhooks/{webhook}', [ProjectWebhookController::class, 'update'])
+        ->name('projects.webhooks.update');
+    Route::delete('projects/{project:key}/webhooks/{webhook}', [ProjectWebhookController::class, 'destroy'])
+        ->name('projects.webhooks.destroy');
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');
