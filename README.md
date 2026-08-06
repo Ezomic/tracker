@@ -128,6 +128,23 @@ PATCH  /api/issues/{identifier}/status
 DELETE /api/issues/{identifier}          # soft-archive, reversible
 ```
 
+`GET /api/issues` is paginated and returns `{"data": [...], "meta": {...}}`. It takes these filters, combinable:
+
+| Param      | Takes                                            |
+| ---------- | ------------------------------------------------ |
+| `project`  | a project key (`TRACK`)                          |
+| `search`   | matches title, identifier and description        |
+| `status`   | `backlog`, `in_progress`, `in_review`, `done`    |
+| `type`     | `feature`, `fix`                                 |
+| `priority` | `none`, `low`, `medium`, `high`, `urgent`        |
+| `label`    | a label name, case-insensitive                   |
+| `assignee` | an email, or `none` for unassigned               |
+| `parent`   | an epic identifier (`TRACK-200`)                 |
+| `per_page` | 1 to 200, default 50                             |
+| `page`     | page number                                      |
+
+Each row carries enough to triage without a follow-up request: identifier, title, type, status, priority, project, parent, assignee, estimate, labels, `created_at` and `closed_at`.
+
 Creating an issue stamps the token's user as the owner (reporter) and returns the branch name:
 
 ```bash

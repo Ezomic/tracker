@@ -11,6 +11,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FilterIssuesApiRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
@@ -24,27 +25,68 @@ use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Support\Duration;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class IssueController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(FilterIssuesApiRequest $request): JsonResponse
     {
-        $request->validate([
-            'project' => ['sometimes', 'string', 'exists:projects,key'],
+        $issues = Issue::query()
+            ->visibleTo($this->currentUser($request))
+            ->notArchived()
+            ->with(['project', 'parent', 'assignee', 'labels'])
+            ->when($request->filled('project'), fn (Builder $query) => $query->whereRelation('project', 'key', $request->string('project')->toString()))
+            ->when($request->filled('search'), fn (Builder $query) => $this->applySearch($query, $request->string('search')->toString()))
+            ->when($request->filled('status'), fn (Builder $query) => $query->where('status', $request->string('status')->toString()))
+            ->when($request->filled('type'), fn (Builder $query) => $query->where('type', $request->string('type')->toString()))
+            ->when($request->filled('priority'), fn (Builder $query) => $query->where('priority', $request->string('priority')->toString()))
+            ->when($request->filled('label'), fn (Builder $query) => $query->whereHas('labels', fn (Builder $labels) => $labels->whereRaw('lower(labels.name) = ?', [Str::lower($request->string('label')->toString())])))
+            ->when($request->filled('assignee'), fn (Builder $query) => $this->applyAssignee($query, $request->string('assignee')->toString()))
+            ->when($request->filled('parent'), fn (Builder $query) => $query->whereRelation('parent', 'identifier', $request->string('parent')->toString()))
+            ->orderBy('project_id')
+            ->orderBy('number')
+            ->paginate($request->perPage())
+            ->withQueryString();
+
+        return response()->json([
+            'data' => array_map($this->summary(...), $issues->items()),
+            'meta' => [
+                'total' => $issues->total(),
+                'per_page' => $issues->perPage(),
+                'current_page' => $issues->currentPage(),
+                'last_page' => $issues->lastPage(),
+            ],
         ]);
+    }
 
-        $query = Issue::query()->visibleTo($this->currentUser($request))->notArchived()->with(['project', 'parent', 'owner', 'assignee', 'labels']);
+    /**
+     * @param  Builder<Issue>  $query
+     * @return Builder<Issue>
+     */
+    private function applySearch(Builder $query, string $search): Builder
+    {
+        return $query->where(fn (Builder $group) => $group
+            ->where('title', 'like', '%'.$search.'%')
+            ->orWhere('identifier', 'like', '%'.$search.'%')
+            ->orWhere('description', 'like', '%'.$search.'%'));
+    }
 
-        if ($request->filled('project')) {
-            $query->whereRelation('project', 'key', $request->string('project')->toString());
+    /**
+     * `none` selects unassigned issues; anything else is matched as an email.
+     *
+     * @param  Builder<Issue>  $query
+     * @return Builder<Issue>
+     */
+    private function applyAssignee(Builder $query, string $assignee): Builder
+    {
+        if (Str::lower($assignee) === 'none') {
+            return $query->whereNull('assignee_id');
         }
 
-        $issues = $query->orderBy('project_id')->orderBy('number')->get();
-
-        return response()->json($issues->map(fn (Issue $issue): array => $this->summary($issue))->all());
+        return $query->whereRelation('assignee', 'email', Str::lower($assignee));
     }
 
     public function show(Issue $issue): JsonResponse
@@ -341,10 +383,15 @@ class IssueController extends Controller
             'title' => $issue->title,
             'type' => $issue->type->value,
             'status' => $issue->status->value,
+            'priority' => $issue->priority->value,
             'project' => $issue->project->key,
             'parent' => $issue->parent?->identifier,
+            'assignee' => $issue->assignee?->email,
+            'estimate_minutes' => $issue->estimate_minutes,
             'labels' => $issue->labels->pluck('name')->all(),
             'url' => url("/issues/{$issue->identifier}"),
+            'created_at' => $issue->created_at?->toIso8601String(),
+            'closed_at' => $issue->closed_at?->toIso8601String(),
         ];
     }
 
