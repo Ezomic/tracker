@@ -157,11 +157,13 @@ Beyond issues, the API also exposes CRUD for **projects** and their **members**,
 
 ## Deployment
 
-Pushing to `main` deploys via GitHub Actions over SSH: maintenance mode, `composer install`, `npm ci`, `optimize:clear`, `npm run build`, `migrate --force`, `optimize`, then back up.
+Deploys are **manual**. Merging to `main` does not ship anything. The "Deploy to production" workflow is `workflow_dispatch` only, so a release is a deliberate act: run the workflow from the Actions tab (or deploy over SSH by hand).
+
+The workflow does maintenance mode, `composer install`, `npm ci`, `optimize:clear`, `npm run build`, `migrate --force`, `optimize`, then back up.
 
 Two things that bite:
 
-- The workflow uses a `production` concurrency group, so **a newer deploy cancels an older one**. Merge and let each deploy finish before starting the next.
+- The workflow uses a `production` concurrency group, so **a newer deploy cancels an older one**. Let each deploy finish before starting the next.
 - `optimize:clear` runs **before** `npm run build` deliberately. Wayfinder generates from the route list at build time, and a stale route cache once produced a build referencing a route that did not exist yet, taking production down.
 
 Tests and linting run on every pull request targeting `main`. Note that pull requests targeting **any other branch get no CI at all**, so stacked pull requests are unverified until retargeted.
