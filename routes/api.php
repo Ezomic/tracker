@@ -12,45 +12,51 @@ use App\Http\Middleware\VerifyGithubWebhookSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Reads and writes are throttled separately: see AppServiceProvider. A new
+// route inherits the right limiter from its group rather than repeating an
+// inline throttle string.
+Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): void {
+    Route::get('/user', fn (Request $request) => $request->user());
 
-Route::get('/projects', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/projects', [ProjectController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/projects/{project:key}', [ProjectController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/projects/{project:key}', [ProjectController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/projects/{project:key}/restore', [ProjectController::class, 'restore'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/projects/{project:key}/members', [ProjectMemberController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
-// Deprecated alias for /projects; kept for existing API consumers during the projects transition.
-Route::get('/teams', [ProjectController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/templates', [TemplateController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/templates', [TemplateController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/templates/{template}', [TemplateController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/templates/{template}', [TemplateController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/categories', [CategoryController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/categories', [CategoryController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/categories/{category}', [CategoryController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/labels', [LabelController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/labels', [LabelController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/labels/{label}', [LabelController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/labels/{label}', [LabelController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/members', [MemberController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/issues', [IssueController::class, 'index'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/issues/{issue}', [IssueController::class, 'show'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/issues', [IssueController::class, 'store'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/issues/{issue}', [IssueController::class, 'update'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/issues/{issue}/comments', [IssueController::class, 'listComments'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::get('/issues/{issue}/time', [IssueController::class, 'listTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::post('/issues/{issue}/time', [IssueController::class, 'logTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/issues/{issue}/time/{timeEntry}', [IssueController::class, 'deleteTime'])->middleware(['auth:sanctum', 'throttle:60,1']);
-Route::delete('/issues/{issue}', [IssueController::class, 'destroy'])->middleware(['auth:sanctum', 'throttle:60,1']);
+    Route::get('/projects', [ProjectController::class, 'index']);
+    Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index']);
+    // Deprecated alias for /projects; kept for existing API consumers during the projects transition.
+    Route::get('/teams', [ProjectController::class, 'index']);
+    Route::get('/templates', [TemplateController::class, 'index']);
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/labels', [LabelController::class, 'index']);
+    Route::get('/members', [MemberController::class, 'index']);
+    Route::get('/issues', [IssueController::class, 'index']);
+    Route::get('/issues/{issue}', [IssueController::class, 'show']);
+    Route::get('/issues/{issue}/comments', [IssueController::class, 'listComments']);
+    Route::get('/issues/{issue}/time', [IssueController::class, 'listTime']);
+});
+
+Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): void {
+    Route::post('/projects', [ProjectController::class, 'store']);
+    Route::patch('/projects/{project:key}', [ProjectController::class, 'update']);
+    Route::delete('/projects/{project:key}', [ProjectController::class, 'destroy']);
+    Route::post('/projects/{project:key}/restore', [ProjectController::class, 'restore']);
+    Route::post('/projects/{project:key}/members', [ProjectMemberController::class, 'store']);
+    Route::patch('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'update']);
+    Route::delete('/projects/{project:key}/members/{user}', [ProjectMemberController::class, 'destroy']);
+    Route::post('/templates', [TemplateController::class, 'store']);
+    Route::patch('/templates/{template}', [TemplateController::class, 'update']);
+    Route::delete('/templates/{template}', [TemplateController::class, 'destroy']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::patch('/categories/{category}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+    Route::post('/labels', [LabelController::class, 'store']);
+    Route::patch('/labels/{label}', [LabelController::class, 'update']);
+    Route::delete('/labels/{label}', [LabelController::class, 'destroy']);
+    Route::post('/issues', [IssueController::class, 'store']);
+    Route::patch('/issues/{issue}', [IssueController::class, 'update']);
+    Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus']);
+    Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment']);
+    Route::post('/issues/{issue}/time', [IssueController::class, 'logTime']);
+    Route::delete('/issues/{issue}/time/{timeEntry}', [IssueController::class, 'deleteTime']);
+    Route::delete('/issues/{issue}', [IssueController::class, 'destroy']);
+});
 
 Route::post('/webhooks/github', [GithubWebhookController::class, 'handle'])
     ->middleware(VerifyGithubWebhookSignature::class);
