@@ -672,5 +672,23 @@
         "read": "Read",
         "write": "Write",
         "admin": "Admin"
+    },
+    "webhooks": {
+        "title": "Webhooks",
+        "description": "Tell another app when an issue in {project} changes status. Deliveries are queued, signed, and retried.",
+        "urlLabel": "Endpoint URL",
+        "add": "Add webhook",
+        "secretTitle": "Signing secret",
+        "secretWarning": "Copy it now. You will not be able to see it again.",
+        "secretUsage": "Each delivery carries an HMAC SHA-256 of the body in the {header} header. Verify it before trusting the payload.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "active": "Active",
+        "test": "Test",
+        "lastDelivered": "last delivered {when}",
+        "neverDelivered": "never delivered",
+        "removeConfirm": "Remove the webhook for {url}?",
+        "empty": "No webhooks yet",
+        "emptyBody": "Add one so another app hears about status changes instead of polling."
     }
 }

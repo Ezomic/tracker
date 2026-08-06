@@ -94,6 +94,14 @@ class Project extends Model
     }
 
     /**
+     * @return HasMany<ProjectWebhook, $this>
+     */
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(ProjectWebhook::class);
+    }
+
+    /**
      * @return BelongsToMany<User, $this>
      */
     public function members(): BelongsToMany

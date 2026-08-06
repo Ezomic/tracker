@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Actions\NotifyIssueWebhooksAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
@@ -25,6 +26,8 @@ class IssueObserver
                 'from' => ($from = $issue->getOriginal('status')) instanceof IssueStatus ? $from->value : null,
                 'to' => $issue->status->value,
             ]);
+
+            app(NotifyIssueWebhooksAction::class)->handle($issue, 'issue.status_changed');
         }
 
         if ($issue->wasChanged('assignee_id')) {

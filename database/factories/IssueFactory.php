@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
@@ -32,6 +33,7 @@ class IssueFactory extends Factory
             'slug' => str($title)->slug(),
             'description' => $this->faker->paragraph(),
             'type' => IssueType::Feature,
+            'priority' => IssuePriority::None,
             'status' => IssueStatus::Backlog,
             'branch_name' => 'feature/test-'.$number.'-'.str($title)->slug(),
         ];
