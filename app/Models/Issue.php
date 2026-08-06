@@ -40,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $template_id
  * @property string|null $source
  * @property string|null $external_ref
+ * @property string|null $external_reporter
  * @property IssuePriority $priority
  * @property IssueStatus $status
  * @property int|null $workflow_state_id

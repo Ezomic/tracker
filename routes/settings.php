@@ -11,6 +11,7 @@ use App\Http\Controllers\Settings\LocaleController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\ProjectTypeController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\ServiceAccountController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -67,6 +68,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
     Route::post('settings/api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store');
     Route::delete('settings/api-tokens/{token}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+
+    Route::get('settings/service-accounts', [ServiceAccountController::class, 'index'])->name('service-accounts.index');
+    Route::post('settings/service-accounts', [ServiceAccountController::class, 'store'])->name('service-accounts.store');
+    Route::delete('settings/service-accounts/{serviceAccount}', [ServiceAccountController::class, 'destroy'])->name('service-accounts.destroy');
 
     Route::get('settings/appearance', fn () => Inertia::render('settings/Appearance'))->name('appearance.edit');
 

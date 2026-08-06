@@ -16,9 +16,9 @@ use Illuminate\Support\Str;
 
 class CreateIssueAction
 {
-    public function handle(Project $project, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null, ?User $owner = null, ?User $assignee = null, ?IssuePriority $priority = null, ?IssueTemplate $template = null, ?string $source = null, ?string $externalRef = null): Issue
+    public function handle(Project $project, string $title, IssueType $type, ?string $description = null, ?Issue $parent = null, ?User $owner = null, ?User $assignee = null, ?IssuePriority $priority = null, ?IssueTemplate $template = null, ?string $source = null, ?string $externalRef = null, ?string $externalReporter = null): Issue
     {
-        return DB::transaction(function () use ($project, $title, $type, $description, $parent, $owner, $assignee, $priority, $template, $source, $externalRef) {
+        return DB::transaction(function () use ($project, $title, $type, $description, $parent, $owner, $assignee, $priority, $template, $source, $externalRef, $externalReporter) {
             $row = (array) DB::selectOne(
                 'update projects set next_number = next_number + 1 where id = ? returning next_number',
                 [$project->id]
@@ -43,6 +43,7 @@ class CreateIssueAction
                 'template_id' => $template?->id,
                 'source' => $source,
                 'external_ref' => $externalRef,
+                'external_reporter' => $externalReporter,
                 'number' => $number,
                 'identifier' => $identifier,
                 'title' => $title,

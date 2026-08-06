@@ -175,6 +175,18 @@ curl -X POST https://tracker.thijssensoftware.nl/api/issues \
 
 Retries are therefore safe. Issues filed by hand leave both fields null and are unaffected.
 
+`external_reporter` records who reported it when that person has no account here: a name, or a pseudonym the host app computed. It is never resolved against users.
+
+### Service accounts
+
+An app that files issues gets a **service account** rather than someone's personal token (Settings → Service accounts, organisation admins only). A service account:
+
+- is granted write on exactly the projects you pick, and can see nothing else
+- holds a token limited to `issues:create` and `issues:read`, so the rest of the API answers 403
+- can never sign in: no login code is issued for its address, and no login path can give it a session
+
+Revoking the account deletes its tokens with it.
+
 Beyond issues, the API also exposes CRUD for **projects** and their **members**, plus the organisation's **templates**, **categories** and **labels** (`/api/projects`, `/api/projects/{key}/members`, `/api/templates`, `/api/categories`, `/api/labels`, `/api/members`).
 
 ## Artisan commands

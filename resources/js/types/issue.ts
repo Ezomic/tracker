@@ -70,6 +70,8 @@ export interface Issue {
         billrLinked: boolean;
     };
     owner: IssueUser | null;
+    /** Set when another app filed this on behalf of someone with no account here. */
+    externalReporter: string | null;
     assignee: IssueUser | null;
     createdAt: string;
     archivedAt: string | null;

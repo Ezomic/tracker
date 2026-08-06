@@ -32,7 +32,9 @@ class EmailLoginCodeController extends Controller
     {
         $email = Str::lower($request->string('email')->toString());
 
-        if (User::query()->where('email', $email)->exists()) {
+        // Service accounts are skipped silently, exactly like an unknown
+        // address: the response must not reveal which of the two it was.
+        if (User::query()->where('email', $email)->where('is_service', false)->exists()) {
             $code = $this->codes->issue($this->cacheKey($email));
 
             Mail::to($email)->send(new LoginCodeMail($code));

@@ -7,6 +7,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,6 +27,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $idp_id
  * @property string|null $login_code_hash
  * @property Carbon|null $login_code_expires_at
+ * @property bool $is_service
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -77,6 +79,19 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'login_code_expires_at' => 'datetime',
+            'is_service' => 'boolean',
         ];
+    }
+
+    /**
+     * Machine identities: they hold API tokens and project memberships but can
+     * never sign in. See DenyServiceAccountSessions.
+     *
+     * @param  Builder<User>  $query
+     * @return Builder<User>
+     */
+    public function scopeServiceAccounts(Builder $query): Builder
+    {
+        return $query->where('is_service', true);
     }
 }
