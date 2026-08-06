@@ -38,6 +38,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $confirmed_at
  * @property IssueType $type
  * @property int|null $template_id
+ * @property string|null $source
+ * @property string|null $external_ref
  * @property IssuePriority $priority
  * @property IssueStatus $status
  * @property int|null $workflow_state_id

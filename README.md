@@ -141,6 +141,7 @@ POST   /api/issues/{identifier}/restore  # undo the archive
 | `label`    | a label name, case-insensitive                   |
 | `assignee` | an email, or `none` for unassigned               |
 | `parent`   | an epic identifier (`TRACK-200`)                 |
+| `source`   | the app that filed it (`snag`, `flare`)          |
 | `archived` | `exclude` (default), `include`, or `only`        |
 | `per_page` | 1 to 200, default 50                             |
 | `page`     | page number                                      |
@@ -160,6 +161,19 @@ curl -X POST https://tracker.thijssensoftware.nl/api/issues \
 ```
 
 Only projects you are a member of are visible, on the API as much as in the UI.
+
+### Filing from another app
+
+An app that files issues automatically can pass `source` and `external_ref` together to make the call idempotent. If an issue in that project already carries the same pair, it is returned with `200` instead of a second one being created with `201`:
+
+```bash
+curl -X POST https://tracker.thijssensoftware.nl/api/issues \
+  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
+  -d project=TRACK -d title="Total is wrong on the invoice screen" -d type=fix \
+  -d source=snag -d external_ref=123
+```
+
+Retries are therefore safe. Issues filed by hand leave both fields null and are unaffected.
 
 Beyond issues, the API also exposes CRUD for **projects** and their **members**, plus the organisation's **templates**, **categories** and **labels** (`/api/projects`, `/api/projects/{key}/members`, `/api/templates`, `/api/categories`, `/api/labels`, `/api/members`).
 

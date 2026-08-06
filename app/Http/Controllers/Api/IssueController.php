@@ -48,6 +48,7 @@ class IssueController extends Controller
             ->when($request->filled('label'), fn (Builder $query) => $query->whereHas('labels', fn (Builder $labels) => $labels->whereRaw('lower(labels.name) = ?', [Str::lower($request->string('label')->toString())])))
             ->when($request->filled('assignee'), fn (Builder $query) => $this->applyAssignee($query, $request->string('assignee')->toString()))
             ->when($request->filled('parent'), fn (Builder $query) => $query->whereRelation('parent', 'identifier', $request->string('parent')->toString()))
+            ->when($request->filled('source'), fn (Builder $query) => $query->where('source', $request->string('source')->toString()))
             ->orderBy('project_id')
             ->orderBy('number')
             ->paginate($request->perPage())
@@ -104,6 +105,23 @@ class IssueController extends Controller
 
         $this->authorize('createIssue', $project);
 
+        $source = $request->string('source')->toString() ?: null;
+        $externalRef = $request->string('external_ref')->toString() ?: null;
+
+        // Automated filers retry. Handing back the issue they already filed,
+        // rather than a second one, is what makes a retry safe.
+        if ($source !== null && $externalRef !== null) {
+            $existing = Issue::query()
+                ->where('project_id', $project->id)
+                ->where('source', $source)
+                ->where('external_ref', $externalRef)
+                ->first();
+
+            if ($existing !== null) {
+                return response()->json($this->payload($existing));
+            }
+        }
+
         $template = $this->resolveTemplate($project, $request->string('template')->toString() ?: null);
         $priority = $request->string('priority')->toString() ?: null;
         $estimate = $request->string('estimate')->toString() ?: null;
@@ -119,6 +137,8 @@ class IssueController extends Controller
             assignee: $this->resolveAssignee($request->string('assignee')->toString() ?: null),
             priority: $priority !== null ? IssuePriority::from($priority) : $template?->priority,
             template: $template,
+            source: $source,
+            externalRef: $externalRef,
         );
 
         // Explicit labels replace the template's; the template only fills the gap.
@@ -388,6 +408,8 @@ class IssueController extends Controller
             'parent' => $issue->parent?->identifier,
             'owner' => $issue->owner?->email,
             'assignee' => $issue->assignee?->email,
+            'source' => $issue->source,
+            'external_ref' => $issue->external_ref,
         ];
     }
 
@@ -413,6 +435,7 @@ class IssueController extends Controller
             'created_at' => $issue->created_at?->toIso8601String(),
             'closed_at' => $issue->closed_at?->toIso8601String(),
             'archived_at' => $issue->archived_at?->toIso8601String(),
+            'source' => $issue->source,
         ];
     }
 
@@ -444,6 +467,8 @@ class IssueController extends Controller
             'closed_at' => $issue->closed_at?->toIso8601String(),
             'archived_at' => $issue->archived_at?->toIso8601String(),
             'archive_reason' => $issue->archive_reason,
+            'source' => $issue->source,
+            'external_ref' => $issue->external_ref,
         ];
     }
 }
