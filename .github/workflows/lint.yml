@@ -8,10 +8,22 @@ on:
       - '**.md'
       - 'docs/**'
       - 'LICENSE'
+  # main is verified in its own right rather than inferred from a branch that
+  # was green before merging. The repo is private on a plan without branch
+  # protection, so required status checks cannot hold a merge back, and deploys
+  # are driven by hand off main: an unchecked main is what would ship.
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  # Never cancel the run on main: it is the only one verifying what shipped.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
