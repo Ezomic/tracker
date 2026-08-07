@@ -135,7 +135,9 @@ POST   /api/issues/{identifier}/restore  # undo the archive
 | ---------- | ------------------------------------------------ |
 | `project`  | a project key (`TRACK`)                          |
 | `search`   | matches title, identifier and description        |
-| `status`   | `backlog`, `in_progress`, `in_review`, `done`    |
+| `status`   | `backlog`, `in_progress`, `in_review`, `done` (deprecated) |
+| `workflow_state` | a lane name on the project's type            |
+| `state_category` | `backlog`, `unstarted`, `started`, `completed`, `canceled` |
 | `type`     | `feature`, `fix`                                 |
 | `priority` | `none`, `low`, `medium`, `high`, `urgent`        |
 | `label`    | a label name, case-insensitive                   |
@@ -146,7 +148,25 @@ POST   /api/issues/{identifier}/restore  # undo the archive
 | `per_page` | 1 to 200, default 50                             |
 | `page`     | page number                                      |
 
-Each row carries enough to triage without a follow-up request: identifier, title, type, status, priority, project, parent, assignee, estimate, labels, `created_at` and `closed_at`.
+Each row carries enough to triage without a follow-up request: identifier, title, type, status, `workflow_state`, priority, project, parent, assignee, estimate, labels, `created_at` and `closed_at`.
+
+### Workflow states
+
+Board lanes are per-project-type and freely named, so an issue's real position is its **workflow state**, not the four-value `status`. Every lane maps to a fixed `category` (`backlog`, `unstarted`, `started`, `completed`, `canceled`), which is what to filter on when you want meaning rather than a particular project's wording.
+
+`PATCH /api/issues/{identifier}/status` takes **either** form, and exactly one:
+
+```bash
+# by lane, on the project's own type; name is case-insensitive, id also works
+curl -X PATCH .../api/issues/TRACK-42/status -d workflow_state="In review"
+
+# the legacy form, still accepted until it sunsets
+curl -X PATCH .../api/issues/TRACK-42/status -d status=in_review
+```
+
+Both keep `status`, `workflow_state` and `closed_at` consistent with each other, so a consumer on either field sees the same truth. Sending both is a 422 rather than one silently winning.
+
+A project with no type has no lanes: `workflow_state` reads as `null` and only `status` applies. That is why `status` is still populated everywhere rather than removed outright.
 
 Creating an issue stamps the token's user as the owner (reporter) and returns the branch name:
 
@@ -169,9 +189,11 @@ lands alongside the old, consumers migrate, and the old one is removed no sooner
 later. Anything deprecated is marked here and answers with a `Sunset` header carrying its removal
 date. The reasoning is in [`docs/api-versioning-2026-08-06.md`](docs/api-versioning-2026-08-06.md).
 
-| Deprecated       | Use instead     | Removal      |
-| ---------------- | --------------- | ------------ |
-| `GET /api/teams` | `GET /api/projects` | 2026-09-05 |
+| Deprecated                  | Use instead                          | Removal      |
+| --------------------------- | ------------------------------------ | ------------ |
+| `GET /api/teams`            | `GET /api/projects`                  | 2026-09-05   |
+| `status` on issue payloads  | `workflow_state`                     | 2026-09-30   |
+| `status` on `PATCH .../status` | `workflow_state`                  | 2026-09-30   |
 
 ### Filing from another app
 

@@ -8,6 +8,8 @@ use App\Actions\AddCommentAction;
 use App\Actions\ArchiveIssueAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LogTimeAction;
+use App\Actions\MoveIssueToStateAction;
+use App\Actions\ResolveWorkflowStateAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
@@ -17,7 +19,7 @@ use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Requests\UpdateIssueApiRequest;
-use App\Http\Requests\UpdateIssueStatusRequest;
+use App\Http\Requests\UpdateIssueStatusApiRequest;
 use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
@@ -25,6 +27,7 @@ use App\Models\Label;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Models\WorkflowState;
 use App\Support\Duration;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -39,7 +42,7 @@ class IssueController extends Controller
             ->visibleTo($this->currentUser($request))
             ->when($request->archived() === 'exclude', fn (Builder $query) => $query->notArchived())
             ->when($request->archived() === 'only', fn (Builder $query) => $query->whereNotNull('archived_at'))
-            ->with(['project', 'parent', 'assignee', 'labels'])
+            ->with(['project', 'parent', 'assignee', 'labels', 'workflowState'])
             ->when($request->filled('project'), fn (Builder $query) => $query->whereRelation('project', 'key', $request->string('project')->toString()))
             ->when($request->filled('search'), fn (Builder $query) => $this->applySearch($query, $request->string('search')->toString()))
             ->when($request->filled('status'), fn (Builder $query) => $query->where('status', $request->string('status')->toString()))
@@ -49,6 +52,8 @@ class IssueController extends Controller
             ->when($request->filled('assignee'), fn (Builder $query) => $this->applyAssignee($query, $request->string('assignee')->toString()))
             ->when($request->filled('parent'), fn (Builder $query) => $query->whereRelation('parent', 'identifier', $request->string('parent')->toString()))
             ->when($request->filled('source'), fn (Builder $query) => $query->where('source', $request->string('source')->toString()))
+            ->when($request->filled('workflow_state'), fn (Builder $query) => $query->whereHas('workflowState', fn (Builder $states) => $states->whereRaw('lower(name) = ?', [Str::lower($request->string('workflow_state')->toString())])))
+            ->when($request->filled('state_category'), fn (Builder $query) => $query->whereHas('workflowState', fn (Builder $states) => $states->where('category', $request->string('state_category')->toString())))
             ->orderBy('project_id')
             ->orderBy('number')
             ->paginate($request->perPage())
@@ -96,7 +101,7 @@ class IssueController extends Controller
     {
         $this->authorize('view', $issue);
 
-        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee', 'labels'])));
+        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState'])));
     }
 
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
@@ -234,14 +239,35 @@ class IssueController extends Controller
         }
 
         return response()->json(
-            $this->detail($issue->refresh()->load(['project', 'parent', 'owner', 'assignee', 'labels']))
+            $this->detail($issue->refresh()->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState']))
         );
     }
 
-    public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): JsonResponse
+    /**
+     * Move an issue, by lane or by the legacy status.
+     *
+     * Both forms land in MoveIssueToStateAction so `status`, `workflow_state_id`
+     * and `closed_at` cannot drift apart. Previously this wrote `status` alone
+     * and left workflow_state_id pointing at the lane the issue used to be in,
+     * so the board and the API disagreed about where it was.
+     */
+    public function updateStatus(UpdateIssueStatusApiRequest $request, Issue $issue, MoveIssueToStateAction $move, ResolveWorkflowStateAction $resolve): JsonResponse
     {
         $this->authorize('update', $issue);
 
+        $state = $request->has('workflow_state')
+            ? $request->resolveState()
+            : $resolve->handle($issue->project, IssueStatus::from($request->string('status')->toString()));
+
+        if ($state instanceof WorkflowState) {
+            $move->handle($issue, $state);
+
+            return response()->json($this->payload($issue->refresh()));
+        }
+
+        // A project with no type, or a type with no lane meaning this status,
+        // still has to honour the request: fall back to writing status alone,
+        // which is what this endpoint did before lanes existed.
         $status = IssueStatus::from($request->string('status')->toString());
 
         $issue->forceFill([
@@ -416,6 +442,23 @@ class IssueController extends Controller
     }
 
     /**
+     * The lane an issue sits in. Null for a project with no type, which is why
+     * `status` stays populated for now rather than being replaced outright.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function statePayload(Issue $issue): ?array
+    {
+        $state = $issue->workflowState;
+
+        return $state === null ? null : [
+            'id' => $state->id,
+            'name' => $state->name,
+            'category' => $state->category->value,
+        ];
+    }
+
+    /**
      * Compact shape for list responses.
      *
      * @return array<string, mixed>
@@ -426,7 +469,9 @@ class IssueController extends Controller
             'identifier' => $issue->identifier,
             'title' => $issue->title,
             'type' => $issue->type->value,
+            // Deprecated, sunsets 2026-09-30: read workflow_state instead.
             'status' => $issue->status->value,
+            'workflow_state' => $this->statePayload($issue),
             'priority' => $issue->priority->value,
             'project' => $issue->project->key,
             'parent' => $issue->parent?->identifier,
@@ -455,7 +500,9 @@ class IssueController extends Controller
             'description' => $issue->description,
             'type' => $issue->type->value,
             'priority' => $issue->priority->value,
+            // Deprecated, sunsets 2026-09-30: read workflow_state instead.
             'status' => $issue->status->value,
+            'workflow_state' => $this->statePayload($issue),
             'estimate_minutes' => $issue->estimate_minutes,
             'labels' => $issue->labels->pluck('name')->all(),
             'branch_name' => $issue->branch_name,

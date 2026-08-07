@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Enums\StatusCategory;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -38,6 +39,8 @@ class FilterIssuesApiRequest extends FormRequest
             'assignee' => ['sometimes', 'string', 'max:255'],
             'parent' => ['sometimes', 'string', 'max:255'],
             'source' => ['sometimes', 'string', 'max:64'],
+            'workflow_state' => ['sometimes', 'string', 'max:255'],
+            'state_category' => ['sometimes', Rule::enum(StatusCategory::class)],
             'archived' => ['sometimes', 'string', Rule::in(['exclude', 'include', 'only'])],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:200'],
             'page' => ['sometimes', 'integer', 'min:1'],

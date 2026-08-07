@@ -11,6 +11,7 @@ use App\Models\Issue;
 use App\Models\IssueTemplate;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\WorkflowState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -52,10 +53,33 @@ class CreateIssueAction
                 'type' => $type,
                 'priority' => $priority ?? IssuePriority::None,
                 'status' => IssueStatus::Backlog,
+                // Without this a new issue has a status but no lane, so it
+                // reads as workflow_state: null over the API and sits in no
+                // column on the board.
+                'workflow_state_id' => $this->defaultStateId($project),
                 'branch_name' => $branchName,
             ])->save();
 
             return $issue;
         });
+    }
+
+    /**
+     * The lane a new issue starts in: the type's default, or its first lane by
+     * position when no default is flagged.
+     */
+    private function defaultStateId(Project $project): ?int
+    {
+        if ($project->project_type_id === null) {
+            return null;
+        }
+
+        $states = WorkflowState::query()
+            ->where('project_type_id', $project->project_type_id)
+            ->orderByDesc('is_default')
+            ->orderBy('position')
+            ->first();
+
+        return $states?->id;
     }
 }
