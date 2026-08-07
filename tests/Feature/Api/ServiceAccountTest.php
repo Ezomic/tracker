@@ -68,7 +68,9 @@ it('reads only the issues of its granted projects', function () {
 it('cannot reach the rest of the api', function () {
     actAsService($this->account);
 
-    $this->getJson('/api/projects')->assertForbidden();
+    // /api/projects is deliberately readable (TRACK-220): a service account has
+    // to know which project keys exist before it can file into one.
+    $this->getJson('/api/projects')->assertOk();
     $this->getJson('/api/labels')->assertForbidden();
     $this->getJson('/api/members?project=THI')->assertForbidden();
     $this->postJson('/api/projects', ['key' => 'NEW', 'name' => 'New'])->assertForbidden();
@@ -88,8 +90,8 @@ it('cannot change or archive an issue it filed', function () {
         ->and($issue->fresh()->archived_at)->toBeNull();
 });
 
-it('mints a token limited to filing and reading issues', function () {
-    expect($this->token->accessToken->abilities)->toBe(['issues:create', 'issues:read']);
+it('mints a token limited to filing issues and reading issues and projects', function () {
+    expect($this->token->accessToken->abilities)->toBe(['issues:create', 'issues:read', 'projects:read']);
 });
 
 it('refuses a service token whose abilities were narrowed further', function () {

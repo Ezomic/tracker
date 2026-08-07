@@ -28,10 +28,15 @@ Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): voi
         Route::get('/issues/{issue}', [IssueController::class, 'show']);
     });
 
+    // A service account needs to know which project keys exist before it can
+    // file into one, so this is readable with its own ability rather than
+    // blanket-denied like the rest of the API.
+    Route::get('/projects', [ProjectController::class, 'index'])
+        ->middleware(RequireServiceAbility::class.':projects:read');
+
     Route::middleware(DenyServiceAccounts::class)->group(function (): void {
         Route::get('/user', fn (Request $request) => $request->user());
 
-        Route::get('/projects', [ProjectController::class, 'index']);
         Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index']);
         // Deprecated alias for /projects, from the projects transition. Now
         // carries a removal date rather than living on indefinitely.

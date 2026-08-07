@@ -6,20 +6,35 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\CreateProjectAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FilterProjectsApiRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use App\Services\CurrentOrganization;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(FilterProjectsApiRequest $request): JsonResponse
     {
-        return response()->json(
-            Project::query()->visibleTo($this->currentUser($request))->notArchived()->orderBy('key')->get(['key', 'name', 'color'])
-        );
+        $projects = Project::query()
+            ->visibleTo($this->currentUser($request))
+            ->when($request->archived() === 'exclude', fn (Builder $query) => $query->notArchived())
+            ->when($request->archived() === 'only', fn (Builder $query) => $query->whereNotNull('archived_at'))
+            ->orderBy('key')
+            ->get(['key', 'name', 'color', 'category_id', 'archived_at']);
+
+        return response()->json($projects->map(fn (Project $project): array => [
+            'key' => $project->key,
+            'name' => $project->name,
+            'color' => $project->color,
+            // The only signal distinguishing a Workflow project from a Games or
+            // Mods one, for a consumer that cannot infer it from a repo.
+            'category_id' => $project->category_id,
+            // Absence used to be indistinguishable from never having existed.
+            'archived_at' => $project->archived_at?->toIso8601String(),
+        ])->all());
     }
 
     public function store(StoreProjectRequest $request, CreateProjectAction $action, CurrentOrganization $current): JsonResponse

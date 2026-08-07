@@ -21,7 +21,7 @@ class CreateServiceAccountAction
      *
      * @var list<string>
      */
-    public const ABILITIES = ['issues:create', 'issues:read'];
+    public const ABILITIES = ['issues:create', 'issues:read', 'projects:read'];
 
     /**
      * Create the machine identity, grant it write on exactly the projects it

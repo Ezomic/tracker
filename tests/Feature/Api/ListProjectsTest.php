@@ -14,8 +14,8 @@ it('lists projects ordered by key', function () {
     $response = $this->actingAs($user, 'sanctum')->getJson('/api/projects');
 
     $response->assertOk()->assertExactJson([
-        ['key' => 'BILLR', 'name' => 'Billr', 'color' => '#378add'],
-        ['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30'],
+        ['key' => 'BILLR', 'name' => 'Billr', 'color' => '#378add', 'category_id' => null, 'archived_at' => null],
+        ['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30', 'category_id' => null, 'archived_at' => null],
     ]);
 });
 
@@ -27,7 +27,7 @@ it('serves the deprecated /api/teams alias', function () {
     $this->actingAs($user, 'sanctum')->getJson('/api/teams')
         ->assertOk()
         ->assertExactJson([
-            ['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30'],
+            ['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30', 'category_id' => null, 'archived_at' => null],
         ]);
 });
 
