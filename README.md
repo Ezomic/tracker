@@ -223,10 +223,12 @@ The signing secret is shown once at creation. The settings page reports the last
 An app that files issues gets a **service account** rather than someone's personal token (Settings → Service accounts, organisation admins only). A service account:
 
 - is granted write on exactly the projects you pick, and can see nothing else
-- holds a token limited to `issues:create` and `issues:read`, so the rest of the API answers 403
+- holds a token limited to `issues:create`, `issues:read` and `projects:read`, so the rest of the API answers 403
 - can never sign in: no login code is issued for its address, and no login path can give it a session
 
 Revoking the account deletes its tokens with it.
+
+`GET /api/projects` returns `key`, `name`, `color`, `category_id` and `archived_at`, and takes `archived=exclude` (default), `include` or `only`. Without that, an archived project is indistinguishable from one that never existed.
 
 Beyond issues, the API also exposes CRUD for **projects** and their **members**, plus the organisation's **templates**, **categories** and **labels** (`/api/projects`, `/api/projects/{key}/members`, `/api/templates`, `/api/categories`, `/api/labels`, `/api/members`).
 
