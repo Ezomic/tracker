@@ -18,6 +18,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
+        "thijssensoftware/flare-client": "^0.2.0",
         "thijssensoftware/id-client": "^0.1.0"
     },
     "require-dev": {
@@ -131,9 +132,21 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
-    "repositories": [{
-        "name": "id-client",
-        "type": "vcs",
-        "url": "https://github.com/Ezomic/id-client.git"
-    }]
+    "repositories": [
+        {
+            "name": "id-client",
+            "type": "vcs",
+            "url": "https://github.com/Ezomic/id-client.git"
+        },
+        {
+            "name": "flare-client",
+            "type": "vcs",
+            "url": "https://github.com/Ezomic/flare-client.git"
+        },
+        {
+            "name": "request-id",
+            "type": "vcs",
+            "url": "https://github.com/Ezomic/request-id.git"
+        }
+    ]
 }
