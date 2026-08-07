@@ -67,7 +67,10 @@ Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): vo
         Route::patch('/labels/{label}', [LabelController::class, 'update']);
         Route::delete('/labels/{label}', [LabelController::class, 'destroy']);
         Route::patch('/issues/{issue}', [IssueController::class, 'update']);
-        Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus']);
+        // `status` is deprecated here in favour of `workflow_state`; the header
+        // carries the date the legacy form stops being accepted.
+        Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])
+            ->middleware(AnnounceSunset::class.':2026-09-30');
         Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment']);
         Route::post('/issues/{issue}/time', [IssueController::class, 'logTime']);
         Route::delete('/issues/{issue}/time/{timeEntry}', [IssueController::class, 'deleteTime']);
