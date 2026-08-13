@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\WebhookEvent;
 use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\User;
@@ -28,6 +29,8 @@ class AddCommentAction
         $this->watch->autoWatch($issue, $author);
 
         $this->notifyMentionsAndWatchers($issue, $comment, $author);
+
+        app(NotifyIssueWebhooksAction::class)->handle($issue, WebhookEvent::Commented->value);
 
         return $comment;
     }

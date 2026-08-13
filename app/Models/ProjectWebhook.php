@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\WebhookEvent;
 use Database\Factories\ProjectWebhookFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -17,13 +18,14 @@ use Illuminate\Support\Carbon;
  * @property int $project_id
  * @property string $url
  * @property string $secret
+ * @property list<string>|null $events
  * @property bool $active
  * @property Carbon|null $last_delivered_at
  * @property int|null $last_status
  * @property string|null $last_error
  * @property-read Project $project
  */
-#[Fillable(['url', 'active'])]
+#[Fillable(['url', 'active', 'events'])]
 // The secret signs outgoing deliveries; it is shown once at creation and never
 // serialized again.
 #[Hidden(['secret'])]
@@ -41,12 +43,30 @@ class ProjectWebhook extends Model
     }
 
     /**
+     * What this endpoint is subscribed to. Null means the default, so an
+     * endpoint created before events existed keeps receiving exactly what it
+     * did before.
+     *
+     * @return list<string>
+     */
+    public function subscribedEvents(): array
+    {
+        return $this->events ?? WebhookEvent::defaults();
+    }
+
+    public function wants(string $event): bool
+    {
+        return in_array($event, $this->subscribedEvents(), true);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'active' => 'boolean',
+            'events' => 'array',
             'last_delivered_at' => 'datetime',
         ];
     }
