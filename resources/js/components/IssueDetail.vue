@@ -6,6 +6,8 @@ import {
     Bot,
     Check,
     Clock,
+    Eye,
+    EyeOff,
     ExternalLink,
     FileText,
     GitBranch,
@@ -64,6 +66,7 @@ import {
     confirmTime as confirmTimeRoute,
     show,
     unarchive,
+    watch as watchIssue,
     update,
     updateStatus,
 } from '@/routes/issues';
@@ -204,6 +207,18 @@ function archiveIssue() {
             },
         },
     );
+}
+
+function toggleWatch() {
+    const url = watchIssue({ issue: props.issue.identifier }).url;
+
+    if (props.issue.watching) {
+        router.delete(url, { preserveScroll: true });
+
+        return;
+    }
+
+    router.post(url, {}, { preserveScroll: true });
 }
 
 function unarchiveIssue() {
@@ -919,6 +934,32 @@ const statusDot: Record<Issue['status'], string> = {
                 <p class="text-sm">
                     {{ issue.owner?.name ?? $t('issue.unknown') }}
                 </p>
+            </div>
+
+            <div class="grid gap-1.5">
+                <Label class="text-xs text-muted-foreground">
+                    {{ $t('issue.watching') }}
+                </Label>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="justify-start"
+                    @click="toggleWatch"
+                >
+                    <Eye v-if="issue.watching" class="size-4" />
+                    <EyeOff v-else class="size-4" />
+                    <span>{{
+                        issue.watching
+                            ? $t('issue.watchingOn')
+                            : $t('issue.watchingOff')
+                    }}</span>
+                    <span
+                        v-if="issue.watcherCount > 0"
+                        class="ml-auto text-xs text-muted-foreground"
+                        >{{ issue.watcherCount }}</span
+                    >
+                </Button>
             </div>
 
             <div v-if="issue.originatingReport" class="grid gap-1.5">

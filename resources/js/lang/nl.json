@@ -308,7 +308,10 @@
         "addEstimate": "Schatting toevoegen",
         "addLabel": "Label toevoegen",
         "saving": "Opslaan…",
-        "legacyLayout": "Oude indeling"
+        "legacyLayout": "Oude indeling",
+        "watching": "Volgen",
+        "watchingOn": "Je volgt dit",
+        "watchingOff": "Volgen"
     },
     "newIssue": {
         "title": "Nieuw ticket",
