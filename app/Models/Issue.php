@@ -234,6 +234,17 @@ class Issue extends Model
     }
 
     /**
+     * Links out of this issue. Both directions of a pair are stored, so this
+     * alone answers "what does this relate to" without a union.
+     *
+     * @return HasMany<IssueLink, $this>
+     */
+    public function links(): HasMany
+    {
+        return $this->hasMany(IssueLink::class);
+    }
+
+    /**
      * @return HasMany<TimeEntry, $this>
      */
     public function timeEntries(): HasMany

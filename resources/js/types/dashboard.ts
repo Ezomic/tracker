@@ -38,6 +38,12 @@ export interface IssueRow {
     timestamp: string | null;
 }
 
+/** A stale row carries how long it has been quiet, on top of the usual fields. */
+export interface StaleRow extends IssueRow {
+    quietSince: string;
+    quietDays: number;
+}
+
 export interface CompletedSeries {
     key: string;
     name: string;

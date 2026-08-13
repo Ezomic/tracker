@@ -8,6 +8,7 @@ import AttentionList from '@/components/dashboard/AttentionList.vue';
 import CompletedPerWeek from '@/components/dashboard/CompletedPerWeek.vue';
 import Panel from '@/components/dashboard/Panel.vue';
 import ProjectWeekMatrix from '@/components/dashboard/ProjectWeekMatrix.vue';
+import StaleList from '@/components/dashboard/StaleList.vue';
 import StatTile from '@/components/dashboard/StatTile.vue';
 import StatusThroughput from '@/components/dashboard/StatusThroughput.vue';
 import TimePanel from '@/components/dashboard/TimePanel.vue';
@@ -21,6 +22,7 @@ import type {
     DashboardStats,
     DashboardTime,
     IssueRow,
+    StaleRow,
     StatusBreakdown,
 } from '@/types';
 
@@ -30,6 +32,7 @@ const props = defineProps<{
     hasProjects: boolean;
     activeByProject: ActiveByProject[];
     attention: IssueRow[];
+    stale: StaleRow[];
     completedByWeek: CompletedByWeek;
     metrics: DashboardMetrics;
     time: DashboardTime;
@@ -117,9 +120,18 @@ const cycleValue = computed(() =>
         <TimePanel :time="time" />
 
         <div class="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
-            <Panel :title="t('dashboard.attentionTitle')">
-                <AttentionList :rows="attention" />
-            </Panel>
+            <div class="flex flex-col gap-4">
+                <Panel :title="t('dashboard.attentionTitle')">
+                    <AttentionList :rows="attention" />
+                </Panel>
+                <Panel
+                    v-if="stale.length > 0"
+                    :title="t('dashboard.staleTitle')"
+                    :description="t('dashboard.staleDescription')"
+                >
+                    <StaleList :rows="stale" />
+                </Panel>
+            </div>
             <div class="flex flex-col gap-4">
                 <Panel :title="t('dashboard.activeByProject')">
                     <ActiveProjects :projects="activeByProject" />

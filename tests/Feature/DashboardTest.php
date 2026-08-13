@@ -132,7 +132,10 @@ it('orders the attention list by priority first, then staleness', function () {
         'priority' => IssuePriority::Low,
         'assignee_id' => $user->id,
     ]);
+    // Staleness is measured from the last activity now, not updated_at, so age
+    // the activity rather than the row. See TRACK-231.
     $stale->forceFill(['updated_at' => now()->subDays(20)])->save();
+    DB::table('activities')->where('issue_id', $stale->id)->update(['created_at' => now()->subDays(40)]);
 
     $urgent = Issue::factory()->for($project)->create([
         'status' => IssueStatus::InProgress,

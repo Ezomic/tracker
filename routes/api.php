@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): voi
     Route::middleware(RequireServiceAbility::class.':issues:read')->group(function (): void {
         Route::get('/issues', [IssueController::class, 'index']);
         Route::get('/issues/{issue}', [IssueController::class, 'show']);
+        Route::get('/issues/{issue}/activity', [IssueController::class, 'listActivity']);
     });
 
     // A service account needs to know which project keys exist before it can
@@ -78,6 +79,8 @@ Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): vo
         // carries the date the legacy form stops being accepted.
         Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])
             ->middleware(AnnounceSunset::class.':2026-09-30');
+        Route::post('/issues/{issue}/links', [IssueController::class, 'storeLink']);
+        Route::delete('/issues/{issue}/links/{link}', [IssueController::class, 'destroyLink']);
         Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment']);
         Route::patch('/issues/{issue}/comments/{comment}', [IssueController::class, 'updateComment']);
         Route::post('/issues/{issue}/time', [IssueController::class, 'logTime']);

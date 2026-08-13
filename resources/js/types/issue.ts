@@ -76,6 +76,13 @@ export interface Issue {
     owner: IssueUser | null;
     /** Set when another app filed this on behalf of someone with no account here. */
     externalReporter: string | null;
+    /** Relations to other issues, both directions already resolved. */
+    links: {
+        id: number;
+        relation: string;
+        label: string;
+        issue: { identifier: string; title: string; status: Issue['status'] };
+    }[];
     /** How many people follow this issue, and whether you are one of them. */
     watcherCount: number;
     watching: boolean;

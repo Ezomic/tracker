@@ -60,6 +60,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('issues/{issue:identifier}/state', [IssueController::class, 'updateState'])->name('issues.updateState');
     Route::post('issues/{issue:identifier}/archive', [IssueController::class, 'archive'])->name('issues.archive');
     Route::post('issues/{issue:identifier}/unarchive', [IssueController::class, 'unarchive'])->name('issues.unarchive');
+    Route::post('issues/{issue:identifier}/links', [IssueController::class, 'link'])->name('issues.links.store');
+    Route::delete('issues/{issue:identifier}/links/{link}', [IssueController::class, 'unlink'])->name('issues.links.destroy');
     Route::post('issues/{issue:identifier}/watch', [IssueController::class, 'watch'])->name('issues.watch');
     Route::delete('issues/{issue:identifier}/watch', [IssueController::class, 'unwatch'])->name('issues.unwatch');
 

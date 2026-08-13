@@ -7,13 +7,16 @@ namespace App\Http\Controllers;
 use App\Actions\ArchiveIssueAction;
 use App\Actions\BulkUpdateIssuesAction;
 use App\Actions\CreateIssueAction;
+use App\Actions\LinkIssuesAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\WatchIssueAction;
+use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Requests\ArchiveIssueRequest;
 use App\Http\Requests\BulkUpdateIssuesRequest;
 use App\Http\Requests\FilterIssuesRequest;
+use App\Http\Requests\StoreIssueLinkRequest;
 use App\Http\Requests\StoreIssueWebRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStateRequest;
@@ -22,6 +25,7 @@ use App\Models\Activity;
 use App\Models\Comment;
 use App\Models\Commit;
 use App\Models\Issue;
+use App\Models\IssueLink;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Organization;
@@ -34,6 +38,7 @@ use App\Models\WorkflowState;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use App\Support\Duration;
+use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
@@ -70,6 +75,7 @@ class IssueController extends Controller
                 ->when($request->string('type')->toString() ?: null, fn (Builder $query, string $type) => $query->where('type', $type))
                 ->when($request->string('priority')->toString() ?: null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
                 ->when($request->integer('label_id') ?: null, fn (Builder $query, int $labelId) => $query->whereHas('labels', fn (Builder $q) => $q->where('labels.id', $labelId)))
+                ->when($request->boolean('stale'), fn (Builder $query) => Staleness::scope($query))
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
@@ -177,6 +183,7 @@ class IssueController extends Controller
             'children' => fn (Relation $query) => $query->orderBy('number'),
             'timeEntries' => fn (Relation $query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
             'comments' => fn (Relation $query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
+            'links' => fn (Relation $query) => $query->with('relatedIssue')->orderBy('relation')->orderBy('id'),
             'activities' => fn (Relation $query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
             'commits' => fn (Relation $query) => $query->orderBy('committed_at')->orderBy('id'),
         ]);
@@ -397,6 +404,32 @@ class IssueController extends Controller
         return back();
     }
 
+    public function link(StoreIssueLinkRequest $request, Issue $issue, LinkIssuesAction $action): RedirectResponse
+    {
+        $this->authorize('update', $issue);
+
+        $related = Issue::query()->where('identifier', $request->string('issue')->toString())->firstOrFail();
+
+        // Both ends must be visible to the actor, or a link becomes a way to
+        // learn that an issue exists in a project you cannot see.
+        $this->authorize('view', $related);
+
+        $action->handle($issue, $related, IssueRelation::from($request->string('relation')->toString()), $this->currentUser($request));
+
+        return back();
+    }
+
+    public function unlink(Request $request, Issue $issue, IssueLink $link, LinkIssuesAction $action): RedirectResponse
+    {
+        $this->authorize('update', $issue);
+
+        abort_unless($link->issue_id === $issue->id, 404);
+
+        $action->unlink($issue, $link->relatedIssue, $link->relation);
+
+        return back();
+    }
+
     private function findTemplate(mixed $templateId): ?IssueTemplate
     {
         return $templateId === null
@@ -506,6 +539,16 @@ class IssueController extends Controller
             'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
             'externalReporter' => $issue->external_reporter,
             'originatingReport' => $issue->originatingReport(),
+            'links' => $issue->relationLoaded('links') ? $issue->links->map(fn (IssueLink $link) => [
+                'id' => $link->id,
+                'relation' => $link->relation->value,
+                'label' => $link->relation->label(),
+                'issue' => [
+                    'identifier' => $link->relatedIssue->identifier,
+                    'title' => $link->relatedIssue->title,
+                    'status' => $link->relatedIssue->status->value,
+                ],
+            ])->all() : [],
             'watcherCount' => $issue->watchers()->wherePivot('watching', true)->count(),
             'watching' => $issue->watchers()
                 ->wherePivot('watching', true)

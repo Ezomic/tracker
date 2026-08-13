@@ -209,7 +209,10 @@
         "onDone": "op {count} afgerond",
         "noEstimates": "Nog geen geschatte tickets afgerond.",
         "loggedByProject": "Geregistreerd per project",
-        "noTimeLogged": "Deze week geen tijd geregistreerd."
+        "noTimeLogged": "Deze week geen tijd geregistreerd.",
+        "staleTitle": "Stil geworden",
+        "staleDescription": "Open tickets waar al een tijd niets mee is gebeurd",
+        "quietDays": "{days}d stil"
     },
     "board": {
         "title": "Bord",
@@ -311,7 +314,8 @@
         "legacyLayout": "Oude indeling",
         "watching": "Volgen",
         "watchingOn": "Je volgt dit",
-        "watchingOff": "Volgen"
+        "watchingOff": "Volgen",
+        "links": "Gekoppelde tickets"
     },
     "newIssue": {
         "title": "Nieuw ticket",
