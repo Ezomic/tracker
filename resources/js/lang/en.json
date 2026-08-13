@@ -357,7 +357,9 @@
         "prOpened": "opened a pull request",
         "prMerged": "merged the pull request",
         "committed": "committed",
-        "someone": "Someone"
+        "someone": "Someone",
+        "edited": "edited",
+        "save": "Save"
     },
     "time": {
         "title": "Time",
