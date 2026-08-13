@@ -697,5 +697,13 @@
         "removeConfirm": "Remove the webhook for {url}?",
         "empty": "No webhooks yet",
         "emptyBody": "Add one so another app hears about status changes instead of polling."
+    },
+    "bulk": {
+        "selected": "{count} selected",
+        "selectAll": "Select all in view",
+        "clear": "Clear",
+        "setStatus": "Set status",
+        "setPriority": "Set priority",
+        "archive": "Archive"
     }
 }

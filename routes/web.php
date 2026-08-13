@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');
+    Route::patch('issues/bulk', [IssueController::class, 'bulk'])->name('issues.bulk');
     Route::get('issues/board', [IssueController::class, 'board'])->name('issues.board');
     Route::get('issues/search', [IssueController::class, 'search'])->name('issues.search');
     Route::get('issues/{issue:identifier}', [IssueController::class, 'show'])->name('issues.show');

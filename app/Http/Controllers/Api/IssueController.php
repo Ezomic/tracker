@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\AddCommentAction;
 use App\Actions\ArchiveIssueAction;
+use App\Actions\BulkUpdateIssuesAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LogTimeAction;
 use App\Actions\MoveIssueToStateAction;
@@ -14,6 +15,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BulkUpdateIssuesRequest;
 use App\Http\Requests\FilterIssuesApiRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueRequest;
@@ -252,6 +254,17 @@ class IssueController extends Controller
      * and left workflow_state_id pointing at the lane the issue used to be in,
      * so the board and the API disagreed about where it was.
      */
+    /**
+     * One request for a whole selection, so a caller does not have to loop and
+     * burn the 60-per-minute write budget one issue at a time.
+     */
+    public function bulk(BulkUpdateIssuesRequest $request, BulkUpdateIssuesAction $action): JsonResponse
+    {
+        return response()->json(
+            $action->handle($request->identifiers(), $request->changes(), $this->currentUser($request))
+        );
+    }
+
     public function updateStatus(UpdateIssueStatusApiRequest $request, Issue $issue, MoveIssueToStateAction $move, ResolveWorkflowStateAction $resolve): JsonResponse
     {
         $this->authorize('update', $issue);
