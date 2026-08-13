@@ -72,6 +72,8 @@ Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): vo
         Route::post('/labels', [LabelController::class, 'store']);
         Route::patch('/labels/{label}', [LabelController::class, 'update']);
         Route::delete('/labels/{label}', [LabelController::class, 'destroy']);
+        // Before the {issue} routes: bulk is a literal, not an identifier.
+        Route::patch('/issues/bulk', [IssueController::class, 'bulk']);
         Route::patch('/issues/{issue}', [IssueController::class, 'update']);
         // `status` is deprecated here in favour of `workflow_state`; the header
         // carries the date the legacy form stops being accepted.

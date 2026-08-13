@@ -11,6 +11,7 @@ import ProjectLinks from '@/components/ProjectLinks.vue';
 import SavedViews from '@/components/SavedViews.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -19,7 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { index, show } from '@/routes/issues';
+import { bulk, index, show } from '@/routes/issues';
 import type {
     EpicOption,
     Issue,
@@ -188,6 +189,52 @@ const groups = computed(() =>
 );
 
 const createOpen = ref(false);
+
+// Selection lives on the page rather than in the URL: it is a thing you are
+// doing right now, not a view worth sharing or restoring.
+const selected = ref<Set<string>>(new Set());
+
+const selectedCount = computed(() => selected.value.size);
+
+function toggleSelected(identifier: string) {
+    const next = new Set(selected.value);
+
+    if (next.has(identifier)) {
+        next.delete(identifier);
+    } else {
+        next.add(identifier);
+    }
+
+    selected.value = next;
+}
+
+function selectAllInView() {
+    selected.value = new Set(props.issues.map((issue) => issue.identifier));
+}
+
+function clearSelection() {
+    selected.value = new Set();
+}
+
+const bulkBusy = ref(false);
+
+function applyBulk(changes: Record<string, unknown>) {
+    if (selected.value.size === 0 || bulkBusy.value) {
+        return;
+    }
+
+    bulkBusy.value = true;
+
+    router.patch(
+        bulk().url,
+        { issues: [...selected.value], ...changes },
+        {
+            preserveScroll: true,
+            onSuccess: clearSelection,
+            onFinish: () => (bulkBusy.value = false),
+        },
+    );
+}
 </script>
 
 <template>
@@ -378,53 +425,124 @@ const createOpen = ref(false);
                     </span>
                 </div>
 
-                <Link
+                <div
                     v-for="issue in group.issues"
                     :key="issue.identifier"
-                    :href="show({ issue: issue.identifier })"
-                    class="flex items-center gap-3 border-t border-sidebar-border/70 px-4 py-2.5 transition-colors hover:bg-accent dark:border-sidebar-border"
+                    class="flex items-center border-t border-sidebar-border/70 transition-colors hover:bg-accent dark:border-sidebar-border"
+                    :class="{ 'bg-accent/60': selected.has(issue.identifier) }"
                 >
-                    <span
-                        class="size-2 shrink-0 rounded-full"
-                        :class="priorityDot[issue.priority]"
-                    />
-                    <span
-                        class="w-20 shrink-0 font-mono text-xs text-muted-foreground"
+                    <!-- Outside the Link: a checkbox inside one navigates. -->
+                    <label
+                        class="flex shrink-0 cursor-pointer items-center py-2.5 pl-4"
                     >
-                        {{ issue.identifier }}
-                    </span>
-                    <span class="truncate text-sm">{{ issue.title }}</span>
-                    <span
-                        v-if="issue.childrenCount > 0"
-                        class="shrink-0 text-xs text-muted-foreground"
-                    >
-                        {{ issue.childrenCount }} sub
-                    </span>
-                    <div class="ml-auto flex shrink-0 items-center gap-1.5">
-                        <Badge
-                            v-if="issue.originatingReport"
-                            variant="secondary"
-                            class="font-normal"
-                            :title="
-                                $t('issue.filedBy', {
-                                    source: issue.originatingReport.label,
-                                })
+                        <Checkbox
+                            :model-value="selected.has(issue.identifier)"
+                            :aria-label="issue.identifier"
+                            @update:model-value="
+                                () => toggleSelected(issue.identifier)
                             "
-                        >
-                            {{ issue.originatingReport.label }}
-                        </Badge>
-                        <LabelBadge
-                            v-for="label in issue.labels"
-                            :key="label.id"
-                            :name="label.name"
-                            :color="label.color"
                         />
-                        <Badge variant="outline" class="font-normal">
-                            {{ $t(`issueType.${issue.type}`) }}
-                        </Badge>
-                    </div>
-                </Link>
+                    </label>
+                    <Link
+                        :href="show({ issue: issue.identifier })"
+                        class="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5"
+                    >
+                        <span
+                            class="size-2 shrink-0 rounded-full"
+                            :class="priorityDot[issue.priority]"
+                        />
+                        <span
+                            class="w-20 shrink-0 font-mono text-xs text-muted-foreground"
+                        >
+                            {{ issue.identifier }}
+                        </span>
+                        <span class="truncate text-sm">{{ issue.title }}</span>
+                        <span
+                            v-if="issue.childrenCount > 0"
+                            class="shrink-0 text-xs text-muted-foreground"
+                        >
+                            {{ issue.childrenCount }} sub
+                        </span>
+                        <div class="ml-auto flex shrink-0 items-center gap-1.5">
+                            <Badge
+                                v-if="issue.originatingReport"
+                                variant="secondary"
+                                class="font-normal"
+                                :title="
+                                    $t('issue.filedBy', {
+                                        source: issue.originatingReport.label,
+                                    })
+                                "
+                            >
+                                {{ issue.originatingReport.label }}
+                            </Badge>
+                            <LabelBadge
+                                v-for="label in issue.labels"
+                                :key="label.id"
+                                :name="label.name"
+                                :color="label.color"
+                            />
+                            <Badge variant="outline" class="font-normal">
+                                {{ $t(`issueType.${issue.type}`) }}
+                            </Badge>
+                        </div>
+                    </Link>
+                </div>
             </template>
+        </div>
+    </div>
+
+    <div
+        v-if="selectedCount > 0"
+        class="sticky bottom-4 z-10 mx-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur"
+    >
+        <span class="text-sm font-medium">
+            {{ $t('bulk.selected', { count: selectedCount }) }}
+        </span>
+        <Button size="sm" variant="ghost" @click="selectAllInView">
+            {{ $t('bulk.selectAll') }}
+        </Button>
+        <Button size="sm" variant="ghost" @click="clearSelection">
+            {{ $t('bulk.clear') }}
+        </Button>
+
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+            <Select @update:model-value="(v) => applyBulk({ status: v })">
+                <SelectTrigger class="h-8 w-auto gap-1.5" :disabled="bulkBusy">
+                    <SelectValue :placeholder="$t('bulk.setStatus')" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem
+                        v-for="option in statusMeta"
+                        :key="option.value"
+                        :value="option.value"
+                    >
+                        {{ $t(`status.${option.value}`) }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            <Select @update:model-value="(v) => applyBulk({ priority: v })">
+                <SelectTrigger class="h-8 w-auto gap-1.5" :disabled="bulkBusy">
+                    <SelectValue :placeholder="$t('bulk.setPriority')" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem
+                        v-for="option in Object.keys(priorityDot)"
+                        :key="option"
+                        :value="option"
+                    >
+                        {{ $t(`priority.${option}`) }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            <Button
+                size="sm"
+                variant="outline"
+                :disabled="bulkBusy"
+                @click="applyBulk({ archived: true })"
+            >
+                {{ $t('bulk.archive') }}
+            </Button>
         </div>
     </div>
 

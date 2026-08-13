@@ -702,6 +702,14 @@
         "empty": "No webhooks yet",
         "emptyBody": "Add one so another app hears about status changes instead of polling."
     },
+    "bulk": {
+        "selected": "{count} selected",
+        "selectAll": "Select all in view",
+        "clear": "Clear",
+        "setStatus": "Set status",
+        "setPriority": "Set priority",
+        "archive": "Archive"
+    },
     "accuracy": {
         "title": "Estimate accuracy",
         "description": "How estimates compare to time actually logged",
