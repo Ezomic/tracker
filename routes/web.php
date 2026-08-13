@@ -57,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('issues/{issue:identifier}', [IssueController::class, 'show'])->name('issues.show');
     Route::patch('issues/{issue:identifier}', [IssueController::class, 'update'])->name('issues.update');
     Route::patch('issues/{issue:identifier}/status', [IssueController::class, 'updateStatus'])->name('issues.updateStatus');
+    Route::patch('issues/{issue:identifier}/reorder', [IssueController::class, 'reorder'])->name('issues.reorder');
     Route::patch('issues/{issue:identifier}/state', [IssueController::class, 'updateState'])->name('issues.updateState');
     Route::post('issues/{issue:identifier}/archive', [IssueController::class, 'archive'])->name('issues.archive');
     Route::post('issues/{issue:identifier}/unarchive', [IssueController::class, 'unarchive'])->name('issues.unarchive');

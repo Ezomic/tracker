@@ -9,6 +9,7 @@ use App\Actions\BulkUpdateIssuesAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LinkIssuesAction;
 use App\Actions\MoveIssueToStateAction;
+use App\Actions\ReorderIssueAction;
 use App\Actions\WatchIssueAction;
 use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
@@ -271,6 +272,9 @@ class IssueController extends Controller
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee', 'parent'])
                 ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
+                // Position first, then creation date as the tiebreak so lanes
+                // that have never been reordered look exactly as they did.
+                ->orderBy('board_position')
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
@@ -314,7 +318,7 @@ class IssueController extends Controller
             ->all());
     }
 
-    public function updateState(UpdateIssueStateRequest $request, Issue $issue, MoveIssueToStateAction $action): RedirectResponse
+    public function updateState(UpdateIssueStateRequest $request, Issue $issue, MoveIssueToStateAction $action, ReorderIssueAction $reorder): RedirectResponse
     {
         $this->authorize('update', $issue);
 
@@ -322,7 +326,42 @@ class IssueController extends Controller
 
         $action->handle($issue, $state);
 
+        // Dropping between lanes should land where it was dropped, not at a
+        // position inherited from the lane it came from.
+        $reorder->handle($issue->refresh(), $this->anchorFor($request));
+
         return back();
+    }
+
+    public function reorder(Request $request, Issue $issue, ReorderIssueAction $action): RedirectResponse
+    {
+        $this->authorize('update', $issue);
+
+        $action->handle($issue, $this->anchorFor($request));
+
+        return back();
+    }
+
+    /**
+     * The issue a drop landed after, addressed by identifier like everything
+     * else. Null means the top of the lane.
+     *
+     * Authorized: without this, ordering against an arbitrary issue would
+     * confirm whether it exists in a project the actor cannot see.
+     */
+    private function anchorFor(Request $request): ?int
+    {
+        $identifier = $request->string('after')->toString();
+
+        if ($identifier === '') {
+            return null;
+        }
+
+        $anchor = Issue::query()->where('identifier', $identifier)->firstOrFail();
+
+        $this->authorize('view', $anchor);
+
+        return $anchor->id;
     }
 
     public function updateStatus(UpdateIssueStatusRequest $request, Issue $issue): RedirectResponse

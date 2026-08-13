@@ -13,7 +13,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { getInitials } from '@/composables/useInitials';
 import { formatDuration } from '@/lib/duration';
-import { board, show, updateState, updateStatus } from '@/routes/issues';
+import {
+    board,
+    reorder,
+    show,
+    updateState,
+    updateStatus,
+} from '@/routes/issues';
 import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
 
 interface WorkflowStateColumn {
@@ -57,7 +63,7 @@ interface BoardColumn {
     color: string | null;
     colorClass: string;
     match: (issue: Issue) => boolean;
-    drop: (issue: Issue) => void;
+    drop: (issue: Issue, after?: string | null) => void;
 }
 
 const RELOAD = { preserveScroll: true, preserveState: true, only: ['issues'] };
@@ -79,10 +85,10 @@ const columns = computed<BoardColumn[]>(() => {
             color: state.color,
             colorClass: '',
             match: (issue: Issue) => issue.workflowStateId === state.id,
-            drop: (issue: Issue) =>
+            drop: (issue: Issue, after: string | null = null) =>
                 router.patch(
                     updateState.url({ issue: issue.identifier }),
-                    { workflow_state_id: state.id },
+                    { workflow_state_id: state.id, after },
                     RELOAD,
                 ),
         }));
@@ -94,10 +100,10 @@ const columns = computed<BoardColumn[]>(() => {
         color: null,
         colorClass: column.dot,
         match: (issue: Issue) => issue.status === column.status,
-        drop: (issue: Issue) =>
+        drop: (issue: Issue, after: string | null = null) =>
             router.patch(
                 updateStatus.url({ issue: issue.identifier }),
-                { status: column.status },
+                { status: column.status, after },
                 RELOAD,
             ),
     }));
@@ -135,18 +141,59 @@ function onDragStart(event: DragEvent, issue: Issue) {
 function onDragEnd() {
     draggingId.value = null;
     dragOverKey.value = null;
+    dropAfter.value = null;
+}
+
+// The card the pointer is currently over, so a drop lands where it looks like
+// it will rather than always at the top of the column.
+const dropAfter = ref<string | null>(null);
+
+function onCardDragOver(event: DragEvent, issue: Issue) {
+    if (draggingId.value === null || draggingId.value === issue.identifier) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Past the midpoint means "after this card", before it means "before".
+    const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const below = event.clientY > box.top + box.height / 2;
+
+    dropAfter.value = below ? issue.identifier : previousIn(issue);
+}
+
+function previousIn(issue: Issue): string | null {
+    const column = columns.value.find((c) => c.match(issue));
+    const cards = column ? (issuesByColumn.value.get(column.key) ?? []) : [];
+    const index = cards.findIndex((c) => c.identifier === issue.identifier);
+
+    return index > 0 ? cards[index - 1].identifier : null;
 }
 
 function onDrop(event: DragEvent, column: BoardColumn) {
     dragOverKey.value = null;
     const identifier = event.dataTransfer?.getData('text/plain');
     const issue = props.issues.find((i) => i.identifier === identifier);
+    const after = dropAfter.value;
+    dropAfter.value = null;
 
-    if (!issue || column.match(issue)) {
+    if (!issue) {
         return;
     }
 
-    column.drop(issue);
+    // Same lane: only the position changed.
+    if (column.match(issue)) {
+        router.patch(
+            reorder.url({ issue: issue.identifier }),
+            { after },
+            RELOAD,
+        );
+
+        return;
+    }
+
+    column.drop(issue, after);
 }
 </script>
 
@@ -229,6 +276,7 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                         ]"
                         @dragstart="onDragStart($event, issue)"
                         @dragend="onDragEnd"
+                        @dragover="onCardDragOver($event, issue)"
                     >
                         <div class="flex items-center gap-2">
                             <PriorityBars :priority="issue.priority" />
