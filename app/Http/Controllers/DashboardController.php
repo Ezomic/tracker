@@ -13,6 +13,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
+use App\Support\EstimateAccuracy;
 use App\Support\Staleness;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,7 +57,19 @@ class DashboardController extends Controller
             'completedByWeek' => $weekly['payload'],
             'metrics' => $this->metrics($counts, $weekly['totals'], $weekly['cycles']),
             'time' => $this->time($user, $done),
+            'accuracy' => EstimateAccuracy::build($user, $this->accuracyWeeks($request)),
         ]);
+    }
+
+    /**
+     * 4, 12 or 26 weeks. Anything else falls back to 12 rather than erroring:
+     * this is a dashboard control, not an API contract.
+     */
+    private function accuracyWeeks(Request $request): int
+    {
+        $weeks = $request->integer('accuracy_weeks');
+
+        return in_array($weeks, [4, 12, 26], true) ? $weeks : 12;
     }
 
     /**

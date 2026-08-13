@@ -701,5 +701,20 @@
         "removeConfirm": "Remove the webhook for {url}?",
         "empty": "No webhooks yet",
         "emptyBody": "Add one so another app hears about status changes instead of polling."
+    },
+    "accuracy": {
+        "title": "Estimate accuracy",
+        "description": "How estimates compare to time actually logged",
+        "weeks": "{weeks}w",
+        "sample": "{counted} counted, {excluded} without logged time",
+        "empty": "Nothing closed with both an estimate and logged time yet",
+        "onTarget": "on target",
+        "byProject": "By project",
+        "byBand": "By estimate size",
+        "band": {
+            "under_1h": "Under 1h",
+            "1h_to_4h": "1h to 4h",
+            "over_4h": "Over 4h"
+        }
     }
 }

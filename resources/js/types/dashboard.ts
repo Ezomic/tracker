@@ -44,6 +44,21 @@ export interface StaleRow extends IssueRow {
     quietDays: number;
 }
 
+export interface AccuracyRow {
+    estimated: number;
+    actual: number;
+    ratio: number | null;
+    direction: 'over' | 'under' | 'none';
+    sampleSize: number;
+}
+
+export interface EstimateAccuracyData {
+    window: number;
+    overall: AccuracyRow & { excluded: number };
+    projects: (AccuracyRow & { key: string; name: string })[];
+    bands: (AccuracyRow & { band: string })[];
+}
+
 export interface CompletedSeries {
     key: string;
     name: string;
