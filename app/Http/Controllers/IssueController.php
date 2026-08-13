@@ -38,6 +38,7 @@ use App\Models\WorkflowState;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use App\Support\Duration;
+use App\Support\IssueSearch;
 use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -69,7 +70,7 @@ class IssueController extends Controller
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
                 ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
-                ->when($request->string('search')->toString() ?: null, fn (Builder $query, string $search) => $query->where('title', 'like', '%'.$search.'%'))
+                ->when($request->string('search')->toString() ?: null, fn (Builder $query, string $search) => IssueSearch::apply($query, $search))
                 ->when($request->integer('project_id') ?: null, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 ->when($request->string('status')->toString() ?: null, fn (Builder $query, string $status) => $query->where('status', $status))
                 ->when($request->string('type')->toString() ?: null, fn (Builder $query, string $type) => $query->where('type', $type))
@@ -114,22 +115,13 @@ class IssueController extends Controller
             return response()->json([]);
         }
 
-        $like = '%'.addcslashes($term, '%_\\').'%';
-
-        $issues = Issue::query()
-            ->visibleTo($user)
-            ->inOrganization($current->for($user))
-            ->with('project:id,key')
-            ->where(function (Builder $query) use ($like): void {
-                $query->where('identifier', 'like', $like)
-                    ->orWhere('title', 'like', $like)
-                    ->orWhere('description', 'like', $like);
-            })
-            ->orderByRaw('CASE WHEN identifier = ? THEN 0 WHEN identifier like ? THEN 1 ELSE 2 END', [
-                mb_strtoupper($term),
-                mb_strtoupper($term).'%',
-            ])
-            ->latest('updated_at')
+        $issues = IssueSearch::apply(
+            Issue::query()
+                ->visibleTo($user)
+                ->inOrganization($current->for($user))
+                ->with('project:id,key'),
+            $term,
+        )
             ->limit(15)
             ->get(['id', 'identifier', 'title', 'status', 'archived_at', 'project_id']);
 
