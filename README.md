@@ -135,7 +135,7 @@ GET    /api/issues/{identifier}/activity # how it got to be the way it is
 | Param      | Takes                                            |
 | ---------- | ------------------------------------------------ |
 | `project`  | a project key (`TRACK`)                          |
-| `search`   | matches title, identifier and description        |
+| `search`   | ranked full-text over title, description and comments |
 | `status`   | `backlog`, `in_progress`, `in_review`, `done` (deprecated) |
 | `workflow_state` | a lane name on the project's type            |
 | `state_category` | `backlog`, `unstarted`, `started`, `completed`, `canceled` |

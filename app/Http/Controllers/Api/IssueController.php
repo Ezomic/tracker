@@ -38,6 +38,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\WorkflowState;
 use App\Support\Duration;
+use App\Support\IssueSearch;
 use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -87,10 +88,7 @@ class IssueController extends Controller
      */
     private function applySearch(Builder $query, string $search): Builder
     {
-        return $query->where(fn (Builder $group) => $group
-            ->where('title', 'like', '%'.$search.'%')
-            ->orWhere('identifier', 'like', '%'.$search.'%')
-            ->orWhere('description', 'like', '%'.$search.'%'));
+        return IssueSearch::apply($query, $search);
     }
 
     /**

@@ -14,6 +14,7 @@ use App\Enums\WebhookEvent;
 use App\Models\Issue;
 use App\Models\User;
 use App\Notifications\IssueNotification;
+use App\Support\IssueSearch;
 use Illuminate\Support\Facades\Notification;
 
 class IssueObserver
@@ -29,10 +30,16 @@ class IssueObserver
         // which for a service account is nobody worth notifying, and autoWatch
         // handles the null.
         app(WatchIssueAction::class)->autoWatch($issue, $issue->owner);
+
+        IssueSearch::index($issue);
     }
 
     public function updated(Issue $issue): void
     {
+        if ($issue->wasChanged(['title', 'description', 'identifier'])) {
+            IssueSearch::index($issue);
+        }
+
         if ($issue->wasChanged('status')) {
             $issue->recordActivity('status_changed', [
                 'from' => ($from = $issue->getOriginal('status')) instanceof IssueStatus ? $from->value : null,
@@ -104,6 +111,11 @@ class IssueObserver
                 ($archived ? WebhookEvent::Archived : WebhookEvent::Restored)->value,
             );
         }
+    }
+
+    public function deleted(Issue $issue): void
+    {
+        IssueSearch::forget($issue);
     }
 
     /**
