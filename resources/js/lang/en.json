@@ -314,7 +314,8 @@
         "legacyLayout": "Legacy layout",
         "watching": "Watching",
         "watchingOn": "Watching",
-        "watchingOff": "Watch"
+        "watchingOff": "Watch",
+        "links": "Linked issues"
     },
     "newIssue": {
         "title": "New issue",
