@@ -30,8 +30,11 @@ class BulkUpdateIssuesAction
     {
         $updated = [];
         $skipped = [];
+        $projects = [];
+        $notify = app(NotifyIssueWebhooksAction::class);
+        NotifyIssueWebhooksAction::reset();
 
-        DB::transaction(function () use ($identifiers, $changes, $actor, &$updated, &$skipped): void {
+        DB::transaction(function () use ($identifiers, $changes, $actor, &$updated, &$skipped, &$projects): void {
             foreach (array_unique($identifiers) as $identifier) {
                 $issue = Issue::query()->where('identifier', $identifier)->first();
 
@@ -49,8 +52,15 @@ class BulkUpdateIssuesAction
 
                 $this->apply($issue, $changes, $actor);
                 $updated[] = $identifier;
+                $projects[$issue->project_id] = $issue->project;
             }
         });
+
+        // One summary per project touched, so an endpoint that hit the cap
+        // learns that more happened than it was told about.
+        foreach ($projects as $project) {
+            $notify->flushSuppressed($project);
+        }
 
         return ['updated' => $updated, 'skipped' => $skipped];
     }

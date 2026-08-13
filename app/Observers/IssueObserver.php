@@ -9,6 +9,7 @@ use App\Actions\WatchIssueAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Enums\WebhookEvent;
 use App\Models\Issue;
 use App\Models\User;
 use App\Notifications\IssueNotification;
@@ -19,6 +20,8 @@ class IssueObserver
     public function created(Issue $issue): void
     {
         $issue->recordActivity('created');
+
+        app(NotifyIssueWebhooksAction::class)->handle($issue, WebhookEvent::Created->value);
 
         // Filing an issue subscribes you to it. The owner is whoever filed it,
         // which for a service account is nobody worth notifying, and autoWatch
@@ -34,12 +37,13 @@ class IssueObserver
                 'to' => $issue->status->value,
             ]);
 
-            app(NotifyIssueWebhooksAction::class)->handle($issue, 'issue.status_changed');
+            app(NotifyIssueWebhooksAction::class)->handle($issue, WebhookEvent::StatusChanged->value);
             $this->notifyWatchers($issue, 'issue_status_changed');
         }
 
         if ($issue->wasChanged('assignee_id')) {
             $issue->recordActivity('assigned', ['to' => $issue->assignee?->name]);
+            app(NotifyIssueWebhooksAction::class)->handle($issue, WebhookEvent::Assigned->value);
             $this->notifyAssignee($issue);
 
             if ($issue->assignee_id !== null) {
@@ -87,9 +91,16 @@ class IssueObserver
         }
 
         if ($issue->wasChanged('archived_at')) {
-            $issue->archived_at !== null
+            $archived = $issue->archived_at !== null;
+
+            $archived
                 ? $issue->recordActivity('archived', ['reason' => $issue->archive_reason])
                 : $issue->recordActivity('unarchived');
+
+            app(NotifyIssueWebhooksAction::class)->handle(
+                $issue,
+                ($archived ? WebhookEvent::Archived : WebhookEvent::Restored)->value,
+            );
         }
     }
 

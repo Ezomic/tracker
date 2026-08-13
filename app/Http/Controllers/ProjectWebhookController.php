@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\DeliverWebhookAction;
+use App\Enums\WebhookEvent;
 use App\Http\Requests\StoreProjectWebhookRequest;
 use App\Models\Project;
 use App\Models\ProjectWebhook;
+use App\Support\Cast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -36,9 +38,11 @@ class ProjectWebhookController extends Controller
                     'lastDeliveredAtDiff' => $webhook->last_delivered_at?->diffForHumans(),
                     'lastStatus' => $webhook->last_status,
                     'lastError' => $webhook->last_error,
+                    'events' => $webhook->subscribedEvents(),
                 ])
                 ->all(),
             'signatureHeader' => DeliverWebhookAction::SIGNATURE_HEADER,
+            'availableEvents' => WebhookEvent::values(),
             // Flashed once by store(), through the redirect, then gone.
             'createdSecret' => session('createdSecret'),
         ]);
@@ -94,7 +98,18 @@ class ProjectWebhookController extends Controller
 
         abort_unless($webhook->project_id === $project->id, 404);
 
-        $webhook->update(['active' => $request->boolean('active')]);
+        $attributes = ['active' => $request->boolean('active')];
+
+        if ($request->has('events')) {
+            // Intersected with the known set, so an unknown event name cannot
+            // be stored and silently never fire.
+            $attributes['events'] = array_values(array_intersect(
+                Cast::strings($request->input('events', [])),
+                WebhookEvent::values(),
+            ));
+        }
+
+        $webhook->update($attributes);
 
         return to_route('projects.webhooks.index', $project->key);
     }
