@@ -65,6 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('issues/{issue:identifier}/confirm-time', [TimeEntryController::class, 'confirmTime'])->name('issues.confirmTime');
 
     Route::post('issues/{issue:identifier}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
+    Route::patch('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'update'])->name('issues.comments.update');
     Route::delete('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'destroy'])->name('issues.comments.destroy');
 
     Route::post('saved-views', [SavedViewController::class, 'store'])->name('saved-views.store');

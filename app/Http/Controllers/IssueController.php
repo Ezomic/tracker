@@ -204,6 +204,7 @@ class IssueController extends Controller
             'kind' => 'comment',
             'id' => $comment->id,
             'createdAt' => $comment->created_at->toIso8601String(),
+            'editedAt' => $comment->edited_at?->toIso8601String(),
             'user' => $this->serializeUser($comment->user),
             'body' => $comment->body,
         ]);
@@ -500,6 +501,7 @@ class IssueController extends Controller
                 'id' => $comment->id,
                 'body' => $comment->body,
                 'createdAt' => $comment->created_at->toIso8601String(),
+                'editedAt' => $comment->edited_at?->toIso8601String(),
                 'user' => $this->serializeUser($comment->relationLoaded('user') ? $comment->user : null),
             ])->all() : [],
         ];

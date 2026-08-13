@@ -11,6 +11,7 @@ import {
     GitBranch,
     GitCommit,
     GitPullRequest,
+    Pencil,
     Plus,
     Trash2,
 } from '@lucide/vue';
@@ -68,6 +69,7 @@ import {
 } from '@/routes/issues';
 import {
     destroy as destroyComment,
+    update as updateComment,
     store as storeComment,
 } from '@/routes/issues/comments';
 import {
@@ -320,6 +322,34 @@ function removeEntry(entry: TimeEntry) {
     );
 }
 
+const editingCommentId = ref<number | null>(null);
+const editingBody = ref('');
+
+function startEditing(comment: { id: number; body: string }) {
+    editingCommentId.value = comment.id;
+    editingBody.value = comment.body;
+}
+
+function cancelEditing() {
+    editingCommentId.value = null;
+    editingBody.value = '';
+}
+
+function saveComment(comment: { id: number }) {
+    if (editingBody.value.trim() === '') {
+        return;
+    }
+
+    router.patch(
+        updateComment({
+            issue: props.issue.identifier,
+            comment: comment.id,
+        }).url,
+        { body: editingBody.value },
+        { preserveScroll: true, onSuccess: cancelEditing },
+    );
+}
+
 function removeComment(comment: IssueComment) {
     router.delete(
         destroyComment({ issue: props.issue.identifier, comment: comment.id })
@@ -333,6 +363,10 @@ const canRemove = (entry: TimeEntry) =>
 
 const canRemoveComment = (comment: IssueComment) =>
     props.canModerateComments || comment.user?.id === props.currentUserId;
+
+// Only the author edits. A moderator can remove a comment but not rewrite it.
+const canEditComment = (comment: { user: IssueUser | null }) =>
+    comment.user?.id === props.currentUserId;
 
 function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(undefined, {
@@ -627,18 +661,72 @@ const statusDot: Record<Issue['status'], string> = {
                                     <span class="text-xs text-muted-foreground">
                                         {{ formatTimestamp(item.createdAt) }}
                                     </span>
+                                    <span
+                                        v-if="item.editedAt"
+                                        class="text-xs text-muted-foreground"
+                                        :title="formatTimestamp(item.editedAt)"
+                                    >
+                                        · {{ $t('activity.edited') }}
+                                    </span>
+                                    <Button
+                                        v-if="
+                                            canEditComment(item) &&
+                                            editingCommentId !== item.id
+                                        "
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        class="ml-auto size-7 shrink-0 text-muted-foreground"
+                                        @click="startEditing(item)"
+                                    >
+                                        <Pencil class="size-3.5" />
+                                    </Button>
                                     <Button
                                         v-if="canRemoveComment(item)"
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        class="ml-auto size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                        class="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                        :class="{
+                                            'ml-auto':
+                                                !canEditComment(item) ||
+                                                editingCommentId === item.id,
+                                        }"
                                         @click="removeComment(item)"
                                     >
                                         <Trash2 class="size-3.5" />
                                     </Button>
                                 </div>
-                                <p class="mt-0.5 text-sm whitespace-pre-wrap">
+                                <div
+                                    v-if="editingCommentId === item.id"
+                                    class="mt-1 flex flex-col gap-2"
+                                >
+                                    <AutoTextarea
+                                        v-model="editingBody"
+                                        class="text-sm"
+                                    />
+                                    <div class="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            @click="saveComment(item)"
+                                        >
+                                            {{ $t('activity.save') }}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            @click="cancelEditing"
+                                        >
+                                            {{ $t('common.cancel') }}
+                                        </Button>
+                                    </div>
+                                </div>
+                                <p
+                                    v-else
+                                    class="mt-0.5 text-sm whitespace-pre-wrap"
+                                >
                                     {{ item.body }}
                                 </p>
                             </div>

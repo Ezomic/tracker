@@ -18,6 +18,7 @@ use App\Http\Requests\FilterIssuesApiRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
+use App\Http\Requests\UpdateCommentRequest;
 use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusApiRequest;
 use App\Models\Comment;
@@ -291,6 +292,7 @@ class IssueController extends Controller
                 'body' => $comment->body,
                 'user' => $comment->user?->name,
                 'createdAt' => $comment->created_at->toIso8601String(),
+                'editedAt' => $comment->edited_at?->toIso8601String(),
             ]);
 
         return response()->json($comments);
@@ -309,6 +311,30 @@ class IssueController extends Controller
             'user' => $this->currentUser($request)->name,
             'createdAt' => $comment->created_at->toIso8601String(),
         ], 201);
+    }
+
+    /**
+     * Only the author may edit, matching the web route. No notification is sent:
+     * an edit must not become a way to ping someone after the fact.
+     */
+    public function updateComment(UpdateCommentRequest $request, Issue $issue, Comment $comment): JsonResponse
+    {
+        abort_unless($comment->issue_id === $issue->id, 404);
+        $this->authorize('view', $issue);
+        abort_unless($comment->user_id === $this->currentUser($request)->id, 403);
+
+        $comment->forceFill([
+            'body' => $request->string('body')->toString(),
+            'edited_at' => now(),
+        ])->save();
+
+        return response()->json([
+            'id' => $comment->id,
+            'body' => $comment->body,
+            'user' => $comment->user?->name,
+            'createdAt' => $comment->created_at->toIso8601String(),
+            'editedAt' => $comment->edited_at?->toIso8601String(),
+        ]);
     }
 
     public function listTime(Request $request, Issue $issue): JsonResponse

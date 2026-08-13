@@ -357,7 +357,9 @@
         "prOpened": "opende een pull request",
         "prMerged": "voegde de pull request samen",
         "committed": "committe",
-        "someone": "Iemand"
+        "someone": "Iemand",
+        "edited": "bewerkt",
+        "save": "Opslaan"
     },
     "time": {
         "title": "Tijd",

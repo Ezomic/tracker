@@ -13,6 +13,8 @@ export interface TimeEntry {
 }
 
 export interface IssueComment {
+    /** Set once the author has edited it. */
+    editedAt?: string | null;
     id: number;
     body: string;
     createdAt: string;
@@ -24,6 +26,8 @@ export type TimelineItem =
           kind: 'comment';
           id: number;
           createdAt: string;
+          /** Set once the author has edited it; null means untouched since posting. */
+          editedAt: string | null;
           user: IssueUser | null;
           body: string;
       }

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $issue_id
  * @property int|null $user_id
  * @property string $body
+ * @property Carbon|null $edited_at
  * @property Carbon $created_at
  */
 #[Fillable(['issue_id', 'user_id', 'body'])]
@@ -38,5 +39,15 @@ class Comment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'edited_at' => 'datetime',
+        ];
     }
 }
