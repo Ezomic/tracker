@@ -7,15 +7,18 @@ namespace App\Http\Controllers\Api;
 use App\Actions\AddCommentAction;
 use App\Actions\ArchiveIssueAction;
 use App\Actions\CreateIssueAction;
+use App\Actions\LinkIssuesAction;
 use App\Actions\LogTimeAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\ResolveWorkflowStateAction;
 use App\Enums\IssuePriority;
+use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FilterIssuesApiRequest;
 use App\Http\Requests\StoreCommentRequest;
+use App\Http\Requests\StoreIssueLinkRequest;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Requests\UpdateCommentRequest;
@@ -23,6 +26,7 @@ use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusApiRequest;
 use App\Models\Comment;
 use App\Models\Issue;
+use App\Models\IssueLink;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
@@ -102,7 +106,7 @@ class IssueController extends Controller
     {
         $this->authorize('view', $issue);
 
-        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState'])));
+        return response()->json($this->detail($issue->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState', 'links.relatedIssue'])));
     }
 
     public function store(StoreIssueRequest $request, CreateIssueAction $action): JsonResponse
@@ -240,7 +244,7 @@ class IssueController extends Controller
         }
 
         return response()->json(
-            $this->detail($issue->refresh()->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState']))
+            $this->detail($issue->refresh()->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState', 'links.relatedIssue']))
         );
     }
 
@@ -335,6 +339,32 @@ class IssueController extends Controller
             'createdAt' => $comment->created_at->toIso8601String(),
             'editedAt' => $comment->edited_at?->toIso8601String(),
         ]);
+    }
+
+    public function storeLink(StoreIssueLinkRequest $request, Issue $issue, LinkIssuesAction $action): JsonResponse
+    {
+        $this->authorize('update', $issue);
+
+        $related = Issue::query()->where('identifier', $request->string('issue')->toString())->firstOrFail();
+
+        // Both ends must be visible, or a link leaks the existence of an issue
+        // in a project the caller cannot see.
+        $this->authorize('view', $related);
+
+        $action->handle($issue, $related, IssueRelation::from($request->string('relation')->toString()), $this->currentUser($request));
+
+        return response()->json($this->detail($issue->refresh()->load(['project', 'parent', 'owner', 'assignee', 'labels', 'workflowState', 'links.relatedIssue'])), 201);
+    }
+
+    public function destroyLink(Request $request, Issue $issue, IssueLink $link, LinkIssuesAction $action): JsonResponse
+    {
+        $this->authorize('update', $issue);
+
+        abort_unless($link->issue_id === $issue->id, 404);
+
+        $action->unlink($issue, $link->relatedIssue, $link->relation);
+
+        return response()->json(status: 204);
     }
 
     public function listTime(Request $request, Issue $issue): JsonResponse
@@ -546,6 +576,10 @@ class IssueController extends Controller
             'external_ref' => $issue->external_ref,
             'external_reporter' => $issue->external_reporter,
             'watchers' => $issue->watchers()->wherePivot('watching', true)->count(),
+            'links' => $issue->links->map(fn (IssueLink $link): array => [
+                'relation' => $link->relation->value,
+                'issue' => $link->relatedIssue->identifier,
+            ])->all(),
         ];
     }
 }

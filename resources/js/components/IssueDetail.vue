@@ -75,6 +75,7 @@ import {
     update as updateComment,
     store as storeComment,
 } from '@/routes/issues/comments';
+import { destroy as destroyLink } from '@/routes/issues/links';
 import {
     destroy as destroyTime,
     store as storeTime,
@@ -205,6 +206,36 @@ function archiveIssue() {
                 archiveOpen.value = false;
                 archiveReason.value = '';
             },
+        },
+    );
+}
+
+// Grouped by relation so "Blocked by" reads as a list rather than a repeated
+// label on every row.
+const groupedLinks = computed(() => {
+    const groups = new Map<
+        string,
+        { relation: string; label: string; links: Issue['links'] }
+    >();
+
+    for (const link of props.issue.links) {
+        const group = groups.get(link.relation) ?? {
+            relation: link.relation,
+            label: link.label,
+            links: [],
+        };
+        group.links.push(link);
+        groups.set(link.relation, group);
+    }
+
+    return [...groups.values()];
+});
+
+function removeLink(id: number) {
+    router.delete(
+        destroyLink({ issue: props.issue.identifier, link: id }).url,
+        {
+            preserveScroll: true,
         },
     );
 }
@@ -934,6 +965,52 @@ const statusDot: Record<Issue['status'], string> = {
                 <p class="text-sm">
                     {{ issue.owner?.name ?? $t('issue.unknown') }}
                 </p>
+            </div>
+
+            <div v-if="groupedLinks.length > 0" class="grid gap-1.5">
+                <Label class="text-xs text-muted-foreground">
+                    {{ $t('issue.links') }}
+                </Label>
+                <div
+                    v-for="group in groupedLinks"
+                    :key="group.relation"
+                    class="grid gap-1"
+                >
+                    <span class="text-xs text-muted-foreground">{{
+                        group.label
+                    }}</span>
+                    <div
+                        v-for="link in group.links"
+                        :key="link.id"
+                        class="flex items-center gap-1.5 text-sm"
+                    >
+                        <span
+                            class="size-1.5 shrink-0 rounded-full"
+                            :class="
+                                link.issue.status === 'done'
+                                    ? 'bg-emerald-500'
+                                    : 'bg-muted-foreground/50'
+                            "
+                        />
+                        <Link
+                            :href="show({ issue: link.issue.identifier })"
+                            class="truncate hover:underline"
+                            :title="link.issue.title"
+                        >
+                            <span class="font-mono text-xs">{{
+                                link.issue.identifier
+                            }}</span>
+                            {{ link.issue.title }}
+                        </Link>
+                        <button
+                            type="button"
+                            class="ml-auto shrink-0 text-muted-foreground hover:text-destructive"
+                            @click="removeLink(link.id)"
+                        >
+                            <Trash2 class="size-3.5" />
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="grid gap-1.5">

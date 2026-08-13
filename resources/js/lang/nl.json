@@ -311,7 +311,8 @@
         "legacyLayout": "Oude indeling",
         "watching": "Volgen",
         "watchingOn": "Je volgt dit",
-        "watchingOff": "Volgen"
+        "watchingOff": "Volgen",
+        "links": "Gekoppelde tickets"
     },
     "newIssue": {
         "title": "Nieuw ticket",
