@@ -45,6 +45,7 @@ class FilterIssuesRequest extends FormRequest
             'type' => ['nullable', Rule::enum(IssueType::class)],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],
             'label_id' => ['nullable', 'integer', 'exists:labels,id'],
+            'stale' => ['nullable', 'boolean'],
         ];
     }
 }

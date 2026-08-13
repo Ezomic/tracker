@@ -13,6 +13,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
+use App\Support\Staleness;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -23,8 +24,6 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    private const STALE_DAYS = 7;
-
     private const TREND_WEEKS = 8;
 
     private const TOP_PROJECTS = 6;
@@ -53,6 +52,7 @@ class DashboardController extends Controller
             'hasProjects' => $user->projects()->notArchived()->exists(),
             'activeByProject' => $this->activeByProject($user),
             'attention' => $this->attention($user),
+            'stale' => $this->stale($user),
             'completedByWeek' => $weekly['payload'],
             'metrics' => $this->metrics($counts, $weekly['totals'], $weekly['cycles']),
             'time' => $this->time($user, $done),
@@ -151,6 +151,33 @@ class DashboardController extends Controller
             ->take(6)
             ->get()
             ->map(fn (Issue $issue): array => $this->row($issue))
+            ->all());
+    }
+
+    /**
+     * Open issues nobody has touched for longer than their project's threshold.
+     * Surfacing only: nothing is archived and nobody is notified, because an
+     * issue being old is information rather than an event.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function stale(User $user): array
+    {
+        return array_values(Staleness::scope($this->scoped($user))
+            ->with('project')
+            ->take(8)
+            ->get()
+            ->map(function (Issue $issue): array {
+                $last = Staleness::lastActivityAt($issue);
+
+                return [
+                    ...$this->row($issue),
+                    'quietSince' => $last->toIso8601String(),
+                    'quietDays' => (int) $last->diffInDays(now()),
+                ];
+            })
+            ->sortByDesc('quietDays')
+            ->values()
             ->all());
     }
 
@@ -455,6 +482,14 @@ class DashboardController extends Controller
             ? (int) CarbonImmutable::now()->diffInDays($reference, true)
             : 0;
 
+        // Staleness is measured from the last recorded activity, not from
+        // updated_at. updated_at moves on any column write: the TRACK-222
+        // backfill touched workflow_state_id on 354 issues and would have
+        // silently reset every one of them to "fresh".
+        $quietDays = $issue->status === IssueStatus::Done
+            ? 0
+            : (int) Staleness::lastActivityAt($issue)->diffInDays(CarbonImmutable::now());
+
         return [
             'identifier' => $issue->identifier,
             'title' => $issue->title,
@@ -463,7 +498,8 @@ class DashboardController extends Controller
             'status' => $issue->status->value,
             'priority' => $issue->priority->value,
             'ageDays' => $ageDays,
-            'stale' => $issue->status !== IssueStatus::Done && $ageDays >= self::STALE_DAYS,
+            'stale' => $issue->status !== IssueStatus::Done
+                && $quietDays >= Staleness::daysFor($issue->project),
             'timestamp' => $reference?->toIso8601String(),
         ];
     }

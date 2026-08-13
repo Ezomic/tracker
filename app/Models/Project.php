@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string $color
  * @property int|null $archive_after_days
+ * @property int|null $stale_after_days
  * @property list<string>|null $github_repos
  * @property string|null $production_url
  * @property int|null $billr_project_id
@@ -37,7 +38,7 @@ use Illuminate\Support\Carbon;
  * @property int $next_number
  * @property Carbon|null $archived_at
  */
-#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days', 'category_id'])]
+#[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days', 'stale_after_days', 'category_id'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
