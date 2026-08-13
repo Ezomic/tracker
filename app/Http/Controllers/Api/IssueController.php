@@ -14,12 +14,14 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FilterActivityApiRequest;
 use App\Http\Requests\FilterIssuesApiRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusApiRequest;
+use App\Models\Activity;
 use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\IssueTemplate;
@@ -309,6 +311,42 @@ class IssueController extends Controller
             'user' => $this->currentUser($request)->name,
             'createdAt' => $comment->created_at->toIso8601String(),
         ], 201);
+    }
+
+    /**
+     * The third strand of the issue timeline. Comments and time entries were
+     * already reachable; the activity behind them was not, so a consumer could
+     * read what an issue is now and nothing about how it got there.
+     *
+     * Oldest first, matching how the timeline reads on the page.
+     */
+    public function listActivity(FilterActivityApiRequest $request, Issue $issue): JsonResponse
+    {
+        $this->authorize('view', $issue);
+
+        $activities = $issue->activities()
+            ->with('user:id,email')
+            ->when($request->filled('type'), fn (Builder $query) => $query->where('type', $request->string('type')->toString()))
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->paginate($request->perPage())
+            ->withQueryString();
+
+        return response()->json([
+            'data' => array_map(fn (Activity $activity): array => [
+                'id' => $activity->id,
+                'type' => $activity->type,
+                'data' => $activity->data,
+                'user' => $activity->user?->email,
+                'created_at' => $activity->created_at->toIso8601String(),
+            ], $activities->items()),
+            'meta' => [
+                'total' => $activities->total(),
+                'per_page' => $activities->perPage(),
+                'current_page' => $activities->currentPage(),
+                'last_page' => $activities->lastPage(),
+            ],
+        ]);
     }
 
     public function listTime(Request $request, Issue $issue): JsonResponse
