@@ -545,6 +545,7 @@ class IssueController extends Controller
             'source' => $issue->source,
             'external_ref' => $issue->external_ref,
             'external_reporter' => $issue->external_reporter,
+            'watchers' => $issue->watchers()->wherePivot('watching', true)->count(),
         ];
     }
 }

@@ -308,7 +308,10 @@
         "addEstimate": "Add estimate",
         "addLabel": "Add label",
         "saving": "Saving…",
-        "legacyLayout": "Legacy layout"
+        "legacyLayout": "Legacy layout",
+        "watching": "Watching",
+        "watchingOn": "Watching",
+        "watchingOff": "Watch"
     },
     "newIssue": {
         "title": "New issue",

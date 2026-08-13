@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 
 class AddCommentAction
 {
+    public function __construct(private readonly WatchIssueAction $watch) {}
+
     public function handle(Issue $issue, User $author, string $body): Comment
     {
         $comment = $issue->comments()->create([
@@ -21,12 +23,16 @@ class AddCommentAction
             'body' => $body,
         ]);
 
-        $this->notifyMentionsAndAssignee($issue, $comment, $author);
+        // Commenting implies interest, so it subscribes you unless you have
+        // explicitly walked away from the issue.
+        $this->watch->autoWatch($issue, $author);
+
+        $this->notifyMentionsAndWatchers($issue, $comment, $author);
 
         return $comment;
     }
 
-    private function notifyMentionsAndAssignee(Issue $issue, Comment $comment, User $actor): void
+    private function notifyMentionsAndWatchers(Issue $issue, Comment $comment, User $actor): void
     {
         $excerpt = Str::limit($comment->body, 120);
 
@@ -35,12 +41,11 @@ class AddCommentAction
 
         Notification::send($mentioned, new IssueNotification('comment_mention', $issue, $actor, $excerpt));
 
-        $assignee = $issue->assignee;
+        // Watchers and the assignee, minus anyone already told by name and
+        // minus the person who wrote it.
+        $watchers = $issue->notifiable($actor)
+            ->reject(fn (User $user): bool => $mentioned->contains('id', $user->id));
 
-        if ($assignee !== null
-            && $assignee->id !== $actor->id
-            && ! $mentioned->contains('id', $assignee->id)) {
-            $assignee->notify(new IssueNotification('issue_commented', $issue, $actor, $excerpt));
-        }
+        Notification::send($watchers, new IssueNotification('issue_commented', $issue, $actor, $excerpt));
     }
 }

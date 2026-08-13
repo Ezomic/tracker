@@ -76,6 +76,9 @@ export interface Issue {
     owner: IssueUser | null;
     /** Set when another app filed this on behalf of someone with no account here. */
     externalReporter: string | null;
+    /** How many people follow this issue, and whether you are one of them. */
+    watcherCount: number;
+    watching: boolean;
     /** The app that filed it and, where configured, a link back to its record. */
     originatingReport: {
         source: string;

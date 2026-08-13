@@ -14,6 +14,7 @@ use Database\Factories\IssueFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -194,6 +195,42 @@ class Issue extends Model
                 ? str_replace(':ref', rawurlencode($this->external_ref), $url)
                 : null,
         ];
+    }
+
+    /**
+     * People following this issue. The pivot's `watching` flag distinguishes
+     * "never subscribed" from "deliberately left", which auto-watch has to
+     * respect.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function watchers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'issue_watchers')
+            ->withPivot('watching')
+            ->withTimestamps();
+    }
+
+    /**
+     * Everyone who should hear about a change: active watchers plus the
+     * assignee, who is notified whether or not they ever pressed watch.
+     *
+     * @return Collection<int, User>
+     */
+    public function notifiable(?User $except = null): Collection
+    {
+        $recipients = $this->watchers()->wherePivot('watching', true)->get();
+
+        $assignee = $this->assignee;
+
+        if ($assignee !== null && ! $recipients->contains('id', $assignee->id)) {
+            $recipients->push($assignee);
+        }
+
+        return $recipients
+            ->reject(fn (User $user): bool => $except !== null && $user->id === $except->id)
+            ->unique('id')
+            ->values();
     }
 
     /**
