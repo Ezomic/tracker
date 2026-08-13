@@ -709,5 +709,20 @@
         "setStatus": "Status instellen",
         "setPriority": "Prioriteit instellen",
         "archive": "Archiveren"
+    },
+    "accuracy": {
+        "title": "Nauwkeurigheid van schattingen",
+        "description": "Hoe schattingen zich verhouden tot werkelijk gelogde tijd",
+        "weeks": "{weeks}w",
+        "sample": "{counted} geteld, {excluded} zonder gelogde tijd",
+        "empty": "Nog niets afgerond met zowel een schatting als gelogde tijd",
+        "onTarget": "op schema",
+        "byProject": "Per project",
+        "byBand": "Per schattingsgrootte",
+        "band": {
+            "under_1h": "Onder 1u",
+            "1h_to_4h": "1u tot 4u",
+            "over_4h": "Meer dan 4u"
+        }
     }
 }
