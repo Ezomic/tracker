@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Actions\NotifyIssueWebhooksAction;
+use App\Actions\ReorderIssueAction;
 use App\Actions\WatchIssueAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
@@ -22,6 +23,7 @@ class IssueObserver
         $issue->recordActivity('created');
 
         app(NotifyIssueWebhooksAction::class)->handle($issue, WebhookEvent::Created->value);
+        app(ReorderIssueAction::class)->toTop($issue);
 
         // Filing an issue subscribes you to it. The owner is whoever filed it,
         // which for a service account is nobody worth notifying, and autoWatch
