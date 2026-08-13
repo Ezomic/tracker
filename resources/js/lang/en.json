@@ -209,7 +209,10 @@
         "onDone": "on {count} done",
         "noEstimates": "No estimated tickets completed yet.",
         "loggedByProject": "Logged by project",
-        "noTimeLogged": "No time logged this week."
+        "noTimeLogged": "No time logged this week.",
+        "staleTitle": "Gone quiet",
+        "staleDescription": "Open issues nobody has touched in a while",
+        "quietDays": "quiet {days}d"
     },
     "board": {
         "title": "Board",

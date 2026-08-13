@@ -42,6 +42,7 @@ class FilterIssuesApiRequest extends FormRequest
             'workflow_state' => ['sometimes', 'string', 'max:255'],
             'state_category' => ['sometimes', Rule::enum(StatusCategory::class)],
             'archived' => ['sometimes', 'string', Rule::in(['exclude', 'include', 'only'])],
+            'stale' => ['sometimes', 'boolean'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:200'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ];

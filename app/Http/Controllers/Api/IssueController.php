@@ -32,6 +32,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\WorkflowState;
 use App\Support\Duration;
+use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,7 @@ class IssueController extends Controller
             ->when($request->filled('parent'), fn (Builder $query) => $query->whereRelation('parent', 'identifier', $request->string('parent')->toString()))
             ->when($request->filled('source'), fn (Builder $query) => $query->where('source', $request->string('source')->toString()))
             ->when($request->filled('workflow_state'), fn (Builder $query) => $query->whereHas('workflowState', fn (Builder $states) => $states->whereRaw('lower(name) = ?', [Str::lower($request->string('workflow_state')->toString())])))
+            ->when($request->boolean('stale'), fn (Builder $query) => Staleness::scope($query))
             ->when($request->filled('state_category'), fn (Builder $query) => $query->whereHas('workflowState', fn (Builder $states) => $states->where('category', $request->string('state_category')->toString())))
             ->orderBy('project_id')
             ->orderBy('number')

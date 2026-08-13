@@ -32,6 +32,7 @@ use App\Models\WorkflowState;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
 use App\Support\Duration;
+use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,7 @@ class IssueController extends Controller
                 ->when($request->string('type')->toString() ?: null, fn (Builder $query, string $type) => $query->where('type', $type))
                 ->when($request->string('priority')->toString() ?: null, fn (Builder $query, string $priority) => $query->where('priority', $priority))
                 ->when($request->integer('label_id') ?: null, fn (Builder $query, int $labelId) => $query->whereHas('labels', fn (Builder $q) => $q->where('labels.id', $labelId)))
+                ->when($request->boolean('stale'), fn (Builder $query) => Staleness::scope($query))
                 ->latest()
                 ->get()
                 ->map($this->serialize(...)),
