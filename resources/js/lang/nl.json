@@ -701,5 +701,13 @@
         "removeConfirm": "De webhook voor {url} verwijderen?",
         "empty": "Nog geen webhooks",
         "emptyBody": "Voeg er een toe zodat een andere app statuswijzigingen hoort in plaats van te pollen."
+    },
+    "bulk": {
+        "selected": "{count} geselecteerd",
+        "selectAll": "Alles in beeld",
+        "clear": "Wissen",
+        "setStatus": "Status instellen",
+        "setPriority": "Prioriteit instellen",
+        "archive": "Archiveren"
     }
 }

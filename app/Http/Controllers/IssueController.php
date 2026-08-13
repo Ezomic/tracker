@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\ArchiveIssueAction;
+use App\Actions\BulkUpdateIssuesAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LinkIssuesAction;
 use App\Actions\MoveIssueToStateAction;
@@ -13,6 +14,7 @@ use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Requests\ArchiveIssueRequest;
+use App\Http\Requests\BulkUpdateIssuesRequest;
 use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueLinkRequest;
 use App\Http\Requests\StoreIssueWebRequest;
@@ -381,6 +383,23 @@ class IssueController extends Controller
         $this->authorize('view', $issue);
 
         $action->unwatch($issue, $this->currentUser($request));
+
+        return back();
+    }
+
+    public function bulk(BulkUpdateIssuesRequest $request, BulkUpdateIssuesAction $action): RedirectResponse
+    {
+        $result = $action->handle($request->identifiers(), $request->changes(), $this->currentUser($request));
+
+        Inertia::flash('toast', [
+            'type' => $result['skipped'] === [] ? 'success' : 'error',
+            'message' => $result['skipped'] === []
+                ? __(':count issues updated.', ['count' => count($result['updated'])])
+                : __(':updated updated, :skipped skipped.', [
+                    'updated' => count($result['updated']),
+                    'skipped' => count($result['skipped']),
+                ]),
+        ]);
 
         return back();
     }
