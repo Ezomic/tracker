@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "056f26c00842f4101efb93a9acf2878a",
+    "content-hash": "6efa0922e3a1894d70e6ac78aefad191",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7888,16 +7888,16 @@
         },
         {
             "name": "thijssensoftware/flare-client",
-            "version": "0.3.3",
+            "version": "0.3.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Ezomic/flare-client.git",
-                "reference": "954514868c61b3c389601bc1532735fbe618b577"
+                "reference": "bd766d6240f4e89b03294b6002f884699bdc6861"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Ezomic/flare-client/zipball/954514868c61b3c389601bc1532735fbe618b577",
-                "reference": "954514868c61b3c389601bc1532735fbe618b577",
+                "url": "https://api.github.com/repos/Ezomic/flare-client/zipball/bd766d6240f4e89b03294b6002f884699bdc6861",
+                "reference": "bd766d6240f4e89b03294b6002f884699bdc6861",
                 "shasum": ""
             },
             "require": {
@@ -7959,10 +7959,10 @@
             ],
             "description": "Reports exceptions, failed jobs and failed scheduled tasks to flare.",
             "support": {
-                "source": "https://github.com/Ezomic/flare-client/tree/0.3.3",
+                "source": "https://github.com/Ezomic/flare-client/tree/0.3.4",
                 "issues": "https://github.com/Ezomic/flare-client/issues"
             },
-            "time": "2026-08-13T03:13:08+00:00"
+            "time": "2026-08-13T15:48:31+00:00"
         },
         {
             "name": "thijssensoftware/id-client",
