@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): voi
     Route::middleware(RequireServiceAbility::class.':issues:read')->group(function (): void {
         Route::get('/issues', [IssueController::class, 'index']);
         Route::get('/issues/{issue}', [IssueController::class, 'show']);
+        Route::get('/issues/{issue}/activity', [IssueController::class, 'listActivity']);
     });
 
     // A service account needs to know which project keys exist before it can

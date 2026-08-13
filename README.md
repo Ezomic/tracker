@@ -127,6 +127,7 @@ PATCH  /api/issues/{identifier}          # reparent
 PATCH  /api/issues/{identifier}/status
 DELETE /api/issues/{identifier}          # soft-archive, reversible
 POST   /api/issues/{identifier}/restore  # undo the archive
+GET    /api/issues/{identifier}/activity # how it got to be the way it is
 ```
 
 `GET /api/issues` is paginated and returns `{"data": [...], "meta": {...}}`. It takes these filters, combinable:
