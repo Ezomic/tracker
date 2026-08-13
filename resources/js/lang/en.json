@@ -308,7 +308,10 @@
         "addEstimate": "Add estimate",
         "addLabel": "Add label",
         "saving": "Saving…",
-        "legacyLayout": "Legacy layout"
+        "legacyLayout": "Legacy layout",
+        "watching": "Watching",
+        "watchingOn": "Watching",
+        "watchingOff": "Watch"
     },
     "newIssue": {
         "title": "New issue",
@@ -357,7 +360,9 @@
         "prOpened": "opened a pull request",
         "prMerged": "merged the pull request",
         "committed": "committed",
-        "someone": "Someone"
+        "someone": "Someone",
+        "edited": "edited",
+        "save": "Save"
     },
     "time": {
         "title": "Time",

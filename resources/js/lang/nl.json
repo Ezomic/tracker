@@ -308,7 +308,10 @@
         "addEstimate": "Schatting toevoegen",
         "addLabel": "Label toevoegen",
         "saving": "Opslaan…",
-        "legacyLayout": "Oude indeling"
+        "legacyLayout": "Oude indeling",
+        "watching": "Volgen",
+        "watchingOn": "Je volgt dit",
+        "watchingOff": "Volgen"
     },
     "newIssue": {
         "title": "Nieuw ticket",
@@ -357,7 +360,9 @@
         "prOpened": "opende een pull request",
         "prMerged": "voegde de pull request samen",
         "committed": "committe",
-        "someone": "Iemand"
+        "someone": "Iemand",
+        "edited": "bewerkt",
+        "save": "Opslaan"
     },
     "time": {
         "title": "Tijd",

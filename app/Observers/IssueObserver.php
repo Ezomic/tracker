@@ -5,18 +5,25 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Actions\NotifyIssueWebhooksAction;
+use App\Actions\WatchIssueAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\User;
 use App\Notifications\IssueNotification;
+use Illuminate\Support\Facades\Notification;
 
 class IssueObserver
 {
     public function created(Issue $issue): void
     {
         $issue->recordActivity('created');
+
+        // Filing an issue subscribes you to it. The owner is whoever filed it,
+        // which for a service account is nobody worth notifying, and autoWatch
+        // handles the null.
+        app(WatchIssueAction::class)->autoWatch($issue, $issue->owner);
     }
 
     public function updated(Issue $issue): void
@@ -28,11 +35,16 @@ class IssueObserver
             ]);
 
             app(NotifyIssueWebhooksAction::class)->handle($issue, 'issue.status_changed');
+            $this->notifyWatchers($issue, 'issue_status_changed');
         }
 
         if ($issue->wasChanged('assignee_id')) {
             $issue->recordActivity('assigned', ['to' => $issue->assignee?->name]);
             $this->notifyAssignee($issue);
+
+            if ($issue->assignee_id !== null) {
+                app(WatchIssueAction::class)->autoWatch($issue, User::find($issue->assignee_id));
+            }
         }
 
         if ($issue->wasChanged('priority')) {
@@ -79,6 +91,21 @@ class IssueObserver
                 ? $issue->recordActivity('archived', ['reason' => $issue->archive_reason])
                 : $issue->recordActivity('unarchived');
         }
+    }
+
+    /**
+     * Tell everyone following this issue, except whoever caused the change.
+     * The assignee is included by notifiable() whether or not they watch.
+     */
+    private function notifyWatchers(Issue $issue, string $event): void
+    {
+        $actor = auth()->user();
+
+        if (! $actor instanceof User) {
+            return;
+        }
+
+        Notification::send($issue->notifiable($actor), new IssueNotification($event, $issue, $actor));
     }
 
     // Notify the new assignee, unless they assigned it to themselves or the change

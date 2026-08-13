@@ -13,6 +13,8 @@ export interface TimeEntry {
 }
 
 export interface IssueComment {
+    /** Set once the author has edited it. */
+    editedAt?: string | null;
     id: number;
     body: string;
     createdAt: string;
@@ -24,6 +26,8 @@ export type TimelineItem =
           kind: 'comment';
           id: number;
           createdAt: string;
+          /** Set once the author has edited it; null means untouched since posting. */
+          editedAt: string | null;
           user: IssueUser | null;
           body: string;
       }
@@ -72,6 +76,9 @@ export interface Issue {
     owner: IssueUser | null;
     /** Set when another app filed this on behalf of someone with no account here. */
     externalReporter: string | null;
+    /** How many people follow this issue, and whether you are one of them. */
+    watcherCount: number;
+    watching: boolean;
     /** The app that filed it and, where configured, a link back to its record. */
     originatingReport: {
         source: string;

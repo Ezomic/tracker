@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\ArchiveIssueAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\MoveIssueToStateAction;
+use App\Actions\WatchIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Requests\ArchiveIssueRequest;
@@ -204,6 +205,7 @@ class IssueController extends Controller
             'kind' => 'comment',
             'id' => $comment->id,
             'createdAt' => $comment->created_at->toIso8601String(),
+            'editedAt' => $comment->edited_at?->toIso8601String(),
             'user' => $this->serializeUser($comment->user),
             'body' => $comment->body,
         ]);
@@ -358,6 +360,24 @@ class IssueController extends Controller
         return back();
     }
 
+    public function watch(Request $request, Issue $issue, WatchIssueAction $action): RedirectResponse
+    {
+        $this->authorize('view', $issue);
+
+        $action->watch($issue, $this->currentUser($request));
+
+        return back();
+    }
+
+    public function unwatch(Request $request, Issue $issue, WatchIssueAction $action): RedirectResponse
+    {
+        $this->authorize('view', $issue);
+
+        $action->unwatch($issue, $this->currentUser($request));
+
+        return back();
+    }
+
     private function findTemplate(mixed $templateId): ?IssueTemplate
     {
         return $templateId === null
@@ -467,6 +487,11 @@ class IssueController extends Controller
             'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
             'externalReporter' => $issue->external_reporter,
             'originatingReport' => $issue->originatingReport(),
+            'watcherCount' => $issue->watchers()->wherePivot('watching', true)->count(),
+            'watching' => $issue->watchers()
+                ->wherePivot('watching', true)
+                ->where('users.id', auth()->id())
+                ->exists(),
             'assignee' => $this->serializeUser($issue->relationLoaded('assignee') ? $issue->assignee : null),
             'createdAt' => $issue->created_at?->toIso8601String(),
             'archivedAt' => $issue->archived_at?->toIso8601String(),
@@ -500,6 +525,7 @@ class IssueController extends Controller
                 'id' => $comment->id,
                 'body' => $comment->body,
                 'createdAt' => $comment->created_at->toIso8601String(),
+                'editedAt' => $comment->edited_at?->toIso8601String(),
                 'user' => $this->serializeUser($comment->relationLoaded('user') ? $comment->user : null),
             ])->all() : [],
         ];

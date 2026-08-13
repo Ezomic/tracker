@@ -78,6 +78,7 @@ Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): vo
         Route::patch('/issues/{issue}/status', [IssueController::class, 'updateStatus'])
             ->middleware(AnnounceSunset::class.':2026-09-30');
         Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment']);
+        Route::patch('/issues/{issue}/comments/{comment}', [IssueController::class, 'updateComment']);
         Route::post('/issues/{issue}/time', [IssueController::class, 'logTime']);
         Route::delete('/issues/{issue}/time/{timeEntry}', [IssueController::class, 'deleteTime']);
         Route::delete('/issues/{issue}', [IssueController::class, 'destroy']);

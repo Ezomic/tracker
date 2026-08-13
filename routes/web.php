@@ -59,12 +59,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('issues/{issue:identifier}/state', [IssueController::class, 'updateState'])->name('issues.updateState');
     Route::post('issues/{issue:identifier}/archive', [IssueController::class, 'archive'])->name('issues.archive');
     Route::post('issues/{issue:identifier}/unarchive', [IssueController::class, 'unarchive'])->name('issues.unarchive');
+    Route::post('issues/{issue:identifier}/watch', [IssueController::class, 'watch'])->name('issues.watch');
+    Route::delete('issues/{issue:identifier}/watch', [IssueController::class, 'unwatch'])->name('issues.unwatch');
 
     Route::post('issues/{issue:identifier}/time', [TimeEntryController::class, 'store'])->name('issues.time.store');
     Route::delete('issues/{issue:identifier}/time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('issues.time.destroy');
     Route::post('issues/{issue:identifier}/confirm-time', [TimeEntryController::class, 'confirmTime'])->name('issues.confirmTime');
 
     Route::post('issues/{issue:identifier}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
+    Route::patch('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'update'])->name('issues.comments.update');
     Route::delete('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'destroy'])->name('issues.comments.destroy');
 
     Route::post('saved-views', [SavedViewController::class, 'store'])->name('saved-views.store');
