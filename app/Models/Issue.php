@@ -334,6 +334,21 @@ class Issue extends Model
     }
 
     /**
+     * Drop issues whose project is archived.
+     *
+     * Archiving a project is how a body of work is put away, so its issues should
+     * stop counting as open the moment it happens. Without this, archiving cleared
+     * the project list and left every number exactly where it was (TRACK-236).
+     *
+     * @param  Builder<Issue>  $query
+     * @return Builder<Issue>
+     */
+    public function scopeInActiveProject(Builder $query): Builder
+    {
+        return $query->whereHas('project', fn (Builder $project) => $project->whereNull('archived_at'));
+    }
+
+    /**
      * Limit to issues in projects the given user is a member of.
      *
      * @param  Builder<Issue>  $query

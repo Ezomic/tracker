@@ -67,6 +67,10 @@ class IssueController extends Controller
                 ->visibleTo($user)
                 ->inOrganization($organization)
                 ->notArchived()
+                // An archived project's issues are hidden unless it is the project being
+                // asked for by name, so they stop filling the list they were archived out
+                // of while staying reachable at their own URL (TRACK-236).
+                ->when($project === null && ! isset($filters['project_id']), fn (Builder $query) => $query->inActiveProject())
                 ->withCount('children')
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
@@ -268,6 +272,7 @@ class IssueController extends Controller
                 ->visibleTo($this->currentUser($request))
                 ->inOrganization($organization)
                 ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
+                ->when($project === null, fn (Builder $query) => $query->inActiveProject())
                 ->withCount(['children', 'children as children_done_count' => fn (Builder $children) => $children->where('status', IssueStatus::Done)])
                 ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee', 'parent'])

@@ -5,7 +5,28 @@ declare(strict_types=1);
 use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Models\Issue;
 use App\Models\Project;
+
+/**
+ * The board is a current-state view too, so an archived project's lanes disappear from the
+ * everything board while its own board still works (TRACK-236).
+ */
+it('keeps an archived project off the everything board', function () {
+    $live = Project::factory()->create(['key' => 'THI']);
+    $shelved = Project::factory()->create(['key' => 'OLD', 'archived_at' => now()]);
+    Issue::factory()->for($live)->create(['status' => IssueStatus::Backlog]);
+    Issue::factory()->for($shelved)->create(['status' => IssueStatus::Backlog]);
+    $user = member([$live, $shelved]);
+
+    $this->actingAs($user)
+        ->get('/issues/board')
+        ->assertInertia(fn ($page) => $page->has('issues', 1));
+
+    $this->actingAs($user)
+        ->get("/{$shelved->key}/board")
+        ->assertInertia(fn ($page) => $page->has('issues', 1));
+});
 
 it('renders the board with all issues regardless of status', function () {
     $team = Project::factory()->create(['key' => 'THI']);

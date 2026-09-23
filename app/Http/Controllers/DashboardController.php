@@ -479,7 +479,9 @@ class DashboardController extends Controller
      */
     private function scoped(User $user): Builder
     {
-        return Issue::query()->visibleTo($user)->inOrganization($this->organization);
+        // inActiveProject: the dashboard is the current-state view, and an archived
+        // project's work is by definition no longer current (TRACK-236).
+        return Issue::query()->visibleTo($user)->inOrganization($this->organization)->inActiveProject();
     }
 
     /**
