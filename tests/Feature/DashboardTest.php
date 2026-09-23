@@ -67,6 +67,25 @@ it('renders stats and status breakdown', function () {
         );
 });
 
+/**
+ * Archiving a project is how a body of work is put away. Before TRACK-236 it cleared the
+ * project list and left every number untouched, so 311 backlog tickets from one archived
+ * project still read as open work on the dashboard.
+ */
+it('leaves an archived project out of the numbers', function () {
+    $project = seedDashboard();
+    $shelved = Project::factory()->create(['key' => 'OLD', 'name' => 'Shelved', 'archived_at' => now()]);
+    Issue::factory()->for($shelved)->count(7)->create(['status' => IssueStatus::Backlog]);
+
+    $this->actingAs(member([$project, $shelved]))
+        ->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->where('stats.open', 6)
+            ->where('statusBreakdown.backlog', 3)
+            ->where('activeByProject', fn ($rows) => collect($rows)->doesntContain(fn ($row) => $row['key'] === 'OLD'))
+        );
+});
+
 it('counts open urgent issues, excluding done and archived ones', function () {
     $project = Project::factory()->create(['key' => 'THI']);
 

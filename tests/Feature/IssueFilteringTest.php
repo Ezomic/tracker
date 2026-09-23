@@ -37,6 +37,36 @@ it('filters issues by title search', function () {
         );
 });
 
+/**
+ * An archived project's issues stop filling the list they were archived out of, but the
+ * project's own URL still shows them: archiving puts work away, it does not delete it.
+ */
+it('hides an archived project from the issue list unless it is asked for', function () {
+    $live = Project::factory()->create(['key' => 'THI']);
+    $shelved = Project::factory()->create(['key' => 'OLD', 'archived_at' => now()]);
+    createFilterableIssue($live, 'Live issue');
+    createFilterableIssue($shelved, 'Shelved issue');
+    $user = member([$live, $shelved]);
+
+    $this->actingAs($user)
+        ->get('/issues')
+        ->assertInertia(fn ($page) => $page
+            ->has('issues', 1)
+            ->where('issues.0.title', 'Live issue')
+        );
+
+    $this->actingAs($user)
+        ->get("/issues?project_id={$shelved->id}")
+        ->assertInertia(fn ($page) => $page
+            ->has('issues', 1)
+            ->where('issues.0.title', 'Shelved issue')
+        );
+
+    $this->actingAs($user)
+        ->get("/{$shelved->key}/tickets")
+        ->assertInertia(fn ($page) => $page->has('issues', 1));
+});
+
 it('filters issues by team', function () {
     $thi = Project::factory()->create(['key' => 'THI']);
     $billr = Project::factory()->create(['key' => 'BILLR']);
