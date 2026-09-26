@@ -34,7 +34,8 @@
         "toggleSidebar": "Toggle sidebar",
         "sidebar": "Sidebar",
         "navigationMenu": "Navigation menu",
-        "displaysMobileSidebar": "Displays the mobile sidebar."
+        "displaysMobileSidebar": "Displays the mobile sidebar.",
+        "reportProblem": "Report a problem"
     },
     "userMenu": {
         "settings": "Settings",

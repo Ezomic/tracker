@@ -34,7 +34,8 @@
         "toggleSidebar": "Zijbalk wisselen",
         "sidebar": "Zijbalk",
         "navigationMenu": "Navigatiemenu",
-        "displaysMobileSidebar": "Toont de mobiele zijbalk."
+        "displaysMobileSidebar": "Toont de mobiele zijbalk.",
+        "reportProblem": "Probleem melden"
     },
     "userMenu": {
         "settings": "Instellingen",
