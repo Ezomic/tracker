@@ -4,6 +4,7 @@ import {
     FolderKanban,
     Kanban,
     LayoutGrid,
+    MessageSquareWarning,
     Plus,
     Search,
     Ticket,
@@ -26,12 +27,14 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCommandPalette } from '@/composables/useCommandPalette';
+import { useSnag } from '@/composables/useSnag';
 import { dashboard } from '@/routes';
 import { board as issuesBoard, index as issuesIndex } from '@/routes/issues';
 import { index as projectsIndex } from '@/routes/projects';
 import type { NavItem, Project, SidebarCategories } from '@/types';
 
 const { show: showCommandPalette } = useCommandPalette();
+const { ready: snagReady, open: openSnag } = useSnag();
 const { t } = useI18n();
 const page = usePage();
 const categories = computed<SidebarCategories>(
@@ -120,6 +123,17 @@ const mainNavItems = computed<NavItem[]>(() => [
         </SidebarContent>
 
         <SidebarFooter>
+            <SidebarMenu v-if="snagReady">
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        class="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
+                        @click="openSnag()"
+                    >
+                        <MessageSquareWarning />
+                        <span>{{ $t('nav.reportProblem') }}</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
             <NavUser />
         </SidebarFooter>
     </Sidebar>
