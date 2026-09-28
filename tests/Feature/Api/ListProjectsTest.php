@@ -19,16 +19,11 @@ it('lists projects ordered by key', function () {
     ]);
 });
 
-it('serves the deprecated /api/teams alias', function () {
+it('no longer serves the /api/teams alias, now past its sunset date', function () {
     $user = User::factory()->create();
-    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
-    joinProjects($user, $thi);
+    joinProjects($user, Project::factory()->create(['key' => 'THI']));
 
-    $this->actingAs($user, 'sanctum')->getJson('/api/teams')
-        ->assertOk()
-        ->assertExactJson([
-            ['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30', 'category_id' => null, 'archived_at' => null],
-        ]);
+    $this->actingAs($user, 'sanctum')->getJson('/api/teams')->assertNotFound();
 });
 
 it('rejects unauthenticated requests', function () {

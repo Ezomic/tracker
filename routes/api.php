@@ -39,10 +39,6 @@ Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): voi
         Route::get('/user', fn (Request $request) => $request->user());
 
         Route::get('/projects/{project:key}/members', [ProjectMemberController::class, 'index']);
-        // Deprecated alias for /projects, from the projects transition. Now
-        // carries a removal date rather than living on indefinitely.
-        Route::get('/teams', [ProjectController::class, 'index'])
-            ->middleware(AnnounceSunset::class.':2026-09-05,/api/projects');
         Route::get('/templates', [TemplateController::class, 'index']);
         Route::get('/categories', [CategoryController::class, 'index']);
         Route::get('/labels', [LabelController::class, 'index']);

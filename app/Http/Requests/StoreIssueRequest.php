@@ -30,11 +30,6 @@ class StoreIssueRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // `team` is the deprecated alias for `project`; accept it when `project` is absent.
-        if (blank($this->input('project')) && filled($this->input('team'))) {
-            $this->merge(['project' => $this->input('team')]);
-        }
-
         if ($this->input('parent') === '') {
             $this->merge(['parent' => null]);
         }
