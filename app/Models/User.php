@@ -84,6 +84,15 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * The app is passwordless and has no password column, but Laravel refuses
+     * a remember-me cookie unless this returns a string.
+     */
+    public function getAuthPassword(): string
+    {
+        return '';
+    }
+
+    /**
      * Machine identities: they hold API tokens and project memberships but can
      * never sign in. See DenyServiceAccountSessions.
      *
