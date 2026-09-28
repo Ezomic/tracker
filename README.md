@@ -192,7 +192,6 @@ date. The reasoning is in [`docs/api-versioning-2026-08-06.md`](docs/api-version
 
 | Deprecated                  | Use instead                          | Removal      |
 | --------------------------- | ------------------------------------ | ------------ |
-| `GET /api/teams`            | `GET /api/projects`                  | 2026-09-05   |
 | `status` on issue payloads  | `workflow_state`                     | 2026-09-30   |
 | `status` on `PATCH .../status` | `workflow_state`                  | 2026-09-30   |
 

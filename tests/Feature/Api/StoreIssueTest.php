@@ -27,7 +27,7 @@ it('creates an issue and returns identifier, url, and branch_name', function () 
     ]);
 });
 
-it('accepts the deprecated team alias for project', function () {
+it('no longer accepts team in place of project', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['key' => 'THI', 'next_number' => 0]);
     joinProjects($user, $project);
@@ -36,7 +36,9 @@ it('accepts the deprecated team alias for project', function () {
         'team' => 'THI',
         'title' => 'Created via the legacy team param',
         'type' => 'feature',
-    ])->assertCreated()->assertJson(['identifier' => 'THI-1']);
+    ])->assertUnprocessable()->assertJsonValidationErrors('project');
+
+    expect(Issue::query()->count())->toBe(0);
 });
 
 it('rejects unauthenticated requests', function () {
