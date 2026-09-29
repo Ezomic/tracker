@@ -5,10 +5,17 @@ declare(strict_types=1);
 use App\Actions\CreateIssueAction;
 use App\Actions\ExportIssuesToCsvAction;
 use App\Actions\ImportIssuesFromCsvAction;
+use App\Actions\NotifyIssueWebhooksAction;
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
+use App\Enums\WebhookEvent;
+use App\Jobs\DeliverWebhookJob;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\ProjectWebhook;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 
 function writeTempCsv(array $rows): string
 {
@@ -118,4 +125,55 @@ it('exports issues to a CSV that can be re-imported into a fresh set of tables',
         ->and($reimported->description)->toBe('a description');
 
     unlink($exportPath);
+});
+
+it('imports a row into a project whose webhook wants issue.created, and delivers it', function () {
+    Queue::fake();
+    $project = Project::factory()->create(['key' => 'TRACK']);
+    ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Created->value]]);
+
+    $path = writeTempCsv([
+        ['TRACK-1', 'TRACK', '1', 'First ticket', 'feature', 'backlog', '', 'feature/TRACK-1-first-ticket', '', '', '2026-07-07', 'Phase 1'],
+    ]);
+
+    $result = (new ImportIssuesFromCsvAction)->handle($path);
+
+    expect($result)->toMatchArray(['imported' => 1, 'skipped' => 0, 'errors' => []]);
+
+    Queue::assertPushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === WebhookEvent::Created->value
+        && $job->payload['project'] === 'TRACK'
+        && $job->payload['issue']['identifier'] === 'TRACK-1'
+        && $job->payload['issue']['priority'] === IssuePriority::None->value);
+
+    $issue = Issue::query()->where('identifier', 'TRACK-1')->firstOrFail();
+
+    // The rest of the created observer ran too, not only the insert.
+    expect(DB::table('issue_search')->where('issue_id', $issue->id)->exists())->toBeTrue();
+
+    unlink($path);
+});
+
+it('delivers a large import as one capped webhook batch with a summary', function () {
+    Queue::fake();
+    $project = Project::factory()->create(['key' => 'TRACK']);
+    ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Created->value]]);
+
+    $rows = NotifyIssueWebhooksAction::PER_BATCH_CAP + 3;
+    $path = writeTempCsv(array_map(
+        fn (int $n): array => ["TRACK-{$n}", 'TRACK', (string) $n, "Ticket {$n}", 'feature', 'backlog', '', "feature/TRACK-{$n}-ticket", '', '', '2026-07-07', 'Phase 1'],
+        range(1, $rows),
+    ));
+
+    $result = (new ImportIssuesFromCsvAction)->handle($path);
+
+    expect($result)->toMatchArray(['imported' => $rows, 'skipped' => 0, 'errors' => []])
+        ->and(Queue::pushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === WebhookEvent::Created->value))
+        ->toHaveCount(NotifyIssueWebhooksAction::PER_BATCH_CAP)
+        ->and(Queue::pushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === 'issue.bulk_changed')
+            ->map(fn (DeliverWebhookJob $job): mixed => $job->payload['suppressed'])
+            ->values()
+            ->all())
+        ->toBe([3]);
+
+    unlink($path);
 });

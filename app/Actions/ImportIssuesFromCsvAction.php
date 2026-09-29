@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
@@ -18,6 +19,16 @@ class ImportIssuesFromCsvAction
      * @return array{imported: int, skipped: int, errors: list<string>}
      */
     public function handle(string $path): array
+    {
+        // Every imported row can fire issue.created, so the whole file is one
+        // webhook batch: its deliveries share one cap and a summary.
+        return NotifyIssueWebhooksAction::batch(fn (): array => $this->import($path));
+    }
+
+    /**
+     * @return array{imported: int, skipped: int, errors: list<string>}
+     */
+    private function import(string $path): array
     {
         $handle = fopen($path, 'r');
 
@@ -76,6 +87,10 @@ class ImportIssuesFromCsvAction
                     'slug' => (string) str($data['title'])->slug(),
                     'description' => $data['description'] !== '' ? $data['description'] : null,
                     'type' => IssueType::from($data['type']),
+                    // The export carries no priority. The column defaults to
+                    // none, but the created observer's webhook payload reads
+                    // it from this model before any refresh.
+                    'priority' => IssuePriority::None,
                     'status' => IssueStatus::from($data['status']),
                     'branch_name' => $data['branch_name'],
                     'github_pr_url' => $data['github_pr_url'] !== '' ? $data['github_pr_url'] : null,
