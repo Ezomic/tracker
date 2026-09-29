@@ -152,14 +152,14 @@ it('caps a large sweep and closes it with a summary of what was held back', func
     Queue::fake();
     $project = Project::factory()->create(['key' => 'THI']);
     ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Archived->value]]);
-    Issue::factory()->for($project)->count(NotifyIssueWebhooksAction::PER_REQUEST_CAP + 5)
+    Issue::factory()->for($project)->count(NotifyIssueWebhooksAction::PER_BATCH_CAP + 5)
         ->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
 
     $count = (new ArchiveDoneIssuesAction)->handle();
 
-    expect($count)->toBe(NotifyIssueWebhooksAction::PER_REQUEST_CAP + 5)
+    expect($count)->toBe(NotifyIssueWebhooksAction::PER_BATCH_CAP + 5)
         ->and(Issue::query()->whereNull('archived_at')->count())->toBe(0)
-        ->and(deliveries('issue.archived', 'THI'))->toBe(NotifyIssueWebhooksAction::PER_REQUEST_CAP);
+        ->and(deliveries('issue.archived', 'THI'))->toBe(NotifyIssueWebhooksAction::PER_BATCH_CAP);
 
     Queue::assertPushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === 'issue.bulk_changed'
         && $job->payload['suppressed'] === 5);
@@ -175,16 +175,40 @@ it('gives each project its own delivery budget in a sweep', function () {
     }
 
     Issue::factory()->for($quiet)->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
-    Issue::factory()->for($busy)->count(NotifyIssueWebhooksAction::PER_REQUEST_CAP + 5)
+    Issue::factory()->for($busy)->count(NotifyIssueWebhooksAction::PER_BATCH_CAP + 5)
         ->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
 
     (new ArchiveDoneIssuesAction)->handle();
 
     expect(deliveries('issue.archived', 'QUIET'))->toBe(1)
         ->and(deliveries('issue.bulk_changed', 'QUIET'))->toBe(0)
-        ->and(deliveries('issue.archived', 'BUSY'))->toBe(NotifyIssueWebhooksAction::PER_REQUEST_CAP);
+        ->and(deliveries('issue.archived', 'BUSY'))->toBe(NotifyIssueWebhooksAction::PER_BATCH_CAP);
 
     Queue::assertPushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === 'issue.bulk_changed'
         && $job->payload['project'] === 'BUSY'
         && $job->payload['suppressed'] === 5);
+});
+
+it('still sends the summary when a sweep fails halfway', function () {
+    Queue::fake();
+    $project = Project::factory()->create(['key' => 'THI']);
+    ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Archived->value]]);
+    Issue::factory()->for($project)->count(NotifyIssueWebhooksAction::PER_BATCH_CAP + 5)
+        ->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
+
+    // Registered after the observer, so the issue it fails on is archived and
+    // counted before the sweep aborts.
+    $saves = 0;
+    Issue::updated(function () use (&$saves): void {
+        if (++$saves === NotifyIssueWebhooksAction::PER_BATCH_CAP + 2) {
+            throw new RuntimeException('Disk full');
+        }
+    });
+
+    expect(fn () => (new ArchiveDoneIssuesAction)->handle())->toThrow(RuntimeException::class, 'Disk full')
+        ->and(Issue::query()->whereNotNull('archived_at')->count())->toBe(NotifyIssueWebhooksAction::PER_BATCH_CAP + 2)
+        ->and(deliveries('issue.archived', 'THI'))->toBe(NotifyIssueWebhooksAction::PER_BATCH_CAP);
+
+    Queue::assertPushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === 'issue.bulk_changed'
+        && $job->payload['suppressed'] === 2);
 });

@@ -28,13 +28,22 @@ class BulkUpdateIssuesAction
      */
     public function handle(array $identifiers, array $changes, User $actor): array
     {
+        // One webhook batch for the whole selection: its deliveries share one
+        // cap, and each project that lost some gets its own summary.
+        return NotifyIssueWebhooksAction::batch(fn (): array => $this->update($identifiers, $changes, $actor));
+    }
+
+    /**
+     * @param  list<string>  $identifiers
+     * @param  array<string, mixed>  $changes
+     * @return array{updated: list<string>, skipped: list<array{issue: string, reason: string}>}
+     */
+    private function update(array $identifiers, array $changes, User $actor): array
+    {
         $updated = [];
         $skipped = [];
-        $projects = [];
-        $notify = app(NotifyIssueWebhooksAction::class);
-        NotifyIssueWebhooksAction::reset();
 
-        DB::transaction(function () use ($identifiers, $changes, $actor, &$updated, &$skipped, &$projects): void {
+        DB::transaction(function () use ($identifiers, $changes, $actor, &$updated, &$skipped): void {
             foreach (array_unique($identifiers) as $identifier) {
                 $issue = Issue::query()->where('identifier', $identifier)->first();
 
@@ -52,15 +61,8 @@ class BulkUpdateIssuesAction
 
                 $this->apply($issue, $changes, $actor);
                 $updated[] = $identifier;
-                $projects[$issue->project_id] = $issue->project;
             }
         });
-
-        // One summary per project touched, so an endpoint that hit the cap
-        // learns that more happened than it was told about.
-        foreach ($projects as $project) {
-            $notify->flushSuppressed($project);
-        }
 
         return ['updated' => $updated, 'skipped' => $skipped];
     }
