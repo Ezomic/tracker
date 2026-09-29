@@ -20,7 +20,7 @@ class ArchiveDoneIssuesAction
             ->whereNotNull('archive_after_days')
             ->get()
             ->each(function (Project $project) use (&$count): void {
-                $count += $this->sweep($project);
+                $count += NotifyIssueWebhooksAction::batch(fn (): int => $this->sweep($project));
             });
 
         return $count;
@@ -30,9 +30,9 @@ class ArchiveDoneIssuesAction
      * Archive through the model rather than a mass update, so the observer
      * records the timeline entry and fires issue.archived for each issue.
      *
-     * The webhook cap is reset per project and flushed after it: endpoints
-     * belong to one project, so each gets its own budget and a summary that
-     * counts only its own suppressed deliveries.
+     * Each project's sweep is its own webhook batch: endpoints belong to one
+     * project, so each gets its own budget and a summary that counts only its
+     * own suppressed deliveries.
      */
     private function sweep(Project $project): int
     {
@@ -44,7 +44,6 @@ class ArchiveDoneIssuesAction
 
         $reason = "Auto-archived {$days} ".($days === 1 ? 'day' : 'days').' after being done';
         $count = 0;
-        NotifyIssueWebhooksAction::reset();
 
         Issue::query()
             ->where('project_id', $project->id)
@@ -60,8 +59,6 @@ class ArchiveDoneIssuesAction
                     $count++;
                 }
             });
-
-        app(NotifyIssueWebhooksAction::class)->flushSuppressed($project);
 
         return $count;
     }
