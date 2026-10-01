@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Actions\NotifyIssueWebhooksAction;
 use App\Enums\IssueStatus;
 use App\Enums\StatusCategory;
+use App\Enums\WebhookEvent;
+use App\Jobs\DeliverWebhookJob;
 use App\Models\Issue;
 use App\Models\ProjectType;
+use App\Models\ProjectWebhook;
+use App\Models\User;
 use App\Models\WorkflowState;
+use Illuminate\Support\Facades\Queue;
 
 function projectTypeWithLanes(object $org, string $name): ProjectType
 {
@@ -76,6 +82,73 @@ it('falls back to the default lane when the new type has no matching category', 
 
     expect($issue->fresh()->workflow_state_id)->toBe($only->id)
         ->and($issue->fresh()->status)->toBe(IssueStatus::Backlog);
+});
+
+// Every moved issue notifies its assignee, so the type change must not lazy
+// load one per issue; it did even on a project without a webhook.
+it('moves several issues and notifies their assignees', function () {
+    [$org, $user] = organizationWith();
+    $from = projectTypeWithLanes($org, 'From');
+
+    $to = ProjectType::factory()->for($org)->create(['name' => 'Flat']);
+    $inbox = WorkflowState::factory()->for($to)->create(['name' => 'Inbox', 'category' => StatusCategory::Backlog, 'position' => 0, 'is_default' => true]);
+
+    $project = projectInOrganization($org, $user, ['key' => 'ABC', 'project_type_id' => $from->id]);
+    $assignee = User::factory()->create();
+    Issue::factory()->for($project)->count(2)->create([
+        'workflow_state_id' => $from->states->firstWhere('category', StatusCategory::Started)->id,
+        'status' => IssueStatus::InProgress,
+        'assignee_id' => $assignee->id,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('projects.update', $project), [
+            'name' => $project->name,
+            'project_type_id' => $to->id,
+        ])
+        ->assertRedirect(route('projects.index'));
+
+    expect(Issue::query()->where('workflow_state_id', $inbox->id)->where('status', IssueStatus::Backlog)->count())->toBe(2)
+        ->and($assignee->notifications()->count())->toBe(2);
+});
+
+it('moves every issue of a project with a webhook as one capped batch with a summary', function () {
+    Queue::fake();
+    [$org, $user] = organizationWith();
+    $from = projectTypeWithLanes($org, 'From');
+
+    $to = ProjectType::factory()->for($org)->create(['name' => 'Flat']);
+    $inbox = WorkflowState::factory()->for($to)->create(['name' => 'Inbox', 'category' => StatusCategory::Backlog, 'position' => 0, 'is_default' => true]);
+
+    $project = projectInOrganization($org, $user, ['key' => 'ABC', 'project_type_id' => $from->id]);
+    ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::StatusChanged->value]]);
+
+    $assignee = User::factory()->create();
+    $issues = NotifyIssueWebhooksAction::PER_BATCH_CAP + 2;
+    Issue::factory()->for($project)->count($issues)->create([
+        'workflow_state_id' => $from->states->firstWhere('category', StatusCategory::Started)->id,
+        'status' => IssueStatus::InProgress,
+        'assignee_id' => $assignee->id,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('projects.update', $project), [
+            'name' => $project->name,
+            'project_type_id' => $to->id,
+        ])
+        ->assertRedirect(route('projects.index'));
+
+    expect($project->fresh()->project_type_id)->toBe($to->id)
+        ->and(Issue::query()->where('workflow_state_id', $inbox->id)->where('status', IssueStatus::Backlog)->count())->toBe($issues)
+        ->and($assignee->notifications()->count())->toBe($issues)
+        ->and(Queue::pushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === WebhookEvent::StatusChanged->value
+            && $job->payload['project'] === 'ABC'))
+        ->toHaveCount(NotifyIssueWebhooksAction::PER_BATCH_CAP)
+        ->and(Queue::pushed(DeliverWebhookJob::class, fn (DeliverWebhookJob $job): bool => $job->event === 'issue.bulk_changed')
+            ->map(fn (DeliverWebhookJob $job): mixed => $job->payload['suppressed'])
+            ->values()
+            ->all())
+        ->toBe([2]);
 });
 
 it('clears lane references when the project type is removed', function () {

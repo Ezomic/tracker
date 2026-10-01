@@ -22,12 +22,16 @@ class ChangeProjectTypeAction
      */
     public function handle(Project $project, ?ProjectType $type): void
     {
-        DB::transaction(function () use ($project, $type): void {
-            $type === null
-                ? $this->detachIssues($project)
-                : $this->remapIssues($project, $type);
+        // Every moved issue can fire issue.status_changed, so the whole change
+        // is one webhook batch: its deliveries share one cap and a summary.
+        NotifyIssueWebhooksAction::batch(function () use ($project, $type): void {
+            DB::transaction(function () use ($project, $type): void {
+                $type === null
+                    ? $this->detachIssues($project)
+                    : $this->remapIssues($project, $type);
 
-            $project->forceFill(['project_type_id' => $type?->id])->save();
+                $project->forceFill(['project_type_id' => $type?->id])->save();
+            });
         });
     }
 
@@ -40,8 +44,11 @@ class ChangeProjectTypeAction
             return;
         }
 
-        $project->issues()->with('workflowState')->get()
-            ->each(function (Issue $issue) use ($lanes, $default): void {
+        // A status change fires the observer, whose webhook payload reads the
+        // project and whose watcher notification reads the assignee.
+        $project->issues()->with(['workflowState', 'assignee'])->get()
+            ->each(function (Issue $issue) use ($project, $lanes, $default): void {
+                $issue->setRelation('project', $project);
                 $category = $issue->workflowState?->category;
 
                 $this->mover->handle(
