@@ -6,9 +6,15 @@ namespace App\Actions;
 
 use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\WorkflowState;
 
 class ApplyGithubPullRequestEventAction
 {
+    public function __construct(
+        private readonly MoveIssueToStateAction $move = new MoveIssueToStateAction,
+        private readonly ResolveWorkflowStateAction $resolve = new ResolveWorkflowStateAction,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $payload
      */
@@ -32,10 +38,8 @@ class ApplyGithubPullRequestEventAction
         $prUrl = data_get($payload, 'pull_request.html_url');
 
         if (in_array($action, ['opened', 'reopened'], true)) {
-            $issue->forceFill([
-                'status' => IssueStatus::InReview,
-                'github_pr_url' => $prUrl,
-            ])->save();
+            $this->moveTo($issue, IssueStatus::InReview);
+            $issue->forceFill(['github_pr_url' => $prUrl])->save();
 
             $issue->recordActivity('pr_opened', ['url' => $prUrl]);
 
@@ -43,14 +47,32 @@ class ApplyGithubPullRequestEventAction
         }
 
         if ($action === 'closed' && $merged === true) {
-            $issue->forceFill([
-                'status' => IssueStatus::Done,
-                'closed_at' => now(),
-                'github_pr_url' => $prUrl,
-            ])->save();
+            $this->moveTo($issue, IssueStatus::Done);
+            $issue->forceFill(['github_pr_url' => $prUrl])->save();
 
             $issue->recordActivity('pr_merged', ['url' => $prUrl]);
         }
+    }
+
+    /**
+     * Through the lane when the project has one, so the board column, the
+     * status and closed_at move together. A project with no type or no lane
+     * for this status keeps writing the status alone.
+     */
+    private function moveTo(Issue $issue, IssueStatus $status): void
+    {
+        $state = $this->resolve->handle($issue->project, $status);
+
+        if ($state instanceof WorkflowState) {
+            $this->move->handle($issue, $state);
+
+            return;
+        }
+
+        $issue->forceFill([
+            'status' => $status,
+            'closed_at' => $status === IssueStatus::Done ? now() : null,
+        ])->save();
     }
 
     private function extractIdentifier(mixed $branch): ?string
