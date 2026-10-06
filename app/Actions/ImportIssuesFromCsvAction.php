@@ -9,12 +9,18 @@ use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\WorkflowState;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 use Throwable;
 
 class ImportIssuesFromCsvAction
 {
+    public function __construct(
+        private readonly MoveIssueToStateAction $move = new MoveIssueToStateAction,
+        private readonly ResolveWorkflowStateAction $resolve = new ResolveWorkflowStateAction,
+    ) {}
+
     /**
      * @return array{imported: int, skipped: int, errors: list<string>}
      */
@@ -98,6 +104,12 @@ class ImportIssuesFromCsvAction
                     'created_at' => $data['created_at'] !== '' ? Carbon::parse($data['created_at']) : now(),
                     'updated_at' => now(),
                 ])->save();
+
+                $state = $this->resolve->handle($team, $issue->status);
+
+                if ($state instanceof WorkflowState) {
+                    $this->move->handle($issue, $state);
+                }
 
                 $teamNextNumbers[$team->id] = max($teamNextNumbers[$team->id] ?? $team->next_number, $number);
                 $imported++;
