@@ -24,7 +24,7 @@ function deliveries(string $event, string $projectKey): int
 }
 
 it('archives a done issue closed more than 24 hours ago', function () {
-    $team = Project::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 1]);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subHours(25)])->save();
 
@@ -35,7 +35,7 @@ it('archives a done issue closed more than 24 hours ago', function () {
 });
 
 it('does not archive a done issue closed less than 24 hours ago', function () {
-    $team = Project::factory()->create(['key' => 'THI']);
+    $team = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 1]);
     $issue = (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
     $issue->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subHours(23)])->save();
 
@@ -99,6 +99,20 @@ it('still shows an archived issue on its own detail page', function () {
         ->assertInertia(fn ($page) => $page->where('issue.archivedAt', fn ($value) => $value !== null));
 });
 
+it('waits a week by default before archiving a done issue', function () {
+    $team = Project::factory()->create(['key' => 'THI']);
+    $recent = (new CreateIssueAction)->handle($team, 'Recent', IssueType::Feature);
+    $recent->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(6)])->save();
+    $old = (new CreateIssueAction)->handle($team, 'Old', IssueType::Feature);
+    $old->forceFill(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(8)])->save();
+
+    $count = (new ArchiveDoneIssuesAction)->handle();
+
+    expect($count)->toBe(1)
+        ->and($recent->fresh()->archived_at)->toBeNull()
+        ->and($old->fresh()->archived_at)->not->toBeNull();
+});
+
 it("honours a project's custom archive duration", function () {
     $team = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 7]);
     $recent = (new CreateIssueAction)->handle($team, 'Recent', IssueType::Feature);
@@ -138,7 +152,7 @@ it('records the archive on the issue timeline, with its reason', function () {
 
 it('tells an endpoint subscribed to archives about an auto-archived issue', function () {
     Queue::fake();
-    $project = Project::factory()->create(['key' => 'THI']);
+    $project = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 1]);
     ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Archived->value]]);
     $issue = Issue::factory()->for($project)->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
 
@@ -150,7 +164,7 @@ it('tells an endpoint subscribed to archives about an auto-archived issue', func
 
 it('caps a large sweep and closes it with a summary of what was held back', function () {
     Queue::fake();
-    $project = Project::factory()->create(['key' => 'THI']);
+    $project = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 1]);
     ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Archived->value]]);
     Issue::factory()->for($project)->count(NotifyIssueWebhooksAction::PER_BATCH_CAP + 5)
         ->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
@@ -167,8 +181,8 @@ it('caps a large sweep and closes it with a summary of what was held back', func
 
 it('gives each project its own delivery budget in a sweep', function () {
     Queue::fake();
-    $quiet = Project::factory()->create(['key' => 'QUIET']);
-    $busy = Project::factory()->create(['key' => 'BUSY']);
+    $quiet = Project::factory()->create(['key' => 'QUIET', 'archive_after_days' => 1]);
+    $busy = Project::factory()->create(['key' => 'BUSY', 'archive_after_days' => 1]);
 
     foreach ([$quiet, $busy] as $project) {
         ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Archived->value]]);
@@ -191,7 +205,7 @@ it('gives each project its own delivery budget in a sweep', function () {
 
 it('still sends the summary when a sweep fails halfway', function () {
     Queue::fake();
-    $project = Project::factory()->create(['key' => 'THI']);
+    $project = Project::factory()->create(['key' => 'THI', 'archive_after_days' => 1]);
     ProjectWebhook::factory()->for($project)->create(['events' => [WebhookEvent::Archived->value]]);
     Issue::factory()->for($project)->count(NotifyIssueWebhooksAction::PER_BATCH_CAP + 5)
         ->create(['status' => IssueStatus::Done, 'closed_at' => now()->subDays(2)]);
