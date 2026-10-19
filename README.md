@@ -237,7 +237,7 @@ Beyond issues, the API also exposes CRUD for **projects** and their **members**,
 | Command                                 |                                                                                                 |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `issues:archive-done`                   | Archive done issues past each project's duration (scheduled hourly)                             |
-| `backup:database`                       | Copy the SQLite database into `storage/app/private/backups`, pruning old ones (scheduled daily) |
+| `backup:database`                       | Write a consistent `VACUUM INTO` copy of the SQLite database to `storage/app/private/backups`, pruning old ones (scheduled daily) |
 | `issues:export {path}`                  | Export all issues to CSV                                                                        |
 | `issues:import {path}`                  | Import issues from CSV matching the export schema                                               |
 | `issues:reassign {path}`                | Re-key issues into other projects, renumbering. Irreversible                                    |
