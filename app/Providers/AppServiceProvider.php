@@ -54,9 +54,9 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
-        RateLimiter::for('api-read', fn (Request $request): Limit => Limit::perMinute(300)->by($this->apiRateKey($request)));
+        RateLimiter::for('api-read', fn (Request $request): Limit => Limit::perMinute(1200)->by($this->apiRateKey($request)));
 
-        RateLimiter::for('api-write', fn (Request $request): Limit => Limit::perMinute(60)->by($this->apiRateKey($request)));
+        RateLimiter::for('api-write', fn (Request $request): Limit => Limit::perMinute(600)->by($this->apiRateKey($request)));
     }
 
     private function apiRateKey(Request $request): string
