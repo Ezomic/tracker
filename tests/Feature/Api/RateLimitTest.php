@@ -20,8 +20,8 @@ it('gives reads a higher budget than writes', function () {
     /** @var Limit $writeLimit */
     $writeLimit = $write($request);
 
-    expect($readLimit->maxAttempts)->toBe(300)
-        ->and($writeLimit->maxAttempts)->toBe(60)
+    expect($readLimit->maxAttempts)->toBe(1200)
+        ->and($writeLimit->maxAttempts)->toBe(600)
         ->and($readLimit->key)->toBe($writeLimit->key);
 });
 

@@ -30,12 +30,12 @@ it('rejects unauthenticated requests', function () {
     $this->getJson('/api/projects')->assertUnauthorized();
 });
 
-it('rate limits writes after 60 requests per minute, leaving reads alone', function () {
+it('rate limits writes after 600 requests per minute, leaving reads alone', function () {
     $user = User::factory()->create();
 
     // A rejected write still consumes an attempt, so an empty body is enough
-    // to drain the bucket without creating 60 projects.
-    for ($i = 0; $i < 60; $i++) {
+    // to drain the bucket without creating 600 projects.
+    for ($i = 0; $i < 600; $i++) {
         $this->actingAs($user, 'sanctum')->postJson('/api/projects', [])->assertStatus(422);
     }
 
