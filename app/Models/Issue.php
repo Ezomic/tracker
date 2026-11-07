@@ -48,9 +48,12 @@ use Illuminate\Support\Str;
  * @property int|null $workflow_state_id
  * @property string $branch_name
  * @property string|null $github_pr_url
+ * @property int $board_position
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
  * @property string|null $archive_reason
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read Project $project
  * @property-read User|null $owner
  * @property-read User|null $assignee

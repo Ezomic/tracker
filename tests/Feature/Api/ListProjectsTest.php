@@ -7,7 +7,7 @@ use App\Models\User;
 
 it('lists projects ordered by key', function () {
     $user = User::factory()->create();
-    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
+    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software', 'color' => '#d85a30']);
     $billr = Project::factory()->create(['key' => 'BILLR', 'name' => 'Billr', 'color' => '#378add']);
     joinProjects($user, [$thi, $billr]);
 
@@ -15,7 +15,7 @@ it('lists projects ordered by key', function () {
 
     $response->assertOk()->assertExactJson([
         ['key' => 'BILLR', 'name' => 'Billr', 'color' => '#378add', 'category_id' => null, 'archived_at' => null],
-        ['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30', 'category_id' => null, 'archived_at' => null],
+        ['key' => 'THI', 'name' => 'Acme Software', 'color' => '#d85a30', 'category_id' => null, 'archived_at' => null],
     ]);
 });
 

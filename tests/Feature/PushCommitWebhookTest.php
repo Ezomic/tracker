@@ -38,7 +38,7 @@ it('records commits pushed to an issue branch', function () {
     $payload = pushPayload($issue->branch_name, [[
         'id' => 'a1b2c3d4e5f6a1b2c3d4',
         'message' => "fix null case\n\nmore detail",
-        'author' => ['name' => 'Robbin'],
+        'author' => ['name' => 'Ada'],
         'url' => 'https://github.com/owner/repo/commit/a1b2c3d4e5f6a1b2c3d4',
         'timestamp' => '2026-07-18T10:00:00Z',
     ]]);
@@ -50,7 +50,7 @@ it('records commits pushed to an issue branch', function () {
         ->and($commit->sha)->toBe('a1b2c3d4e5f6a1b2c3d4')
         ->and($commit->repository)->toBe('owner/repo')
         ->and($commit->message)->toBe("fix null case\n\nmore detail")
-        ->and($commit->author_name)->toBe('Robbin');
+        ->and($commit->author_name)->toBe('Ada');
 });
 
 it('is idempotent on re-delivery', function () {
@@ -59,7 +59,7 @@ it('is idempotent on re-delivery', function () {
     $payload = pushPayload($issue->branch_name, [[
         'id' => 'abc123abc123',
         'message' => 'work',
-        'author' => ['name' => 'Robbin'],
+        'author' => ['name' => 'Ada'],
         'timestamp' => '2026-07-18T10:00:00Z',
     ]]);
 
@@ -75,7 +75,7 @@ it('ignores pushes to branches with no matching issue', function () {
     sendPush($this, pushPayload('main', [[
         'id' => 'deadbeef',
         'message' => 'unrelated',
-        'author' => ['name' => 'Robbin'],
+        'author' => ['name' => 'Ada'],
         'timestamp' => '2026-07-18T10:00:00Z',
     ]]))->assertNoContent();
 

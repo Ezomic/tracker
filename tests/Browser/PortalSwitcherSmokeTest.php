@@ -34,7 +34,7 @@ it('opens the portal app switcher from the navbar', function () {
         ]),
     ]);
 
-    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
     $user = member($project);
 
     $this->actingAs($user);
@@ -51,4 +51,19 @@ it('opens the portal app switcher from the navbar', function () {
         ->assertSee('Current')
         ->screenshot(false, 'portal-switcher-modal')
         ->assertNoJavascriptErrors();
+});
+
+it('leaves the portal app switcher out of the navbar when ID is not configured', function () {
+    Http::fake();
+    config()->set('services.thijssensoftware.client_secret', null);
+
+    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
+
+    $this->actingAs(member($project));
+
+    visit('/dashboard')
+        ->assertNotPresent('[aria-label="Apps"]')
+        ->assertNoJavascriptErrors();
+
+    Http::assertNothingSent();
 });

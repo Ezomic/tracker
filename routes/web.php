@@ -4,6 +4,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectMemberController;
@@ -12,9 +13,8 @@ use App\Http\Controllers\ProjectWebhookController;
 use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\TimeEntryController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', fn () => Inertia::render('Landing'))->name('home');
+Route::get('/', LandingController::class)->name('home');
 
 // Public: the accept flow handles guests by sending them to log in or register first.
 Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');

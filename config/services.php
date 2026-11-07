@@ -45,7 +45,7 @@ return [
     ],
 
     'thijssensoftware' => [
-        'base_url' => env('THIJSSENSOFTWARE_ID_URL', 'https://id.thijssensoftware.nl'),
+        'base_url' => env('THIJSSENSOFTWARE_ID_URL'),
         'client_id' => env('THIJSSENSOFTWARE_ID_CLIENT_ID'),
         'client_secret' => env('THIJSSENSOFTWARE_ID_CLIENT_SECRET'),
         'slug' => env('THIJSSENSOFTWARE_ID_APP_SLUG', 'tracker'),

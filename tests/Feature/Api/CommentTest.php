@@ -7,7 +7,7 @@ use App\Models\Project;
 use App\Models\User;
 
 it('lists comments on an issue oldest first', function () {
-    $author = User::factory()->create(['name' => 'Robbin']);
+    $author = User::factory()->create(['name' => 'Ada']);
     $project = Project::factory()->create(['key' => 'THI']);
     joinProjects($author, $project);
     $issue = Issue::factory()->for($project)->create(['identifier' => 'THI-1']);
@@ -17,13 +17,13 @@ it('lists comments on an issue oldest first', function () {
     $this->actingAs($author, 'sanctum')->getJson('/api/issues/THI-1/comments')
         ->assertOk()
         ->assertJson([
-            ['body' => 'first', 'user' => 'Robbin'],
-            ['body' => 'second', 'user' => 'Robbin'],
+            ['body' => 'first', 'user' => 'Ada'],
+            ['body' => 'second', 'user' => 'Ada'],
         ]);
 });
 
 it('creates a comment via the API', function () {
-    $author = User::factory()->create(['name' => 'Robbin']);
+    $author = User::factory()->create(['name' => 'Ada']);
     $project = Project::factory()->create(['key' => 'THI']);
     joinProjects($author, $project);
     $issue = Issue::factory()->for($project)->create(['identifier' => 'THI-2']);
@@ -31,7 +31,7 @@ it('creates a comment via the API', function () {
     $this->actingAs($author, 'sanctum')
         ->postJson('/api/issues/THI-2/comments', ['body' => 'Deployed to prod'])
         ->assertCreated()
-        ->assertJson(['body' => 'Deployed to prod', 'user' => 'Robbin']);
+        ->assertJson(['body' => 'Deployed to prod', 'user' => 'Ada']);
 
     expect($issue->comments()->where('body', 'Deployed to prod')->exists())->toBeTrue();
 });

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Database\SQLiteConnection;
 use App\Models\User;
 use App\Support\Cast;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -16,6 +19,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use PDO;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,13 +33,29 @@ class AppServiceProvider extends ServiceProvider
         // them with an email-code re-auth instead.
         config(['fortify-options.passkeys.confirmPassword' => false]);
 
-        // Pin the product name in code so it no longer depends on the server's
-        // APP_NAME (which shipped as "Laravel"). Covers the shared Inertia name
-        // prop and the outgoing mail "from" name.
+        $this->resolveAppName();
+
+        Connection::resolverFor('sqlite', static fn (PDO|Closure $pdo, string $database, string $prefix, array $config): SQLiteConnection => new SQLiteConnection($pdo, $database, $prefix, $config));
+    }
+
+    /**
+     * APP_NAME names the product, but an install that never set one (or still
+     * carries the framework's stock "Laravel") is called Tracker. The mail
+     * sender follows it unless MAIL_FROM_NAME was set to something of its own.
+     */
+    private function resolveAppName(): void
+    {
+        $name = $this->ownName(config('app.name')) ?? 'Tracker';
+
         config([
-            'app.name' => 'Tracker',
-            'mail.from.name' => 'Tracker',
+            'app.name' => $name,
+            'mail.from.name' => $this->ownName(config('mail.from.name')) ?? $name,
         ]);
+    }
+
+    private function ownName(mixed $value): ?string
+    {
+        return is_string($value) && filled($value) && $value !== 'Laravel' ? $value : null;
     }
 
     /**

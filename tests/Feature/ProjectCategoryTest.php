@@ -14,7 +14,7 @@ it('creates a project in a category from the same organization', function () {
 
     $this->actingAs($owner)->post('/projects', [
         'key' => 'THI',
-        'name' => 'Thijssen',
+        'name' => 'Acme',
         'category_id' => $category->id,
     ])->assertRedirect();
 
@@ -28,7 +28,7 @@ it('rejects a category from another organization', function () {
 
     $this->actingAs($owner)->post('/projects', [
         'key' => 'THI',
-        'name' => 'Thijssen',
+        'name' => 'Acme',
         'category_id' => $foreign->id,
     ])->assertSessionHasErrors('category_id');
 

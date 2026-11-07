@@ -7,12 +7,26 @@ use App\Actions\ReportTimeToBillrAction;
 use App\Enums\IssueType;
 use App\Jobs\ReportTimeToBillrJob;
 use App\Models\Project;
+use App\Services\Integrations;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    config(['services.billr.base_url' => 'http://billr.test', 'services.billr.token' => 'test-token']);
+    configureBillr();
 });
+
+it('drops a report queued before Billr was switched off', function (?string $value) {
+    Http::fake();
+    config()->set('services.billr.base_url', $value);
+
+    $project = Project::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
+
+    (new ReportTimeToBillrJob($issue, 90, 'Acme BV'))->handle(new ReportTimeToBillrAction, new Integrations);
+
+    Http::assertNothingSent();
+    expect($project->fresh()->billr_project_id)->toBeNull();
+})->with('blank');
 
 it('reports the confirmed time to Billr when run', function () {
     Http::fake(['*/api/time-entries' => Http::response(['project_id' => 55, 'client_id' => 9], 201)]);
@@ -20,7 +34,7 @@ it('reports the confirmed time to Billr when run', function () {
     $project = Project::factory()->create(['key' => 'THI', 'name' => 'Internal']);
     $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
 
-    (new ReportTimeToBillrJob($issue, 90, 'Acme BV'))->handle(new ReportTimeToBillrAction);
+    (new ReportTimeToBillrJob($issue, 90, 'Acme BV'))->handle(new ReportTimeToBillrAction, new Integrations);
 
     expect($project->fresh()->billr_project_id)->toBe(55);
     Http::assertSent(fn ($request) => $request['minutes'] === 90 && $request['client_name'] === 'Acme BV');
@@ -32,6 +46,6 @@ it('throws so the queue retries when Billr is unreachable', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
 
-    expect(fn () => (new ReportTimeToBillrJob($issue, 30, 'Acme BV'))->handle(new ReportTimeToBillrAction))
+    expect(fn () => (new ReportTimeToBillrJob($issue, 30, 'Acme BV'))->handle(new ReportTimeToBillrAction, new Integrations))
         ->toThrow(RequestException::class);
 });

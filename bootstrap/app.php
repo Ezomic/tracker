@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CloseSsoWhenUnconfigured;
 use App\Http\Middleware\DenyServiceAccountSessions;
 use App\Http\Middleware\EnsureEmailConfirmed;
 use App\Http\Middleware\HandleAppearance;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
+            CloseSsoWhenUnconfigured::class,
             DenyServiceAccountSessions::class,
             HandleAppearance::class,
             SetLocale::class,

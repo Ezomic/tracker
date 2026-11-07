@@ -217,7 +217,7 @@ it('accepts an org-only invitation and lands on the dashboard', function () {
 
 it('shows the invitation to a guest and remembers where to return', function () {
     [$org] = organizationWith(OrganizationRole::Owner);
-    $org->forceFill(['name' => 'Thijssen'])->save();
+    $org->forceFill(['name' => 'Acme'])->save();
     $inviter = User::factory()->create();
     [, $plain] = inviteFor($org, 'new@example.com', ['invited_by_id' => $inviter->id]);
 
@@ -227,7 +227,7 @@ it('shows the invitation to a guest and remembers where to return', function () 
             ->component('auth/Invitation')
             ->where('state', 'guest')
             ->where('hasAccount', false)
-            ->where('invitation.organizationName', 'Thijssen')
+            ->where('invitation.organizationName', 'Acme')
         );
 
     expect(session('url.intended'))->toContain("/invitations/{$plain}");

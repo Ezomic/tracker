@@ -71,7 +71,7 @@ class ServiceAccountController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Service account created.')]);
 
         return to_route('service-accounts.index')->with('createdToken', [
-            'name' => $token->accessToken->name,
+            'name' => Cast::string($token->accessToken->getAttribute('name')),
             'plainText' => $token->plainTextToken,
         ]);
     }

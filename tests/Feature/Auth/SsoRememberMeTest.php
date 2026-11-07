@@ -11,18 +11,19 @@ use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 
 beforeEach(function () {
+    configureSso();
     config(['id-client.logout_secret' => 'test-logout-secret']);
 
     $provider = Mockery::mock(Provider::class);
     $provider->shouldReceive('user')->andReturn((new SocialiteUser)->setRaw([
         'sub' => '42',
-        'name' => 'Robbin Thijssen',
-        'email' => 'robbin@example.com',
+        'name' => 'Ada Lovelace',
+        'email' => 'ada@example.com',
         'applications' => ['tracker'],
     ])->map([
         'id' => '42',
-        'name' => 'Robbin Thijssen',
-        'email' => 'robbin@example.com',
+        'name' => 'Ada Lovelace',
+        'email' => 'ada@example.com',
     ]));
 
     Socialite::shouldReceive('driver')->with('thijssensoftware')->andReturn($provider);

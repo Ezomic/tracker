@@ -11,11 +11,13 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use App\Services\Integrations;
 use App\Services\Portal\IdPortalClient;
 use App\Support\Cast;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -28,6 +30,8 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(private readonly Integrations $integrations) {}
 
     /**
      * Determines the current asset version.
@@ -55,6 +59,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'integrations' => [
+                'sso' => $this->integrations->sso(),
+                'billr' => $this->integrations->billr(),
+            ],
             'locale' => $request->user() === null ? app()->getLocale() : $request->user()->locale,
             'auth' => [
                 'user' => $request->user(),
@@ -96,9 +104,9 @@ class HandleInertiaRequests extends Middleware
             'notifications' => fn () => $request->user() !== null
                 ? $request->user()->notifications()->latest()->limit(15)->get()->map(fn ($notification) => [
                     'id' => $notification->id,
-                    'data' => $notification->data,
-                    'read' => $notification->read_at !== null,
-                    'createdAt' => $notification->created_at?->toIso8601String(),
+                    'data' => $notification->getAttribute('data'),
+                    'read' => $notification->getAttribute('read_at') !== null,
+                    'createdAt' => Date::make($notification->getAttribute('created_at'))?->toIso8601String(),
                 ])
                 : [],
             'unreadNotificationsCount' => fn () => $request->user() !== null

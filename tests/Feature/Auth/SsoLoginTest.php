@@ -15,17 +15,24 @@ class SsoLoginTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        configureSso();
+    }
+
     private function fakeIdUser(): SocialiteUser
     {
         return (new SocialiteUser)->setRaw([
             'sub' => '42',
-            'name' => 'Robbin Thijssen',
-            'email' => 'robbin@example.com',
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@example.com',
             'applications' => ['tracker'],
         ])->map([
             'id' => '42',
-            'name' => 'Robbin Thijssen',
-            'email' => 'robbin@example.com',
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@example.com',
         ]);
     }
 
@@ -51,13 +58,13 @@ class SsoLoginTest extends TestCase
         $this->get(route('sso.callback'))->assertRedirect('/dashboard');
 
         $this->assertAuthenticated();
-        $user = User::where('email', 'robbin@example.com')->firstOrFail();
+        $user = User::where('email', 'ada@example.com')->firstOrFail();
         $this->assertSame('42', $user->idp_id);
     }
 
     public function test_it_links_an_existing_user_by_email(): void
     {
-        $existing = User::factory()->create(['email' => 'robbin@example.com', 'idp_id' => null]);
+        $existing = User::factory()->create(['email' => 'ada@example.com', 'idp_id' => null]);
 
         $this->mockSocialite(fn ($provider) => $provider->shouldReceive('user')->andReturn($this->fakeIdUser()));
 

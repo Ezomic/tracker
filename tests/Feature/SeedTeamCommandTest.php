@@ -5,28 +5,28 @@ declare(strict_types=1);
 use App\Models\Project;
 
 it('creates a new team with the given next_number', function () {
-    $this->artisan('teams:seed', ['key' => 'thi', 'name' => 'Thijssen Software', 'next_number' => 276])
+    $this->artisan('teams:seed', ['key' => 'thi', 'name' => 'Acme Software', 'next_number' => 276])
         ->assertSuccessful();
 
     $team = Project::query()->where('key', 'THI')->first();
     expect($team)->not->toBeNull()
-        ->and($team->name)->toBe('Thijssen Software')
+        ->and($team->name)->toBe('Acme Software')
         ->and($team->next_number)->toBe(276);
 });
 
 it('raises an existing counter when the requested number is higher', function () {
-    Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'next_number' => 100]);
+    Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software', 'next_number' => 100]);
 
-    $this->artisan('teams:seed', ['key' => 'THI', 'name' => 'Thijssen Software', 'next_number' => 276])
+    $this->artisan('teams:seed', ['key' => 'THI', 'name' => 'Acme Software', 'next_number' => 276])
         ->assertSuccessful();
 
     expect(Project::query()->where('key', 'THI')->first()->next_number)->toBe(276);
 });
 
 it('never lowers an existing counter', function () {
-    Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'next_number' => 300]);
+    Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software', 'next_number' => 300]);
 
-    $this->artisan('teams:seed', ['key' => 'THI', 'name' => 'Thijssen Software', 'next_number' => 50])
+    $this->artisan('teams:seed', ['key' => 'THI', 'name' => 'Acme Software', 'next_number' => 50])
         ->assertSuccessful();
 
     expect(Project::query()->where('key', 'THI')->first()->next_number)->toBe(300);

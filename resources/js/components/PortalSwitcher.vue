@@ -26,6 +26,9 @@ const { t } = useI18n();
 
 const open = ref(false);
 
+// The switcher lists apps from the same ID service that runs SSO.
+const enabled = computed(() => page.props.integrations.sso);
+
 const apps = computed<PortalApp[]>(() => page.props.portalApps ?? []);
 
 const categories = computed<PortalCategory[]>(
@@ -47,7 +50,7 @@ const sections = computed(() =>
 </script>
 
 <template>
-    <Dialog v-model:open="open">
+    <Dialog v-if="enabled" v-model:open="open">
         <TooltipProvider :delay-duration="0">
             <Tooltip>
                 <TooltipTrigger as-child>

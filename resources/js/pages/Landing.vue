@@ -10,6 +10,12 @@ import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, login } from '@/routes';
 import type { Issue } from '@/types';
 
+defineProps<{
+    operatorName: string;
+    host: string;
+    identityUrl: string | null;
+}>();
+
 const { t } = useI18n();
 const { resolvedAppearance, updateAppearance } = useAppearance();
 
@@ -205,7 +211,11 @@ const features = computed(() => [
                         </Button>
                     </div>
                     <p class="mt-5 font-mono text-xs text-muted-foreground/70">
-                        {{ $t('landing.underCta') }}
+                        {{
+                            identityUrl
+                                ? $t('landing.underCta')
+                                : $t('landing.underCtaWithoutSso')
+                        }}
                     </p>
                 </div>
 
@@ -306,7 +316,7 @@ const features = computed(() => [
                         <span
                             class="ml-2 font-mono text-[11px] text-muted-foreground/70"
                         >
-                            tracker.thijssensoftware.nl / SHOP
+                            {{ host }} / SHOP
                         </span>
                     </div>
                     <div class="grid lg:grid-cols-4">
@@ -434,11 +444,11 @@ const features = computed(() => [
             <div
                 class="mx-auto flex max-w-5xl flex-col items-center gap-3 px-6 py-6 text-center font-mono text-xs text-muted-foreground/70 sm:flex-row sm:justify-between sm:gap-4 sm:text-left"
             >
-                <span>© {{ new Date().getFullYear() }} Thijssen Software</span>
-                <span class="order-last sm:order-none">
-                    {{ $t('landing.footerSuite') }}
+                <span>© {{ new Date().getFullYear() }} {{ operatorName }}</span>
+                <span v-if="identityUrl" class="order-last sm:order-none">
+                    {{ $t('landing.footerSuite', { operator: operatorName }) }}
                     <a
-                        href="https://id.thijssensoftware.nl"
+                        :href="identityUrl"
                         class="text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
                     >
                         {{ $t('landing.footerSuiteLink') }}
