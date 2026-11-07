@@ -267,7 +267,7 @@ function archiveLabel(days: number | null): string {
                                     maxlength="10"
                                     pattern="[A-Z]{2,10}"
                                     class="uppercase"
-                                    placeholder="THI"
+                                    placeholder="SHOP"
                                     required
                                 />
                                 <InputError :message="errors.key" />
@@ -280,7 +280,7 @@ function archiveLabel(days: number | null): string {
                                 <Input
                                     id="name"
                                     name="name"
-                                    placeholder="Thijssen Software"
+                                    placeholder="Web shop"
                                     required
                                 />
                                 <InputError :message="errors.name" />

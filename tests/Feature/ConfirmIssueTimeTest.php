@@ -11,7 +11,52 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
-    config(['services.billr.base_url' => 'http://billr.test', 'services.billr.token' => 'test-token']);
+    configureBillr();
+});
+
+it('confirms locally but queues nothing for Billr when Billr is not configured', function (string $key, ?string $value) {
+    Queue::fake();
+    Http::fake();
+    config()->set("services.billr.{$key}", $value);
+
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project, ProjectLevel::Write);
+    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
+    $issue->forceFill(['invoiceable' => true])->save();
+
+    $this->actingAs($user)
+        ->post("/issues/{$issue->identifier}/confirm-time", [
+            'minutes' => 30,
+            'billr_client_name' => 'Acme BV',
+        ])
+        ->assertRedirect();
+
+    expect($issue->fresh()->confirmed_minutes)->toBe(30);
+
+    Queue::assertNothingPushed();
+    Http::assertNothingSent();
+})->with(['base_url', 'token'])->with('blank');
+
+it('tells the issue page that Billr is off so it can hide the billing controls', function (?string $value) {
+    config()->set('services.billr.token', $value);
+
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project, ProjectLevel::Write);
+    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
+
+    $this->actingAs($user)
+        ->get("/issues/{$issue->identifier}")
+        ->assertInertia(fn ($page) => $page->where('integrations.billr', false));
+})->with('blank');
+
+it('tells the issue page that Billr is on when it is configured', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $user = member($project, ProjectLevel::Write);
+    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
+
+    $this->actingAs($user)
+        ->get("/issues/{$issue->identifier}")
+        ->assertInertia(fn ($page) => $page->where('integrations.billr', true));
 });
 
 it('confirms time on a non-invoiceable issue without calling Billr', function () {
@@ -41,7 +86,7 @@ it('reports confirmed time to Billr for an invoiceable issue in an unlinked proj
         ], 201),
     ]);
 
-    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Internal']);
+    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Internal']);
     $user = member($project, ProjectLevel::Write);
     $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
     $issue->forceFill(['invoiceable' => true])->save();
@@ -61,7 +106,7 @@ it('reports confirmed time to Billr for an invoiceable issue in an unlinked proj
         return $request->url() === 'http://billr.test/api/time-entries'
             && $request['external_source'] === 'tracker'
             && $request['client_name'] === 'Acme BV'
-            && $request['project_name'] === 'Thijssen Internal';
+            && $request['project_name'] === 'Acme Internal';
     });
 });
 

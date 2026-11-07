@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\CurrentOrganization;
+use App\Services\Integrations;
 use App\Services\Portal\IdPortalClient;
 use App\Support\Cast;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -28,6 +29,8 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(private readonly Integrations $integrations) {}
 
     /**
      * Determines the current asset version.
@@ -55,6 +58,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'integrations' => [
+                'sso' => $this->integrations->sso(),
+                'billr' => $this->integrations->billr(),
+            ],
             'locale' => $request->user() === null ? app()->getLocale() : $request->user()->locale,
             'auth' => [
                 'user' => $request->user(),

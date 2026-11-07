@@ -173,7 +173,7 @@ it('records a pr_merged activity from a merged pull request webhook', function (
         'action' => 'closed',
         'pull_request' => [
             'head' => ['ref' => $issue->branch_name],
-            'html_url' => 'https://github.com/Ezomic/tracker/pull/42',
+            'html_url' => 'https://github.com/acme/tracker/pull/42',
             'merged' => true,
         ],
     ];
@@ -184,7 +184,7 @@ it('records a pr_merged activity from a merged pull request webhook', function (
     ])->assertNoContent();
 
     $activity = $issue->activities()->where('type', 'pr_merged')->firstOrFail();
-    expect($activity->data)->toBe(['url' => 'https://github.com/Ezomic/tracker/pull/42'])
+    expect($activity->data)->toBe(['url' => 'https://github.com/acme/tracker/pull/42'])
         ->and($activity->user_id)->toBeNull();
 });
 

@@ -137,7 +137,7 @@ async function copySecret(value: string) {
                         id="webhook-url"
                         v-model="form.url"
                         type="url"
-                        placeholder="https://snag.thijssensoftware.nl/webhooks/tracker"
+                        placeholder="https://example.com/webhooks/tracker"
                         autocomplete="off"
                     />
                     <p v-if="form.errors.url" class="text-sm text-destructive">

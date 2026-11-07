@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Actions\ReportTimeToBillrAction;
 use App\Models\Issue;
+use App\Services\Integrations;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,8 +28,15 @@ class ReportTimeToBillrJob implements ShouldQueue
         public readonly ?string $clientName,
     ) {}
 
-    public function handle(ReportTimeToBillrAction $action): void
+    /**
+     * A report queued before Billr was switched off has nowhere to go.
+     */
+    public function handle(ReportTimeToBillrAction $action, Integrations $integrations): void
     {
+        if (! $integrations->billr()) {
+            return;
+        }
+
         $action->handle($this->issue, $this->minutes, $this->clientName);
     }
 

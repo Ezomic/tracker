@@ -65,7 +65,7 @@ function seedSmokeDashboard(): User
 }
 
 it('renders the unified dashboard for a signed-in user', function () {
-    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
     $user = member($project);
     Issue::factory()->for($project)->count(2)->create(['status' => IssueStatus::Backlog]);
     Issue::factory()->for($project)->create(['status' => IssueStatus::InReview]);

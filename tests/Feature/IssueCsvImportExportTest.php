@@ -105,7 +105,7 @@ it('skips a row with an invalid type or status without failing the whole import'
 });
 
 it('exports issues to a CSV that can be re-imported into a fresh set of tables', function () {
-    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
     (new CreateIssueAction)->handle($team, 'Exported issue', IssueType::Feature, 'a description');
 
     $exportPath = sys_get_temp_dir().'/tracker-export-test-'.uniqid().'.csv';

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     Archive,
     ArchiveRestore,
@@ -268,6 +268,8 @@ const timeError = ref<string | null>(null);
 const confirmMinutes = ref(String(props.issue.loggedMinutes));
 const billrClientName = ref('');
 const confirmError = ref<string | null>(null);
+const page = usePage();
+const billrEnabled = computed(() => page.props.integrations.billr);
 
 watch(
     () => props.issue.loggedMinutes,
@@ -1143,7 +1145,7 @@ const statusDot: Record<Issue['status'], string> = {
                 </a>
             </div>
 
-            <div class="grid gap-2">
+            <div v-if="billrEnabled" class="grid gap-2">
                 <Label for="invoiceable" class="text-xs text-muted-foreground">
                     {{ $t('issue.invoiceable') }}
                 </Label>
@@ -1274,7 +1276,11 @@ const statusDot: Record<Issue['status'], string> = {
                     />
                 </div>
                 <div
-                    v-if="issue.invoiceable && !issue.project.billrLinked"
+                    v-if="
+                        billrEnabled &&
+                        issue.invoiceable &&
+                        !issue.project.billrLinked
+                    "
                     class="grid gap-1.5"
                 >
                     <Label
@@ -1292,7 +1298,7 @@ const statusDot: Record<Issue['status'], string> = {
                 <InputError v-if="confirmError" :message="confirmError" />
                 <Button type="button" variant="outline" @click="confirmTime">
                     {{
-                        issue.invoiceable
+                        billrEnabled && issue.invoiceable
                             ? $t('time.confirmAndBill')
                             : $t('time.confirmTime')
                     }}

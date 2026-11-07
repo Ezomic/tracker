@@ -36,7 +36,7 @@ function pullRequest(Issue $issue, string $action, bool $merged): void
 {
     $data = [
         'action' => $action,
-        'pull_request' => ['head' => ['ref' => $issue->branch_name], 'html_url' => 'https://github.com/Ezomic/x/pull/1', 'merged' => $merged],
+        'pull_request' => ['head' => ['ref' => $issue->branch_name], 'html_url' => 'https://github.com/acme/x/pull/1', 'merged' => $merged],
     ];
     $body = json_encode($data);
 
@@ -74,7 +74,7 @@ it('moves the board column to In Review when a PR is opened, and to Done when it
     expect($issue->workflow_state_id)->toBe($lanes['Done']->id)
         ->and($issue->status)->toBe(IssueStatus::Done)
         ->and($issue->closed_at)->not->toBeNull()
-        ->and($issue->github_pr_url)->toBe('https://github.com/Ezomic/x/pull/1')
+        ->and($issue->github_pr_url)->toBe('https://github.com/acme/x/pull/1')
         ->and(legacyOf($issue))->toBe($issue->status);
 });
 

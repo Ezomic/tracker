@@ -6,8 +6,8 @@ import UserInfo from './UserInfo.vue';
 function makeUser(overrides: Partial<User> = {}): User {
     return {
         id: 1,
-        name: 'Robbin Thijssen',
-        email: 'robbin@example.com',
+        name: 'Grace Hopper',
+        email: 'grace@example.com',
         avatar: '',
         ...overrides,
     } as User;
@@ -17,23 +17,23 @@ describe('UserInfo', () => {
     it('renders the user name', () => {
         const wrapper = mount(UserInfo, { props: { user: makeUser() } });
 
-        expect(wrapper.text()).toContain('Robbin Thijssen');
+        expect(wrapper.text()).toContain('Grace Hopper');
     });
 
     it('hides the email by default and shows it when requested', () => {
         const hidden = mount(UserInfo, { props: { user: makeUser() } });
-        expect(hidden.text()).not.toContain('robbin@example.com');
+        expect(hidden.text()).not.toContain('grace@example.com');
 
         const shown = mount(UserInfo, {
             props: { user: makeUser(), showEmail: true },
         });
-        expect(shown.text()).toContain('robbin@example.com');
+        expect(shown.text()).toContain('grace@example.com');
     });
 
     it('falls back to initials when there is no avatar', () => {
         const wrapper = mount(UserInfo, { props: { user: makeUser() } });
 
-        expect(wrapper.text()).toContain('RT');
+        expect(wrapper.text()).toContain('GH');
         expect(wrapper.find('img').exists()).toBe(false);
     });
 
@@ -44,6 +44,6 @@ describe('UserInfo', () => {
 
         // Reka UI mounts the image asynchronously after it "loads"; assert the
         // fallback initials are not the only content by checking the src wiring.
-        expect(wrapper.html()).toContain('Robbin Thijssen');
+        expect(wrapper.html()).toContain('Grace Hopper');
     });
 });

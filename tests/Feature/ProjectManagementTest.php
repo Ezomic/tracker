@@ -9,7 +9,7 @@ use App\Models\Project;
 use App\Models\User;
 
 it('renders the projects settings page with issue counts', function () {
-    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $team = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(member($team))
@@ -34,14 +34,14 @@ it('creates a project', function () {
 it('keeps the description when it is resubmitted with an unrelated change', function () {
     $team = Project::factory()->create([
         'key' => 'THI',
-        'name' => 'Thijssen Software',
+        'name' => 'Acme Software',
         'description' => 'A meaningful description',
     ]);
 
     $this->actingAs(member($team))
         ->patch("/projects/{$team->id}", [
             'key' => 'THI',
-            'name' => 'Thijssen Software',
+            'name' => 'Acme Software',
             'description' => 'A meaningful description',
             'archive_after_days' => 7,
         ])
@@ -77,7 +77,7 @@ it('rejects an invalid color', function () {
 
 it('rejects a project key that is not 2-10 uppercase letters', function () {
     $this->actingAs(User::factory()->create())
-        ->post('/projects', ['key' => 'thi', 'name' => 'Thijssen Software'])
+        ->post('/projects', ['key' => 'thi', 'name' => 'Acme Software'])
         ->assertSessionHasErrors('key');
 });
 
@@ -116,7 +116,7 @@ it('prohibits changing the key once a project has issues', function () {
     (new CreateIssueAction)->handle($team, 'An issue', IssueType::Feature);
 
     $this->actingAs(member($team))
-        ->patch("/projects/{$team->id}", ['key' => 'CHANGED', 'name' => 'Thijssen Software'])
+        ->patch("/projects/{$team->id}", ['key' => 'CHANGED', 'name' => 'Acme Software'])
         ->assertSessionHasErrors('key');
 
     expect($team->fresh()->key)->toBe('THI');

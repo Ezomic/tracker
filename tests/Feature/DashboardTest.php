@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 function seedDashboard(): Project
 {
-    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software']);
+    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
 
     Issue::factory()->for($project)->count(3)->create(['status' => IssueStatus::Backlog]);
     Issue::factory()->for($project)->count(2)->create(['status' => IssueStatus::InProgress]);

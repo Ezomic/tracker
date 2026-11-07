@@ -29,14 +29,14 @@ it('moves an issue to in_review when its PR is opened', function () {
         'action' => 'opened',
         'pull_request' => [
             'head' => ['ref' => $issue->branch_name],
-            'html_url' => 'https://github.com/Ezomic/tracker/pull/42',
+            'html_url' => 'https://github.com/acme/tracker/pull/42',
             'merged' => false,
         ],
     ], 'pull_request')->assertNoContent();
 
     expect($issue->fresh())
         ->status->toBe(IssueStatus::InReview)
-        ->github_pr_url->toBe('https://github.com/Ezomic/tracker/pull/42');
+        ->github_pr_url->toBe('https://github.com/acme/tracker/pull/42');
 });
 
 it('moves an issue to done and stamps closed_at when its PR is merged', function () {
@@ -47,7 +47,7 @@ it('moves an issue to done and stamps closed_at when its PR is merged', function
         'action' => 'closed',
         'pull_request' => [
             'head' => ['ref' => $issue->branch_name],
-            'html_url' => 'https://github.com/Ezomic/tracker/pull/42',
+            'html_url' => 'https://github.com/acme/tracker/pull/42',
             'merged' => true,
         ],
     ], 'pull_request')->assertNoContent();
@@ -65,7 +65,7 @@ it('does not change status when a PR is closed without merging', function () {
         'action' => 'closed',
         'pull_request' => [
             'head' => ['ref' => $issue->branch_name],
-            'html_url' => 'https://github.com/Ezomic/tracker/pull/42',
+            'html_url' => 'https://github.com/acme/tracker/pull/42',
             'merged' => false,
         ],
     ], 'pull_request')->assertNoContent();
@@ -78,7 +78,7 @@ it('no-ops when the branch name does not match any issue', function () {
         'action' => 'opened',
         'pull_request' => [
             'head' => ['ref' => 'some-random-branch'],
-            'html_url' => 'https://github.com/Ezomic/tracker/pull/42',
+            'html_url' => 'https://github.com/acme/tracker/pull/42',
             'merged' => false,
         ],
     ], 'pull_request')->assertNoContent();
@@ -91,7 +91,7 @@ it('no-ops on a matched branch belonging to a nonexistent issue number', functio
         'action' => 'opened',
         'pull_request' => [
             'head' => ['ref' => 'feature/THI-999-does-not-exist'],
-            'html_url' => 'https://github.com/Ezomic/tracker/pull/42',
+            'html_url' => 'https://github.com/acme/tracker/pull/42',
             'merged' => false,
         ],
     ], 'pull_request')->assertNoContent();

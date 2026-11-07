@@ -9,16 +9,16 @@ describe('getInitials', () => {
     });
 
     it('uppercases the single initial of a one-word name', () => {
-        expect(getInitials('robbin')).toBe('R');
+        expect(getInitials('grace')).toBe('G');
     });
 
     it('takes the first and last initial of a multi-word name', () => {
-        expect(getInitials('Robbin Thijssen')).toBe('RT');
+        expect(getInitials('Grace Hopper')).toBe('GH');
         expect(getInitials('Ada King Lovelace')).toBe('AL');
     });
 
     it('collapses irregular whitespace between names', () => {
-        expect(getInitials('  Robbin   Thijssen  ')).toBe('RT');
+        expect(getInitials('  Grace   Hopper  ')).toBe('GH');
     });
 
     it('handles unicode first characters', () => {
@@ -28,6 +28,6 @@ describe('getInitials', () => {
 
 describe('useInitials', () => {
     it('exposes getInitials', () => {
-        expect(useInitials().getInitials('Robbin Thijssen')).toBe('RT');
+        expect(useInitials().getInitials('Grace Hopper')).toBe('GH');
     });
 });

@@ -7,7 +7,7 @@ use App\Enums\IssueType;
 use App\Models\Project;
 
 it('shares every project the user belongs to for the new-issue modal', function () {
-    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen']);
+    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Acme']);
     $cms = Project::factory()->create(['key' => 'CMS', 'name' => 'Portfolio']);
     Project::factory()->create(['key' => 'NOPE']);
     $user = member([$thi, $cms]);

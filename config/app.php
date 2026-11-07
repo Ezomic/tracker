@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Operator Name
+    |--------------------------------------------------------------------------
+    |
+    | Who runs this instance, shown in the landing page footer. Optional: left
+    | empty, the footer shows the application name instead.
+    |
+    */
+
+    'operator_name' => env('APP_OPERATOR_NAME'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

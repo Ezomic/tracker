@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { Integrations } from '@/types/integrations';
 import type { AppNotification } from '@/types/issue';
 import type { PortalApp, PortalCategory } from '@/types/portal';
 import type {
@@ -24,6 +25,7 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            integrations: Integrations;
             locale: string;
             auth: Auth;
             currentOrganization: OrganizationSummary | null;

@@ -10,13 +10,13 @@ it('stores github_repos and production_url when creating a project', function ()
         ->post('/projects', [
             'key' => 'SHOP',
             'name' => 'Shop',
-            'github_repos' => ['Ezomic/shop', 'Ezomic/shop-api'],
+            'github_repos' => ['acme/shop', 'acme/shop-api'],
             'production_url' => 'https://shop.example.com',
         ])
         ->assertRedirect(route('projects.index'));
 
     $project = Project::query()->where('key', 'SHOP')->first();
-    expect($project->github_repos)->toBe(['Ezomic/shop', 'Ezomic/shop-api'])
+    expect($project->github_repos)->toBe(['acme/shop', 'acme/shop-api'])
         ->and($project->production_url)->toBe('https://shop.example.com');
 });
 
@@ -25,12 +25,12 @@ it('drops empty repo rows when saving', function () {
         ->post('/projects', [
             'key' => 'SHOP',
             'name' => 'Shop',
-            'github_repos' => ['Ezomic/shop', '', '  '],
+            'github_repos' => ['acme/shop', '', '  '],
         ])
         ->assertRedirect(route('projects.index'));
 
     expect(Project::query()->where('key', 'SHOP')->first()->github_repos)
-        ->toBe(['Ezomic/shop']);
+        ->toBe(['acme/shop']);
 });
 
 it('updates github_repos and production_url', function () {
@@ -40,13 +40,13 @@ it('updates github_repos and production_url', function () {
         ->patch("/projects/{$project->id}", [
             'key' => 'SHOP',
             'name' => 'Shop',
-            'github_repos' => ['Ezomic/shop'],
+            'github_repos' => ['acme/shop'],
             'production_url' => 'https://shop.example.com',
         ])
         ->assertRedirect(route('projects.index'));
 
     $project->refresh();
-    expect($project->github_repos)->toBe(['Ezomic/shop'])
+    expect($project->github_repos)->toBe(['acme/shop'])
         ->and($project->production_url)->toBe('https://shop.example.com');
 });
 
@@ -63,7 +63,7 @@ it('rejects an invalid production_url', function () {
 it('derives docs, production, and per-repo links from the stored fields', function () {
     $project = Project::factory()->create([
         'key' => 'SHOP',
-        'github_repos' => ['Ezomic/shop', 'Ezomic/shop-api'],
+        'github_repos' => ['acme/shop', 'acme/shop-api'],
         'production_url' => 'https://shop.example.com/',
     ]);
 
@@ -71,8 +71,8 @@ it('derives docs, production, and per-repo links from the stored fields', functi
         'docs' => 'https://shop.example.com/docs',
         'production' => 'https://shop.example.com',
         'repos' => [
-            ['name' => 'Ezomic/shop', 'url' => 'https://github.com/Ezomic/shop'],
-            ['name' => 'Ezomic/shop-api', 'url' => 'https://github.com/Ezomic/shop-api'],
+            ['name' => 'acme/shop', 'url' => 'https://github.com/acme/shop'],
+            ['name' => 'acme/shop-api', 'url' => 'https://github.com/acme/shop-api'],
         ],
     ]);
 });
@@ -94,7 +94,7 @@ it('returns empty links when the fields are empty', function () {
 it('exposes project links on the settings page', function () {
     $project = Project::factory()->create([
         'key' => 'SHOP',
-        'github_repos' => ['Ezomic/shop'],
+        'github_repos' => ['acme/shop'],
         'production_url' => 'https://shop.example.com',
     ]);
 
@@ -103,14 +103,14 @@ it('exposes project links on the settings page', function () {
         ->assertInertia(fn ($page) => $page
             ->where('projects.0.links.docs', 'https://shop.example.com/docs')
             ->where('projects.0.links.production', 'https://shop.example.com')
-            ->where('projects.0.links.repos.0.url', 'https://github.com/Ezomic/shop')
+            ->where('projects.0.links.repos.0.url', 'https://github.com/acme/shop')
         );
 });
 
 it('exposes scoped project links on the board', function () {
     $project = Project::factory()->create([
         'key' => 'SHOP',
-        'github_repos' => ['Ezomic/shop'],
+        'github_repos' => ['acme/shop'],
         'production_url' => 'https://shop.example.com',
     ]);
 
@@ -125,13 +125,13 @@ it('exposes scoped project links on the board', function () {
 it('exposes project links in the tickets teams list', function () {
     $project = Project::factory()->create([
         'key' => 'SHOP',
-        'github_repos' => ['Ezomic/shop'],
+        'github_repos' => ['acme/shop'],
         'production_url' => 'https://shop.example.com',
     ]);
 
     $this->actingAs(member($project))
         ->get('/issues')
         ->assertInertia(fn ($page) => $page
-            ->where('projects.0.links.repos.0.name', 'Ezomic/shop')
+            ->where('projects.0.links.repos.0.name', 'acme/shop')
         );
 });

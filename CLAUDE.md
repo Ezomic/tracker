@@ -12,7 +12,8 @@ know **before changing code**. Global conventions live in `~/.claude/CLAUDE.md`.
 - **CI runs on PRs targeting `main`, and on `main` itself** (tests and lint; mutation and browser stay PR-only because they are slow). PRs onto any other branch get no CI, so stacked PRs are unverified until retargeted.
 - **Nothing stops you merging red.** The repo is private on a plan without branch protection, so there are no required status checks: `gh pr merge --auto` finds nothing to wait for and merges **immediately**. Watch a PR to green and merge it yourself; the run on `main` is the backstop that tells you afterwards if something slipped through, not a gate.
 - **Deploy is manual.** Merging to `main` does **not** deploy. `.github/workflows/deploy.yml` is `workflow_dispatch` only, so production is deployed by hand (run the workflow, or SSH in). The `production` concurrency group means a newer deploy **cancels an older one**, so let each finish. `optimize:clear` runs **before** `npm run build` on purpose (a stale route cache once shipped a build referencing a not-yet-existing route and took prod down).
-- **The app name is pinned in code**, not read from `APP_NAME` (prod `.env` still says `Laravel`). See `AppServiceProvider`.
+- **The app name comes from `APP_NAME`**, but a blank value or the stock `Laravel` reads as `Tracker` (prod `.env` still says `Laravel`). See `AppServiceProvider`.
+- **Integrations are optional.** Thijssensoftware ID (SSO + portal switcher) and Billr are on only when every one of their env vars is filled (`App\Services\Integrations`, shared to the frontend as `integrations`). Off means no buttons and no outbound calls.
 
 ## Architecture (the short version)
 

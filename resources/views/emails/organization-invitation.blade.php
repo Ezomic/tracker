@@ -7,7 +7,7 @@
         @else
             You've been invited to join
         @endif
-        <strong>{{ $organizationName }}</strong> on Tracker as {{ $roleLabel }}.
+        <strong>{{ $organizationName }}</strong> on {{ config('app.name') }} as {{ $roleLabel }}.
     </p>
     @if ($projectName)
         <p style="color: #6b7280; font-size: 14px;">

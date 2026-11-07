@@ -7,17 +7,20 @@ import { Button } from '@/components/ui/button';
 import { register } from '@/routes';
 import { create as createLoginCode } from '@/routes/login/code';
 import { redirect as ssoRedirect } from '@/routes/sso';
+import type { Integrations } from '@/types';
 
 defineOptions({
-    layout: {
+    layout: (props: { integrations: Integrations }) => ({
         title: 'Log in to your account',
-        description:
-            'Sign in with Thijssensoftware, an email code, or a passkey',
-    },
+        description: props.integrations.sso
+            ? 'Sign in with Thijssensoftware, an email code, or a passkey'
+            : 'Sign in with an email code or a passkey',
+    }),
 });
 
 defineProps<{
     status?: string;
+    integrations: Integrations;
 }>();
 </script>
 
@@ -32,11 +35,16 @@ defineProps<{
     </div>
 
     <div class="grid gap-2">
-        <Button class="w-full" as-child>
+        <Button v-if="integrations.sso" class="w-full" as-child>
             <a :href="ssoRedirect().url">{{ $t('auth.signInWith') }}</a>
         </Button>
 
-        <Button type="button" variant="outline" class="w-full" as-child>
+        <Button
+            type="button"
+            :variant="integrations.sso ? 'outline' : 'default'"
+            class="w-full"
+            as-child
+        >
             <Link :href="createLoginCode()">
                 <Mail class="h-4 w-4" />
                 {{ $t('auth.logInWithCode') }}

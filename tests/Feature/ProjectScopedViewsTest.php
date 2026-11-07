@@ -45,7 +45,7 @@ it('returns 404 for an unknown project key', function () {
 });
 
 it('shares projects to authenticated pages', function () {
-    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Thijssen Software', 'color' => '#d85a30']);
+    $thi = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software', 'color' => '#d85a30']);
 
     $this->actingAs(member($thi))
         ->get('/issues')

@@ -104,7 +104,7 @@ Conventions worth knowing before changing things:
 - **Everything is membership-scoped.** `Project::visibleTo($user)` and `Issue::visibleTo($user)` scope every read; writes are authorized. A query that forgets this leaks across tenants, so scope first and ask questions later.
 - **Guarded data migrations** are how production data gets changed, since there is no shell on the box. They guard on a row existing so fresh and test databases no-op. See `database/migrations/*backfill*` and `*populate*`.
 - **`CarbonImmutable`** for dates, `#[Fillable]` attributes over `$fillable` arrays, and no inline SQL.
-- **The app name is pinned in code**, not read from `APP_NAME`. See `AppServiceProvider`.
+- **The app name comes from `APP_NAME`**, except that a blank value or Laravel's stock `Laravel` reads as `Tracker`. See `AppServiceProvider`.
 
 ## Security
 
@@ -264,3 +264,7 @@ composer test              # lint + PHPStan + Pest
 ```
 
 Pest, with `RefreshDatabase` against in-memory SQLite. `tests/Pest.php` exposes `member()` and `joinProjects()` helpers, since almost every feature test needs the acting user to be a member of the project under test.
+
+## License
+
+Tracker is free software, licensed under the [GNU Affero General Public License v3.0 only](LICENSE) (`AGPL-3.0-only`). You may use, modify and self-host it; if you run a modified version for other people over a network, you must offer them its source code under the same license.

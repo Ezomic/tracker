@@ -7,14 +7,17 @@ namespace App\Actions;
 use App\Jobs\ReportTimeToBillrJob;
 use App\Models\Issue;
 use App\Models\User;
+use App\Services\Integrations;
 
 class ConfirmIssueTimeAction
 {
+    public function __construct(private readonly Integrations $integrations) {}
+
     /**
-     * Lock in the confirmed minutes for an issue. If it's invoiceable, queue a
-     * job to report that time to Billr so a slow or unreachable Billr never
-     * blocks the request; the local confirmation stands regardless, and the
-     * job retries with backoff on failure.
+     * Lock in the confirmed minutes for an issue. If it's invoiceable and
+     * Billr is configured, queue a job to report that time to Billr so a slow
+     * or unreachable Billr never blocks the request; the local confirmation
+     * stands regardless, and the job retries with backoff on failure.
      */
     public function handle(Issue $issue, User $user, int $minutes, ?string $billrClientName): void
     {
@@ -25,7 +28,7 @@ class ConfirmIssueTimeAction
 
         $issue->recordActivity('time_confirmed', ['minutes' => $minutes], $user->id);
 
-        if ($issue->invoiceable) {
+        if ($issue->invoiceable && $this->integrations->billr()) {
             ReportTimeToBillrJob::dispatch($issue, $minutes, $billrClientName);
         }
     }

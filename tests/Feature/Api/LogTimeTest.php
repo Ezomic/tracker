@@ -60,7 +60,7 @@ it('requires authentication', function () {
 });
 
 it('lists the time entries for an issue', function () {
-    $user = User::factory()->create(['name' => 'Robbin']);
+    $user = User::factory()->create(['name' => 'Ada']);
     $project = Project::factory()->create(['key' => 'THI']);
     joinProjects($user, $project);
     $issue = Issue::factory()->for($project)->create(['identifier' => 'THI-20']);
@@ -68,7 +68,7 @@ it('lists the time entries for an issue', function () {
 
     $this->actingAs($user, 'sanctum')->getJson('/api/issues/THI-20/time')
         ->assertOk()
-        ->assertJson([['minutes' => 60, 'spentOn' => '2026-07-21', 'note' => 'a', 'user' => 'Robbin']]);
+        ->assertJson([['minutes' => 60, 'spentOn' => '2026-07-21', 'note' => 'a', 'user' => 'Ada']]);
 });
 
 it('deletes a time entry', function () {

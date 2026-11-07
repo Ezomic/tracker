@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Portal;
 
 use App\Models\User;
+use App\Services\Integrations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -20,12 +21,14 @@ class IdPortalClient
 {
     private const TOKEN_CACHE_KEY = 'portal-client-token';
 
+    public function __construct(private readonly Integrations $integrations) {}
+
     /**
      * @return array{apps: list<array{slug: string, name: string, initials: string, accent: string|null, launch_url: string, current: bool}>, categories: list<array{category: string, apps: list<array{slug: string, name: string, initials: string, accent: string|null, launch_url: string, current: bool}>}>}
      */
     public function appsFor(User $user): array
     {
-        if (! $this->configured()) {
+        if (! $this->integrations->sso()) {
             return ['apps' => [], 'categories' => []];
         }
 
@@ -134,13 +137,6 @@ class IdPortalClient
         Cache::put(self::TOKEN_CACHE_KEY, $token, max(60, $ttl - 30));
 
         return $token;
-    }
-
-    private function configured(): bool
-    {
-        return filled(config('services.thijssensoftware.base_url'))
-            && filled(config('services.thijssensoftware.client_id'))
-            && filled(config('services.thijssensoftware.client_secret'));
     }
 
     private function url(string $path): string

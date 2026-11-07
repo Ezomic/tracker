@@ -9,23 +9,23 @@ it('derives branch and commit links from the pull request url', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $issue = Issue::factory()->for($project)->create([
         'branch_name' => 'feature/THI-1-example',
-        'github_pr_url' => 'https://github.com/Ezomic/tracker/pull/42',
+        'github_pr_url' => 'https://github.com/acme/tracker/pull/42',
     ]);
 
     $this->actingAs(member($project))
         ->get("/issues/{$issue->identifier}")
         ->assertInertia(fn ($page) => $page
             ->component('issues/Show')
-            ->where('issue.branchUrl', 'https://github.com/Ezomic/tracker/tree/feature/THI-1-example')
-            ->where('issue.commitsUrl', 'https://github.com/Ezomic/tracker/commits/feature/THI-1-example')
-            ->where('issue.githubPrUrl', 'https://github.com/Ezomic/tracker/pull/42')
+            ->where('issue.branchUrl', 'https://github.com/acme/tracker/tree/feature/THI-1-example')
+            ->where('issue.commitsUrl', 'https://github.com/acme/tracker/commits/feature/THI-1-example')
+            ->where('issue.githubPrUrl', 'https://github.com/acme/tracker/pull/42')
         );
 });
 
 it('falls back to the project github_repos when there is no pull request', function () {
     $project = Project::factory()->create([
         'key' => 'THI',
-        'github_repos' => ['Ezomic/tracker'],
+        'github_repos' => ['acme/tracker'],
     ]);
     $issue = Issue::factory()->for($project)->create([
         'branch_name' => 'feature/THI-2-example',
@@ -35,8 +35,8 @@ it('falls back to the project github_repos when there is no pull request', funct
     $this->actingAs(member($project))
         ->get("/issues/{$issue->identifier}")
         ->assertInertia(fn ($page) => $page
-            ->where('issue.branchUrl', 'https://github.com/Ezomic/tracker/tree/feature/THI-2-example')
-            ->where('issue.commitsUrl', 'https://github.com/Ezomic/tracker/commits/feature/THI-2-example')
+            ->where('issue.branchUrl', 'https://github.com/acme/tracker/tree/feature/THI-2-example')
+            ->where('issue.commitsUrl', 'https://github.com/acme/tracker/commits/feature/THI-2-example')
         );
 });
 

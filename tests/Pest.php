@@ -39,6 +39,17 @@ expect()->extend('toBeOne', function () {
 });
 
 /*
+| How an optional env var reaches config when an operator leaves it out:
+| unset gives null, `KEY=` gives an empty string, `KEY="   "` gives spaces.
+| Every one of them must read as "this integration is off".
+*/
+dataset('blank', [
+    'unset' => [null],
+    'empty string' => [''],
+    'whitespace only' => ['   '],
+]);
+
+/*
 |--------------------------------------------------------------------------
 | Functions
 |--------------------------------------------------------------------------
@@ -48,6 +59,19 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+function configureSso(): void
+{
+    config()->set('services.thijssensoftware.base_url', 'https://id.example.test');
+    config()->set('services.thijssensoftware.client_id', 'client-id');
+    config()->set('services.thijssensoftware.client_secret', 'client-secret');
+}
+
+function configureBillr(): void
+{
+    config()->set('services.billr.base_url', 'http://billr.test');
+    config()->set('services.billr.token', 'test-token');
+}
 
 /**
  * Create a user who is a member of the given projects (Admin by default).
