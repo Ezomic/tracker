@@ -8,7 +8,6 @@ use App\Enums\ProjectLevel;
 use App\Models\Issue;
 use App\Models\IssueLink;
 use App\Models\Project;
-use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->project = Project::factory()->create(['key' => 'THI']);
@@ -159,42 +158,4 @@ it('refuses a link id belonging to another issue', function () {
     $this->actingAs($this->user, 'sanctum')
         ->deleteJson("/api/issues/THI-1/links/{$theirs->id}")
         ->assertNotFound();
-});
-
-it('backfills the duplicates already recorded as prose', function () {
-    DB::table('issues')->where('id', $this->issue->id)->update([
-        'archived_at' => now(),
-        'archive_reason' => 'Duplicate of THI-2, which covers the same work.',
-    ]);
-
-    (require database_path('migrations/2026_08_07_140000_backfill_duplicate_issue_links.php'))->up();
-
-    expect($this->issue->links()->first()->relation)->toBe(IssueRelation::Duplicates)
-        ->and($this->other->links()->first()->relation)->toBe(IssueRelation::DuplicatedBy)
-        // The prose stays: it is the audit trail of why it was archived.
-        ->and($this->issue->fresh()->archive_reason)->toBe('Duplicate of THI-2, which covers the same work.');
-});
-
-it('leaves an unparseable or dangling reason alone', function () {
-    DB::table('issues')->where('id', $this->issue->id)->update([
-        'archived_at' => now(),
-        'archive_reason' => 'Duplicate of GONE-99, which covers the same work.',
-    ]);
-
-    (require database_path('migrations/2026_08_07_140000_backfill_duplicate_issue_links.php'))->up();
-
-    expect(IssueLink::query()->count())->toBe(0);
-});
-
-it('backfills idempotently', function () {
-    DB::table('issues')->where('id', $this->issue->id)->update([
-        'archived_at' => now(),
-        'archive_reason' => 'Duplicate of THI-2, which covers the same work.',
-    ]);
-
-    $migration = require database_path('migrations/2026_08_07_140000_backfill_duplicate_issue_links.php');
-    $migration->up();
-    $migration->up();
-
-    expect(IssueLink::query()->count())->toBe(2);
 });

@@ -20,7 +20,8 @@ know **before changing code**. Global conventions live in `~/.claude/CLAUDE.md`.
 - **Everything is membership-scoped.** `Project::visibleTo($user)` / `Issue::visibleTo($user)` on every read; policies (`ProjectPolicy`, `IssuePolicy`, and the org/label/category ones) authorize every write. A query that forgets this leaks across tenants.
 - **Two-tier access model.** An org role (owner/admin/member/**guest**) plus an optional per-project grant (read/write/admin); effective access is the higher of the two. Labels, categories and templates live on the **organisation**.
 - Business logic in **Actions** (one `handle()`), validation in **Form Requests**, thin controllers. `CarbonImmutable` for dates, `#[Fillable]`/`#[Hidden]` attributes (not arrays), no inline SQL.
-- **Production data changes go through guarded data migrations** (guard on a row existing so fresh/test DBs no-op). See `database/migrations/*backfill*` and `*populate*`.
+- **Production data changes go through guarded data migrations** (guard on a row existing so fresh/test DBs no-op). Everything up to TRACK-249 is squashed into `database/schema/sqlite-schema.sql` (git history has the old files); new migrations go in `database/migrations` as usual.
+- **The schema dump loads through PDO**, not the `sqlite3` CLI (`App\Database\SQLiteConnection`), so `migrate` works without the binary. Re-running `schema:dump` does need the CLI. Starter data for new organizations is `SeedOrganizationStarterDataAction`, not a migration.
 - Sidebar projects are grouped by a **category tree** (there is no "favorites" feature; it was removed).
 
 ## Local dev

@@ -159,22 +159,3 @@ it('searches from the command palette', function () {
     $response->assertOk();
     expect($response->json('0.identifier'))->toBe('THI-1');
 });
-
-it('backfills existing issues into the index', function () {
-    $issue = Issue::factory()->for($this->project)->create(['number' => 1, 'identifier' => 'THI-1', 'title' => 'Historic widget']);
-    DB::table('issue_search')->delete();
-
-    (require database_path('migrations/2026_08_08_110100_backfill_issue_search_index.php'))->up();
-
-    expect(found($this->user, 'historic'))->toBe(['THI-1']);
-});
-
-it('does not double up when the backfill runs twice', function () {
-    Issue::factory()->for($this->project)->create(['number' => 1, 'identifier' => 'THI-1', 'title' => 'Widget']);
-
-    $migration = require database_path('migrations/2026_08_08_110100_backfill_issue_search_index.php');
-    $migration->up();
-    $migration->up();
-
-    expect(DB::table('issue_search')->where('issue_id', Issue::query()->value('id'))->count())->toBe(1);
-});

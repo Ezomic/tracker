@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Database\SQLiteConnection;
 use App\Models\User;
 use App\Support\Cast;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -16,6 +19,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use PDO;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
         config(['fortify-options.passkeys.confirmPassword' => false]);
 
         $this->resolveAppName();
+
+        Connection::resolverFor('sqlite', static fn (PDO|Closure $pdo, string $database, string $prefix, array $config): SQLiteConnection => new SQLiteConnection($pdo, $database, $prefix, $config));
     }
 
     /**

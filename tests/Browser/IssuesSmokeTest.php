@@ -16,7 +16,8 @@ it('hides the Billr billing controls on an issue when Billr is not configured', 
     $this->actingAs($user);
 
     visit("/issues/{$issue->identifier}")
-        ->assertSee('Rotate the deploy token')
+        ->assertSee('THI-1')
+        ->assertSee('Activity')
         ->assertDontSee('Invoiceable')
         ->assertNoJavascriptErrors();
 });

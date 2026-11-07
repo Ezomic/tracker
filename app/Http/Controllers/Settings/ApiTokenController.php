@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\StoreApiTokenRequest;
+use App\Support\Cast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -24,9 +26,9 @@ class ApiTokenController extends Controller
                 ->get()
                 ->map(fn (PersonalAccessToken $token): array => [
                     'id' => $token->id,
-                    'name' => $token->name,
-                    'createdAtDiff' => $token->created_at?->diffForHumans(),
-                    'lastUsedAtDiff' => $token->last_used_at?->diffForHumans(),
+                    'name' => Cast::string($token->getAttribute('name')),
+                    'createdAtDiff' => Date::make($token->getAttribute('created_at'))?->diffForHumans(),
+                    'lastUsedAtDiff' => Date::make($token->getAttribute('last_used_at'))?->diffForHumans(),
                 ])
                 ->all(),
             // Flashed once by store(), through the redirect, then gone.
@@ -43,7 +45,7 @@ class ApiTokenController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('API token created.')]);
 
         return to_route('api-tokens.index')->with('createdToken', [
-            'name' => $token->accessToken->name,
+            'name' => Cast::string($token->accessToken->getAttribute('name')),
             'plainText' => $token->plainTextToken,
         ]);
     }

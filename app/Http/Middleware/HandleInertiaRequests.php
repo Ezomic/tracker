@@ -17,6 +17,7 @@ use App\Support\Cast;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -103,9 +104,9 @@ class HandleInertiaRequests extends Middleware
             'notifications' => fn () => $request->user() !== null
                 ? $request->user()->notifications()->latest()->limit(15)->get()->map(fn ($notification) => [
                     'id' => $notification->id,
-                    'data' => $notification->data,
-                    'read' => $notification->read_at !== null,
-                    'createdAt' => $notification->created_at?->toIso8601String(),
+                    'data' => $notification->getAttribute('data'),
+                    'read' => $notification->getAttribute('read_at') !== null,
+                    'createdAt' => Date::make($notification->getAttribute('created_at'))?->toIso8601String(),
                 ])
                 : [],
             'unreadNotificationsCount' => fn () => $request->user() !== null
