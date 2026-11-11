@@ -20,8 +20,6 @@ const props = defineProps<{
     epics: EpicOption[];
     labels: IssueLabel[];
     members: IssueUser[];
-    canLogTime: boolean;
-    canManageTime: boolean;
     canModerateComments: boolean;
     canArchive: boolean;
     currentUserId: number;

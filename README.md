@@ -22,7 +22,6 @@ It replaced Linear once that hit its free-tier active-issue cap. The goals were 
 - Epics: one level of parent/child, with progress on the epic
 - Board, list and a three-view dashboard (Focus / Metrics / Board), filtering, and a command palette (`⌘K`)
 - **Saved views** — store the current filters as a named, reusable view
-- **Time tracking** — log time against issues, confirm billable minutes, and report them to Billr; issues can be marked invoiceable
 - Organisation-wide **ticket templates** that prefill the description plus default type, priority and labels; the template a ticket was filed from is shown on the issue
 - **Recurring templates** — file an issue automatically on a cadence into a target project
 - **Notifications and @mentions** on issues and comments
@@ -151,7 +150,7 @@ GET    /api/issues/{identifier}/activity # how it got to be the way it is
 | `per_page` | 1 to 200, default 50                             |
 | `page`     | page number                                      |
 
-Each row carries enough to triage without a follow-up request: identifier, title, type, status, `workflow_state`, priority, project, parent, assignee, estimate, labels, `created_at` and `closed_at`.
+Each row carries enough to triage without a follow-up request: identifier, title, type, status, `workflow_state`, priority, project, parent, assignee, labels, `created_at` and `closed_at`.
 
 ### Workflow states
 

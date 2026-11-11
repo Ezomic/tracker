@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Models\Issue;
 use App\Models\Label;
 
-it('returns estimate_minutes and labels from the detail endpoint', function () {
+it('returns labels from the detail endpoint', function () {
     [$organization, $user] = organizationWith();
     projectInOrganization($organization, $user, ['key' => 'THI', 'next_number' => 0]);
     Label::factory()->create(['organization_id' => $organization->id, 'name' => 'backend']);
@@ -15,7 +15,6 @@ it('returns estimate_minutes and labels from the detail endpoint', function () {
         'project' => 'THI',
         'title' => 'Round-trip me',
         'type' => 'feature',
-        'estimate' => '4h 30m',
         'labels' => ['backend', 'api'],
     ])->assertCreated();
 
@@ -23,11 +22,10 @@ it('returns estimate_minutes and labels from the detail endpoint', function () {
 
     $response = $this->actingAs($user, 'sanctum')->getJson("/api/issues/{$identifier}")->assertOk();
 
-    expect($response->json('estimate_minutes'))->toBe(270)
-        ->and($response->json('labels'))->toEqualCanonicalizing(['backend', 'api']);
+    expect($response->json('labels'))->toEqualCanonicalizing(['backend', 'api']);
 });
 
-it('returns null estimate_minutes and an empty label list when unset', function () {
+it('returns an empty label list when unset', function () {
     [$organization, $user] = organizationWith();
     projectInOrganization($organization, $user, ['key' => 'THI', 'next_number' => 0]);
 
@@ -41,7 +39,7 @@ it('returns null estimate_minutes and an empty label list when unset', function 
 
     $this->actingAs($user, 'sanctum')->getJson("/api/issues/{$identifier}")
         ->assertOk()
-        ->assertJson(['estimate_minutes' => null, 'labels' => []]);
+        ->assertJson(['labels' => []]);
 });
 
 it('includes labels in the list endpoint', function () {

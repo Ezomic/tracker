@@ -11,7 +11,6 @@ use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectWebhookController;
 use App\Http\Controllers\SavedViewController;
-use App\Http\Controllers\TimeEntryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -65,10 +64,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('issues/{issue:identifier}/links/{link}', [IssueController::class, 'unlink'])->name('issues.links.destroy');
     Route::post('issues/{issue:identifier}/watch', [IssueController::class, 'watch'])->name('issues.watch');
     Route::delete('issues/{issue:identifier}/watch', [IssueController::class, 'unwatch'])->name('issues.unwatch');
-
-    Route::post('issues/{issue:identifier}/time', [TimeEntryController::class, 'store'])->name('issues.time.store');
-    Route::delete('issues/{issue:identifier}/time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('issues.time.destroy');
-    Route::post('issues/{issue:identifier}/confirm-time', [TimeEntryController::class, 'confirmTime'])->name('issues.confirmTime');
 
     Route::post('issues/{issue:identifier}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
     Route::patch('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'update'])->name('issues.comments.update');

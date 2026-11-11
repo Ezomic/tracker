@@ -8,7 +8,6 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\User;
-use App\Rules\DurationRule;
 use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -51,8 +50,6 @@ class UpdateIssueRequest extends FormRequest
             'type' => ['required', Rule::enum(IssueType::class)],
             'priority' => ['required', Rule::enum(IssuePriority::class)],
             'description' => ['nullable', 'string'],
-            'estimate' => ['nullable', 'string', new DurationRule],
-            'invoiceable' => ['boolean'],
             'parent_id' => [
                 'nullable',
                 'integer',

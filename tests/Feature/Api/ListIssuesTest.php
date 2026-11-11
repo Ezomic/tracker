@@ -75,7 +75,6 @@ it('carries the fields needed to triage without a second request', function () {
         'identifier' => 'THI-1',
         'priority' => IssuePriority::High,
         'assignee_id' => $user->id,
-        'estimate_minutes' => 90,
         'status' => IssueStatus::Done,
         'closed_at' => now(),
     ]);
@@ -89,7 +88,6 @@ it('carries the fields needed to triage without a second request', function () {
             'identifier' => 'THI-1',
             'priority' => 'high',
             'assignee' => $user->email,
-            'estimate_minutes' => 90,
             'labels' => ['backend'],
         ])
         ->and($response->json('data.0.created_at'))->not->toBeNull()

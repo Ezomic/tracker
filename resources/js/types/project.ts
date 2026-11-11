@@ -86,7 +86,6 @@ export interface Project {
     links: ProjectLinks;
     openCount: number;
     issuesCount: number;
-    loggedMinutes: number;
     keyLocked: boolean;
 }
 

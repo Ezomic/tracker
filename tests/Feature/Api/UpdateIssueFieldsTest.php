@@ -39,37 +39,6 @@ it('updates type on its own', function () {
     expect($issue->fresh()->type)->toBe(IssueType::Fix);
 });
 
-it('updates the estimate from a duration string', function () {
-    [, $owner, , $issue] = apiIssue();
-
-    $this->actingAs($owner, 'sanctum')
-        ->patchJson("/api/issues/{$issue->identifier}", ['estimate' => '4h 30m'])
-        ->assertOk()
-        ->assertJson(['estimate_minutes' => 270]);
-
-    expect($issue->fresh()->estimate_minutes)->toBe(270);
-});
-
-it('clears the estimate when it is submitted null', function () {
-    [, $owner, , $issue] = apiIssue();
-    $issue->forceFill(['estimate_minutes' => 120])->save();
-
-    $this->actingAs($owner, 'sanctum')
-        ->patchJson("/api/issues/{$issue->identifier}", ['estimate' => null])
-        ->assertOk();
-
-    expect($issue->fresh()->estimate_minutes)->toBeNull();
-});
-
-it('rejects an unparseable estimate', function () {
-    [, $owner, , $issue] = apiIssue();
-
-    $this->actingAs($owner, 'sanctum')
-        ->patchJson("/api/issues/{$issue->identifier}", ['estimate' => 'soonish'])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors('estimate');
-});
-
 it('assigns by email and unassigns on an empty string', function () {
     [, $owner, , $issue] = apiIssue();
 
@@ -158,7 +127,6 @@ it('leaves untouched fields alone on a partial patch', function () {
     [$org, $owner, , $issue] = apiIssue();
     $issue->forceFill([
         'priority' => IssuePriority::High,
-        'estimate_minutes' => 60,
         'assignee_id' => $owner->id,
         'description' => 'Original description',
     ])->save();
@@ -171,7 +139,6 @@ it('leaves untouched fields alone on a partial patch', function () {
     expect($issue->fresh())
         ->title->toBe('Only the title moves')
         ->priority->toBe(IssuePriority::High)
-        ->estimate_minutes->toBe(60)
         ->assignee_id->toBe($owner->id)
         ->description->toBe('Original description')
         ->and($issue->fresh()->labels)->toHaveCount(1);
@@ -185,7 +152,7 @@ it('returns the full detail shape so a client can confirm what applied', functio
         ->assertOk()
         ->assertJsonStructure([
             'identifier', 'number', 'title', 'description', 'type', 'priority',
-            'status', 'estimate_minutes', 'labels', 'branch_name', 'project',
+            'status', 'labels', 'branch_name', 'project',
             'owner', 'assignee', 'parent', 'url', 'created_at',
         ]);
 });
@@ -199,7 +166,6 @@ it('applies several fields in one call', function () {
             'title' => 'Fully reconfigured',
             'type' => 'fix',
             'priority' => 'high',
-            'estimate' => '90m',
             'assignee' => $owner->email,
             'labels' => ['api'],
         ])
@@ -209,7 +175,6 @@ it('applies several fields in one call', function () {
         ->title->toBe('Fully reconfigured')
         ->type->toBe(IssueType::Fix)
         ->priority->toBe(IssuePriority::High)
-        ->estimate_minutes->toBe(90)
         ->assignee_id->toBe($owner->id)
         ->and($issue->fresh()->labels->pluck('name')->all())->toBe(['api']);
 });

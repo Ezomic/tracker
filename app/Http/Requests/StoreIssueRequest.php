@@ -10,7 +10,6 @@ use App\Models\Issue;
 use App\Models\Label;
 use App\Models\Project;
 use App\Models\User;
-use App\Rules\DurationRule;
 use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -70,7 +69,6 @@ class StoreIssueRequest extends FormRequest
             // is an HMAC pseudonym, so it is never resolved against users.
             'external_reporter' => ['nullable', 'string', 'max:255'],
             'priority' => ['nullable', Rule::enum(IssuePriority::class)],
-            'estimate' => ['nullable', 'string', new DurationRule],
             'labels' => ['nullable', 'array'],
             'labels.*' => [
                 'string',

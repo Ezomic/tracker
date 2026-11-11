@@ -44,5 +44,23 @@ it('migrates a fresh SQLite file database from the schema dump', function () {
         ->and($schema->hasTable('issue_search'))->toBeTrue()
         ->and($schema->hasColumn('users', 'idp_id'))->toBeTrue()
         ->and(DB::connection('fresh_file')->table('migrations')->count())
-        ->toBe(substr_count((string) file_get_contents($dump), 'INSERT INTO migrations'));
+        ->toBe(substr_count((string) file_get_contents($dump), 'INSERT INTO migrations') + count(glob(database_path('migrations/*.php')) ?: []));
+});
+
+it('runs the time tracking removal on top of the schema dump', function () {
+    Artisan::call('migrate', [
+        '--database' => 'fresh_file',
+        '--schema-path' => database_path('schema/sqlite-schema.sql'),
+        '--force' => true,
+    ]);
+
+    $schema = Schema::connection('fresh_file');
+
+    expect($schema->hasTable('time_entries'))->toBeFalse()
+        ->and($schema->hasColumns('issues', ['estimate_minutes']))->toBeFalse()
+        ->and($schema->hasColumns('issues', ['invoiceable']))->toBeFalse()
+        ->and($schema->hasColumns('issues', ['confirmed_minutes']))->toBeFalse()
+        ->and($schema->hasColumns('issues', ['confirmed_at']))->toBeFalse()
+        ->and($schema->hasColumns('projects', ['billr_project_id']))->toBeFalse()
+        ->and($schema->hasColumns('projects', ['billr_client_id']))->toBeFalse();
 });

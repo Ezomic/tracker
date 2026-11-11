@@ -6,9 +6,7 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueType;
 use App\Models\Project;
 
-it('hides the Billr billing controls on an issue when Billr is not configured', function () {
-    config()->set('services.billr.token', null);
-
+it('shows an issue without time tracking or billing controls', function () {
     $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
     $user = member($project);
     $issue = (new CreateIssueAction)->handle($project, 'Rotate the deploy token', IssueType::Fix);
@@ -19,20 +17,7 @@ it('hides the Billr billing controls on an issue when Billr is not configured', 
         ->assertSee('THI-1')
         ->assertSee('Activity')
         ->assertDontSee('Invoiceable')
-        ->assertNoJavascriptErrors();
-});
-
-it('shows the Billr billing controls on an issue when Billr is configured', function () {
-    configureBillr();
-
-    $project = Project::factory()->create(['key' => 'THI', 'name' => 'Acme Software']);
-    $user = member($project);
-    $issue = (new CreateIssueAction)->handle($project, 'Rotate the deploy token', IssueType::Fix);
-
-    $this->actingAs($user);
-
-    visit("/issues/{$issue->identifier}")
-        ->assertSee('Invoiceable')
+        ->assertDontSee('Add estimate')
         ->assertNoJavascriptErrors();
 });
 

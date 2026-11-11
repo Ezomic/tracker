@@ -4,14 +4,6 @@ export interface IssueUser {
     email: string;
 }
 
-export interface TimeEntry {
-    id: number;
-    minutes: number;
-    note: string | null;
-    spentOn: string;
-    user: IssueUser | null;
-}
-
 export interface IssueComment {
     /** Set once the author has edited it. */
     editedAt?: string | null;
@@ -54,11 +46,6 @@ export interface Issue {
     identifier: string;
     title: string;
     description: string | null;
-    estimateMinutes: number | null;
-    loggedMinutes: number;
-    invoiceable: boolean;
-    confirmedMinutes: number | null;
-    confirmedAt: string | null;
     type: 'feature' | 'fix';
     template: { name: string } | null;
     priority: 'none' | 'low' | 'medium' | 'high' | 'urgent';
@@ -71,7 +58,6 @@ export interface Issue {
     project: {
         key: string;
         name: string;
-        billrLinked: boolean;
     };
     owner: IssueUser | null;
     /** Set when another app filed this on behalf of someone with no account here. */
@@ -110,7 +96,6 @@ export interface Issue {
         status: Issue['status'];
     }[];
     labels: IssueLabel[];
-    timeEntries: TimeEntry[];
     comments: IssueComment[];
 }
 

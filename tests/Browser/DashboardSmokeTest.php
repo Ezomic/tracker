@@ -6,13 +6,12 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
-use App\Models\TimeEntry;
 use App\Models\User;
 
 /**
  * A representative dashboard: a few projects with completions spread over the
- * window (so the chart and matrix have real rows), plus logged time and an
- * urgent open issue for the attention list.
+ * window (so the chart and matrix have real rows), plus an urgent open issue
+ * for the attention list.
  */
 function seedSmokeDashboard(): User
 {
@@ -34,21 +33,12 @@ function seedSmokeDashboard(): User
             $closed = now()->startOfWeek()->subWeeks(7 - $i)->addDays(2)->setTime(12, 0);
 
             for ($n = 0; $n < $count; $n++) {
-                $issue = Issue::factory()->for($project)->create([
+                Issue::factory()->for($project)->create([
                     'status' => IssueStatus::Done,
                     'closed_at' => $closed,
                     'created_at' => $closed->copy()->subDays(3),
                     'owner_id' => $user->id,
-                    'estimate_minutes' => 120,
                 ]);
-
-                if ($i >= 7) {
-                    TimeEntry::factory()->for($issue)->create([
-                        'user_id' => $user->id,
-                        'minutes' => 90,
-                        'spent_on' => now(),
-                    ]);
-                }
             }
         }
     }
@@ -82,7 +72,7 @@ it('renders the unified dashboard for a signed-in user', function () {
         ->assertSee('Active tickets by project')
         ->assertSee('Completed per week')
         ->assertSee('Tickets done by project, week by week')
-        ->assertSee("This week's time");
+        ->assertDontSee("This week's time");
 
     $page->assertNoJavascriptErrors();
 });
@@ -94,7 +84,6 @@ it('renders without horizontal overflow on a mobile viewport', function () {
 
     $page->assertSee('Completed per week')
         ->assertSee('Tickets done by project, week by week')
-        ->assertSee("This week's time")
         ->assertNoJavascriptErrors()
         ->screenshot(filename: 'dashboard-mobile');
 
@@ -109,7 +98,6 @@ it('renders cleanly on a tablet viewport', function () {
     $page = visit('/dashboard')->resize(768, 1024);
 
     $page->assertSee('Completed per week')
-        ->assertSee("This week's time")
         ->assertNoJavascriptErrors()
         ->screenshot(filename: 'dashboard-tablet');
 

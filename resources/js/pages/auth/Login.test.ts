@@ -13,7 +13,7 @@ vi.mock('@inertiajs/vue3', () => ({
 
 function mountLogin(sso: boolean) {
     return mount(Login, {
-        props: { integrations: { sso, billr: false } },
+        props: { integrations: { sso } },
         global: {
             plugins: [i18n],
             stubs: { PasskeyVerify: true, TextLink: true },

@@ -9,7 +9,6 @@ use App\Enums\IssueType;
 use App\Models\Issue;
 use App\Models\Label;
 use App\Models\User;
-use App\Rules\DurationRule;
 use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -61,7 +60,6 @@ class UpdateIssueApiRequest extends FormRequest
             'description' => ['sometimes', 'nullable', 'string'],
             'type' => ['sometimes', Rule::enum(IssueType::class)],
             'priority' => ['sometimes', Rule::enum(IssuePriority::class)],
-            'estimate' => ['sometimes', 'nullable', 'string', new DurationRule],
             'assignee' => [
                 'sometimes',
                 'nullable',

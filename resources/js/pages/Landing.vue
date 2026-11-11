@@ -262,10 +262,6 @@ const features = computed(() => [
                                 --priority
                             </span>
                             <span class="text-muted-foreground">high</span>
-                            <span class="text-sky-600 dark:text-sky-400">
-                                --estimate
-                            </span>
-                            <span class="text-muted-foreground">"2h"</span>
                         </div>
                         <div class="h-3" />
                         <div class="flex gap-1.5">

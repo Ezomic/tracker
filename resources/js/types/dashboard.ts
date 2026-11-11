@@ -44,21 +44,6 @@ export interface StaleRow extends IssueRow {
     quietDays: number;
 }
 
-export interface AccuracyRow {
-    estimated: number;
-    actual: number;
-    ratio: number | null;
-    direction: 'over' | 'under' | 'none';
-    sampleSize: number;
-}
-
-export interface EstimateAccuracyData {
-    window: number;
-    overall: AccuracyRow & { excluded: number };
-    projects: (AccuracyRow & { key: string; name: string })[];
-    bands: (AccuracyRow & { band: string })[];
-}
-
 export interface CompletedSeries {
     key: string;
     name: string;
@@ -83,25 +68,4 @@ export interface DashboardMetrics {
     cycleDelta: number | null;
     completedSpark: number[];
     cycleSpark: number[];
-}
-
-export interface LoggedProject {
-    key: string;
-    name: string;
-    color: string;
-    minutes: number;
-}
-
-export interface EstimateAccuracy {
-    pct: number | null;
-    overPct: number | null;
-    direction: 'over' | 'under' | 'none';
-    sampleSize: number;
-}
-
-export interface DashboardTime {
-    loggedThisWeek: number;
-    loggedPreviousWeek: number;
-    loggedByProject: LoggedProject[];
-    accuracy: EstimateAccuracy;
 }

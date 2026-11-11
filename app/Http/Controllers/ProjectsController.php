@@ -56,7 +56,6 @@ class ProjectsController extends Controller
                         ->whereNull('archived_at')
                         ->where('status', '!=', IssueStatus::Done->value),
                 ])
-                ->withSum('timeEntries', 'minutes')
                 ->orderBy('key')
                 ->get()
                 ->map(function (Project $project): array {
@@ -78,7 +77,6 @@ class ProjectsController extends Controller
                         'links' => $project->links(),
                         'openCount' => Cast::int($project->getAttribute('open_count')),
                         'issuesCount' => Cast::int($project->getAttribute('issues_count')),
-                        'loggedMinutes' => Cast::int($project->getAttribute('time_entries_sum_minutes') ?? 0),
                         'keyLocked' => Cast::int($project->getAttribute('issues_count')) > 0,
                     ];
                 }),
