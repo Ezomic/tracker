@@ -67,12 +67,6 @@ function configureSso(): void
     config()->set('services.thijssensoftware.client_secret', 'client-secret');
 }
 
-function configureBillr(): void
-{
-    config()->set('services.billr.base_url', 'http://billr.test');
-    config()->set('services.billr.token', 'test-token');
-}
-
 /**
  * Create a user who is a member of the given projects (Admin by default).
  */

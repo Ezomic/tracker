@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Clock, CornerDownRight, GitBranch } from '@lucide/vue';
+import { CornerDownRight, GitBranch } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { getInitials } from '@/composables/useInitials';
-import { formatDuration } from '@/lib/duration';
 import {
     board,
     reorder,
@@ -124,8 +123,6 @@ function hasMeta(issue: Issue): boolean {
     return (
         issue.assignee !== null ||
         issue.archivedAt !== null ||
-        issue.loggedMinutes > 0 ||
-        issue.estimateMinutes !== null ||
         issue.childrenCount > 0
     );
 }
@@ -363,27 +360,6 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                             <div
                                 class="ml-auto flex items-center gap-2.5 text-xs text-muted-foreground"
                             >
-                                <span
-                                    v-if="
-                                        issue.loggedMinutes > 0 ||
-                                        issue.estimateMinutes
-                                    "
-                                    class="flex items-center gap-1 tabular-nums"
-                                    :title="$t('issue.estimate')"
-                                >
-                                    <Clock class="size-3.5" />
-                                    {{ formatDuration(issue.loggedMinutes) }}
-                                    <template v-if="issue.estimateMinutes">
-                                        <span class="text-muted-foreground/50">
-                                            /
-                                        </span>
-                                        {{
-                                            formatDuration(
-                                                issue.estimateMinutes,
-                                            )
-                                        }}
-                                    </template>
-                                </span>
                                 <span
                                     v-if="issue.childrenCount > 0"
                                     class="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 font-medium text-primary tabular-nums"

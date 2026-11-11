@@ -24,17 +24,6 @@ class Integrations
     }
 
     /**
-     * Billr: confirmed time on invoiceable issues is reported as billable.
-     */
-    public function billr(): bool
-    {
-        return $this->allFilled([
-            'services.billr.base_url',
-            'services.billr.token',
-        ]);
-    }
-
-    /**
      * @param  list<string>  $keys
      */
     private function allFilled(array $keys): bool

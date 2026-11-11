@@ -6,7 +6,6 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
-use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -46,7 +45,6 @@ it('lets authenticated users visit an empty dashboard', function () {
             ->where('completedByWeek.grandTotal', 0)
             ->has('completedByWeek.weeks', 8)
             ->where('metrics.completed', 0)
-            ->where('time.loggedThisWeek', 0)
         );
 });
 
@@ -248,31 +246,15 @@ it('reports weekly metrics and a work-in-progress load', function () {
         );
 });
 
-it('summarises time logged this week and estimate accuracy', function () {
+it('no longer reports logged time or estimate accuracy', function () {
     $project = Project::factory()->create(['key' => 'THI']);
-    $user = member($project);
 
-    $done = Issue::factory()->for($project)->create([
-        'status' => IssueStatus::Done,
-        'closed_at' => now(),
-        'estimate_minutes' => 120,
-    ]);
-    TimeEntry::factory()->for($done)->create(['minutes' => 180, 'spent_on' => now()]);
-
-    $wip = Issue::factory()->for($project)->create(['status' => IssueStatus::InProgress]);
-    TimeEntry::factory()->for($wip)->create(['minutes' => 60, 'spent_on' => now()->subWeek()]);
-
-    $this->actingAs($user)
-        ->get('/dashboard')
+    $this->actingAs(member($project))
+        ->get('/dashboard?accuracy_weeks=4')
+        ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('time.loggedThisWeek', 180)
-            ->where('time.loggedPreviousWeek', 60)
-            ->where('time.loggedByProject.0.key', 'THI')
-            ->where('time.loggedByProject.0.minutes', 180)
-            ->where('time.accuracy.pct', 50)
-            ->where('time.accuracy.overPct', 50)
-            ->where('time.accuracy.direction', 'over')
-            ->where('time.accuracy.sampleSize', 1)
+            ->missing('time')
+            ->missing('accuracy')
         );
 });
 

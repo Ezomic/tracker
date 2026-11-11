@@ -9,11 +9,9 @@ use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Organization;
 use App\Models\Project;
-use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
-use App\Support\EstimateAccuracy;
 use App\Support\Staleness;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,20 +54,7 @@ class DashboardController extends Controller
             'stale' => $this->stale($user),
             'completedByWeek' => $weekly['payload'],
             'metrics' => $this->metrics($counts, $weekly['totals'], $weekly['cycles']),
-            'time' => $this->time($user, $done),
-            'accuracy' => EstimateAccuracy::build($user, $this->accuracyWeeks($request)),
         ]);
-    }
-
-    /**
-     * 4, 12 or 26 weeks. Anything else falls back to 12 rather than erroring:
-     * this is a dashboard control, not an API contract.
-     */
-    private function accuracyWeeks(Request $request): int
-    {
-        $weeks = $request->integer('accuracy_weeks');
-
-        return in_array($weeks, [4, 12, 26], true) ? $weeks : 12;
     }
 
     /**
@@ -195,8 +180,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Done issues closed within the trailing window, with their project and the
-     * total time logged against them.
+     * Done issues closed within the trailing window, with their project.
      *
      * Archived issues are deliberately included: completion is a historical fact
      * keyed on closed_at, and archiving is board cleanup that must not erase a
@@ -211,8 +195,7 @@ class DashboardController extends Controller
             ->whereNotNull('closed_at')
             ->where('closed_at', '>=', $this->windowStart())
             ->with('project:id,key,name,color')
-            ->withSum('timeEntries as logged_minutes', 'minutes')
-            ->get(['id', 'project_id', 'created_at', 'closed_at', 'estimate_minutes']);
+            ->get(['id', 'project_id', 'created_at', 'closed_at']);
     }
 
     /**
@@ -340,92 +323,6 @@ class DashboardController extends Controller
             'cycleDelta' => $this->pointDelta($cycles[$current], $cycles[$previous]),
             'completedSpark' => $totals,
             'cycleSpark' => $cycleSpark,
-        ];
-    }
-
-    /**
-     * Time logged this week vs last, split by project, plus estimate accuracy
-     * across the completed issues in the window.
-     *
-     * @param  EloquentCollection<int, Issue>  $done
-     * @return array<string, mixed>
-     */
-    private function time(User $user, EloquentCollection $done): array
-    {
-        $weekStart = CarbonImmutable::now()->startOfWeek();
-        $weekEnd = $weekStart->addWeek();
-        $previousStart = $weekStart->subWeek();
-
-        $issueIds = $this->scoped($user)->notArchived()->pluck('id');
-
-        $entries = TimeEntry::query()
-            ->whereIn('issue_id', $issueIds)
-            ->where('spent_on', '>=', $previousStart)
-            ->where('spent_on', '<', $weekEnd)
-            ->with('issue.project:id,key,name,color')
-            ->get(['id', 'issue_id', 'minutes', 'spent_on']);
-
-        $thisWeek = $entries->filter(fn (TimeEntry $entry): bool => $entry->spent_on >= $weekStart);
-
-        return [
-            'loggedThisWeek' => Cast::int($thisWeek->sum('minutes')),
-            'loggedPreviousWeek' => Cast::int($entries
-                ->filter(fn (TimeEntry $entry): bool => $entry->spent_on < $weekStart)
-                ->sum('minutes')),
-            'loggedByProject' => $this->loggedByProject($thisWeek),
-            'accuracy' => $this->estimateAccuracy($done),
-        ];
-    }
-
-    /**
-     * @param  Collection<int, TimeEntry>  $entries
-     * @return list<array{key: string, name: string, color: string, minutes: int}>
-     */
-    private function loggedByProject(Collection $entries): array
-    {
-        $rows = $entries
-            ->groupBy(fn (TimeEntry $entry): int => Cast::int($entry->issue?->project_id))
-            ->map(function (Collection $group): array {
-                $project = $group->first()?->issue?->project;
-
-                return [
-                    'key' => (string) $project?->key,
-                    'name' => (string) $project?->name,
-                    'color' => (string) $project?->color,
-                    'minutes' => Cast::int($group->sum('minutes')),
-                ];
-            })
-            ->sortByDesc('minutes')
-            ->take(5)
-            ->values()
-            ->all();
-
-        return array_values($rows);
-    }
-
-    /**
-     * @param  EloquentCollection<int, Issue>  $done
-     * @return array{pct: int|null, overPct: int|null, direction: string, sampleSize: int}
-     */
-    private function estimateAccuracy(EloquentCollection $done): array
-    {
-        $tracked = $done->filter(fn (Issue $issue): bool => Cast::int($issue->estimate_minutes) > 0
-            && Cast::int($issue->getAttribute('logged_minutes')) > 0);
-
-        $estimated = Cast::int($tracked->sum('estimate_minutes'));
-        $actual = Cast::int($tracked->sum(fn (Issue $issue): int => Cast::int($issue->getAttribute('logged_minutes'))));
-
-        if ($tracked->isEmpty() || $estimated === 0) {
-            return ['pct' => null, 'overPct' => null, 'direction' => 'none', 'sampleSize' => 0];
-        }
-
-        $overPct = (int) round((($actual - $estimated) / $estimated) * 100);
-
-        return [
-            'pct' => max(0, 100 - abs($overPct)),
-            'overPct' => $overPct,
-            'direction' => $actual > $estimated ? 'over' : ($actual < $estimated ? 'under' : 'none'),
-            'sampleSize' => $tracked->count(),
         ];
     }
 

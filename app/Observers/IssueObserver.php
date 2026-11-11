@@ -74,13 +74,6 @@ class IssueObserver
             ]);
         }
 
-        if ($issue->wasChanged('estimate_minutes')) {
-            $issue->recordActivity('estimate_changed', [
-                'from' => $issue->getOriginal('estimate_minutes'),
-                'to' => $issue->estimate_minutes,
-            ]);
-        }
-
         if ($issue->wasChanged('parent_id')) {
             $issue->recordActivity('parent_changed', [
                 'from' => Issue::query()->whereKey($issue->getOriginal('parent_id'))->value('identifier'),

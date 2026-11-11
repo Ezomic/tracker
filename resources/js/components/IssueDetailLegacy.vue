@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { Form, Link, router, usePage } from '@inertiajs/vue3';
+import { Form, Link, router } from '@inertiajs/vue3';
 import {
     Archive,
     ArchiveRestore,
-    Clock,
     FileText,
     GitBranch,
     GitCommit,
     GitPullRequest,
     Trash2,
 } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
@@ -38,36 +37,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
 import { getInitials } from '@/composables/useInitials';
-import { formatDuration } from '@/lib/duration';
-import {
-    archive,
-    confirmTime as confirmTimeRoute,
-    show,
-    unarchive,
-} from '@/routes/issues';
+import { archive, show, unarchive } from '@/routes/issues';
 import {
     destroy as destroyComment,
     store as storeComment,
 } from '@/routes/issues/comments';
-import {
-    destroy as destroyTime,
-    store as storeTime,
-} from '@/routes/issues/time';
 import type {
     EpicOption,
     Issue,
     IssueComment,
     IssueLabel,
     IssueUser,
-    TimeEntry,
     TimelineItem,
 } from '@/types';
 
@@ -77,8 +58,6 @@ const props = defineProps<{
     epics: EpicOption[];
     labels: IssueLabel[];
     members: IssueUser[];
-    canLogTime: boolean;
-    canManageTime: boolean;
     canModerateComments: boolean;
     canArchive: boolean;
     currentUserId: number;
@@ -108,14 +87,6 @@ function describeActivity(
                 : t('activity.archived');
         case 'unarchived':
             return t('activity.unarchived');
-        case 'time_logged':
-            return t('activity.timeLogged', {
-                duration: formatDuration(Number(data.minutes)),
-            });
-        case 'time_confirmed':
-            return t('activity.timeConfirmed', {
-                duration: formatDuration(Number(data.minutes)),
-            });
         case 'priority_changed':
             return t('activity.priorityTo', {
                 priority: t(`priority.${data.to}`),
@@ -124,12 +95,6 @@ function describeActivity(
             return t('activity.typeTo', {
                 type: t(`issueType.${data.to}`),
             });
-        case 'estimate_changed':
-            return data.to
-                ? t('activity.estimateTo', {
-                      duration: formatDuration(Number(data.to)),
-                  })
-                : t('activity.estimateCleared');
         case 'renamed':
             return t('activity.renamed', { title: data.to });
         case 'description_edited':
@@ -153,7 +118,6 @@ function describeActivity(
 
 const archiveOpen = ref(false);
 const archiveReason = ref('');
-const timeOpen = ref(false);
 
 function archiveIssue() {
     router.post(
@@ -177,68 +141,8 @@ function unarchiveIssue() {
     );
 }
 
-const estimateDefault = props.issue.estimateMinutes
-    ? formatDuration(props.issue.estimateMinutes)
-    : '';
-
-const duration = ref('');
-const spentOn = ref(new Date().toISOString().slice(0, 10));
-const note = ref('');
-const timeError = ref<string | null>(null);
-
-const confirmMinutes = ref(String(props.issue.loggedMinutes));
-const billrClientName = ref('');
-const confirmError = ref<string | null>(null);
-const page = usePage();
-const billrEnabled = computed(() => page.props.integrations.billr);
-
-watch(
-    () => props.issue.loggedMinutes,
-    (minutes) => {
-        confirmMinutes.value = String(minutes);
-    },
-);
-
 const commentBody = ref('');
 const commentError = ref<string | null>(null);
-
-const progressPercent = computed(() => {
-    if (!props.issue.estimateMinutes || props.issue.estimateMinutes <= 0) {
-        return 0;
-    }
-
-    return Math.min(
-        100,
-        Math.round(
-            (props.issue.loggedMinutes / props.issue.estimateMinutes) * 100,
-        ),
-    );
-});
-
-const overEstimate = computed(
-    () =>
-        props.issue.estimateMinutes != null &&
-        props.issue.loggedMinutes > props.issue.estimateMinutes,
-);
-
-function logTime() {
-    timeError.value = null;
-
-    router.post(
-        storeTime({ issue: props.issue.identifier }).url,
-        { duration: duration.value, spent_on: spentOn.value, note: note.value },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                duration.value = '';
-                note.value = '';
-            },
-            onError: (errors) => {
-                timeError.value = errors.duration ?? errors.spent_on ?? null;
-            },
-        },
-    );
-}
 
 function postComment() {
     if (commentBody.value.trim() === '') {
@@ -262,51 +166,12 @@ function postComment() {
     );
 }
 
-function confirmTime() {
-    confirmError.value = null;
-
-    router.post(
-        confirmTimeRoute({ issue: props.issue.identifier }).url,
-        {
-            minutes: confirmMinutes.value,
-            billr_client_name: billrClientName.value,
-        },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                billrClientName.value = '';
-            },
-            onError: (errors) => {
-                confirmError.value = errors.minutes ?? null;
-            },
-        },
-    );
-}
-
-function removeEntry(entry: TimeEntry) {
-    router.delete(
-        destroyTime({ issue: props.issue.identifier, timeEntry: entry.id }).url,
-        { preserveScroll: true },
-    );
-}
-
 function removeComment(comment: IssueComment) {
     router.delete(
         destroyComment({ issue: props.issue.identifier, comment: comment.id })
             .url,
         { preserveScroll: true },
     );
-}
-
-const canRemove = (entry: TimeEntry) =>
-    props.canManageTime || entry.user?.id === props.currentUserId;
-
-function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
 }
 
 const canRemoveComment = (comment: IssueComment) =>
@@ -380,22 +245,6 @@ const statusDot: Record<Issue['status'], string> = {
             </span>
 
             <div class="ml-auto flex items-center gap-2">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    @click="timeOpen = true"
-                >
-                    <Clock class="size-4" />
-                    {{ $t('time.title') }}
-                    <span
-                        v-if="issue.loggedMinutes > 0"
-                        class="text-muted-foreground"
-                    >
-                        · {{ formatDuration(issue.loggedMinutes) }}
-                    </span>
-                </Button>
-
                 <template v-if="canArchive">
                     <Button
                         v-if="issue.archivedAt"
@@ -615,36 +464,6 @@ const statusDot: Record<Issue['status'], string> = {
                     <InputError :message="errors.priority" />
                 </div>
 
-                <div class="grid gap-1.5">
-                    <Label for="estimate" class="text-xs text-muted-foreground">
-                        {{ $t('issue.estimate') }}
-                    </Label>
-                    <Input
-                        id="estimate"
-                        name="estimate"
-                        :default-value="estimateDefault"
-                        :placeholder="$t('issue.estimatePlaceholder')"
-                    />
-                    <InputError :message="errors.estimate" />
-                </div>
-
-                <template v-if="billrEnabled">
-                    <label
-                        class="flex items-center gap-2 text-sm"
-                        for="invoiceable"
-                    >
-                        <input type="hidden" name="invoiceable" value="0" />
-                        <Checkbox
-                            id="invoiceable"
-                            name="invoiceable"
-                            value="1"
-                            :default-value="issue.invoiceable"
-                        />
-                        {{ $t('issue.invoiceable') }}
-                    </label>
-                    <InputError :message="errors.invoiceable" />
-                </template>
-
                 <div v-if="issue.children.length === 0" class="grid gap-1.5">
                     <Label
                         for="parent_id"
@@ -744,180 +563,6 @@ const statusDot: Record<Issue['status'], string> = {
             </aside>
         </div>
     </Form>
-
-    <Sheet v-model:open="timeOpen">
-        <SheetContent
-            class="flex w-full flex-col gap-5 overflow-y-auto sm:max-w-md"
-        >
-            <SheetHeader class="gap-1">
-                <SheetTitle
-                    >{{ $t('time.title') }} · {{ issue.identifier }}</SheetTitle
-                >
-                <SheetDescription>
-                    <span
-                        :class="
-                            overEstimate ? 'font-medium text-destructive' : ''
-                        "
-                    >
-                        {{ formatDuration(issue.loggedMinutes) }}
-                    </span>
-                    <template v-if="issue.estimateMinutes">
-                        {{ $t('time.of') }}
-                        {{ formatDuration(issue.estimateMinutes) }}
-                    </template>
-                    {{ $t('time.loggedSuffix') }}
-                </SheetDescription>
-            </SheetHeader>
-
-            <div
-                v-if="issue.estimateMinutes"
-                class="h-1.5 overflow-hidden rounded-full bg-muted"
-            >
-                <div
-                    class="h-full rounded-full transition-all"
-                    :class="overEstimate ? 'bg-destructive' : 'bg-primary'"
-                    :style="{ width: `${progressPercent}%` }"
-                />
-            </div>
-
-            <div
-                v-if="issue.timeEntries.length > 0"
-                class="flex flex-col divide-y divide-sidebar-border/70 dark:divide-sidebar-border"
-            >
-                <div
-                    v-for="entry in issue.timeEntries"
-                    :key="entry.id"
-                    class="flex items-center gap-3 py-2 text-sm"
-                >
-                    <span class="w-16 shrink-0 font-medium">
-                        {{ formatDuration(entry.minutes) }}
-                    </span>
-                    <div class="min-w-0 flex-1">
-                        <p v-if="entry.note" class="truncate">
-                            {{ entry.note }}
-                        </p>
-                        <p class="truncate text-xs text-muted-foreground">
-                            {{ entry.user?.name ?? $t('issue.unknown') }} ·
-                            {{ formatDate(entry.spentOn) }}
-                        </p>
-                    </div>
-                    <Button
-                        v-if="canRemove(entry)"
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        class="size-8 shrink-0 text-muted-foreground hover:text-destructive"
-                        @click="removeEntry(entry)"
-                    >
-                        <Trash2 class="size-4" />
-                    </Button>
-                </div>
-            </div>
-            <p v-else class="text-sm text-muted-foreground">
-                {{ $t('time.empty') }}
-            </p>
-
-            <div
-                v-if="canLogTime"
-                class="flex flex-col gap-3 border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border"
-            >
-                <div class="grid gap-1.5">
-                    <Label
-                        for="log-duration"
-                        class="text-xs text-muted-foreground"
-                    >
-                        {{ $t('time.duration') }}
-                    </Label>
-                    <Input
-                        id="log-duration"
-                        v-model="duration"
-                        :placeholder="$t('time.durationPlaceholder')"
-                        @keydown.enter.prevent="logTime"
-                    />
-                </div>
-                <div class="grid gap-1.5">
-                    <Label for="log-date" class="text-xs text-muted-foreground">
-                        {{ $t('time.date') }}
-                    </Label>
-                    <Input id="log-date" v-model="spentOn" type="date" />
-                </div>
-                <div class="grid gap-1.5">
-                    <Label for="log-note" class="text-xs text-muted-foreground">
-                        {{ $t('time.noteOptional') }}
-                    </Label>
-                    <Input
-                        id="log-note"
-                        v-model="note"
-                        :placeholder="$t('time.notePlaceholder')"
-                        @keydown.enter.prevent="logTime"
-                    />
-                </div>
-                <InputError v-if="timeError" :message="timeError" />
-                <Button type="button" @click="logTime">{{
-                    $t('time.logTime')
-                }}</Button>
-            </div>
-
-            <div
-                v-if="canManageTime"
-                class="flex flex-col gap-3 border-t border-sidebar-border/70 pt-4 dark:border-sidebar-border"
-            >
-                <div class="grid gap-1.5">
-                    <Label
-                        for="confirm-minutes"
-                        class="text-xs text-muted-foreground"
-                    >
-                        {{ $t('time.confirmMinutes') }}
-                    </Label>
-                    <Input
-                        id="confirm-minutes"
-                        v-model="confirmMinutes"
-                        type="number"
-                        min="0"
-                    />
-                </div>
-                <div
-                    v-if="
-                        billrEnabled &&
-                        issue.invoiceable &&
-                        !issue.project.billrLinked
-                    "
-                    class="grid gap-1.5"
-                >
-                    <Label
-                        for="confirm-client"
-                        class="text-xs text-muted-foreground"
-                    >
-                        {{ $t('time.billrClientName') }}
-                    </Label>
-                    <Input
-                        id="confirm-client"
-                        v-model="billrClientName"
-                        :placeholder="$t('time.billrClientNamePlaceholder')"
-                    />
-                </div>
-                <InputError v-if="confirmError" :message="confirmError" />
-                <Button type="button" variant="outline" @click="confirmTime">
-                    {{
-                        billrEnabled && issue.invoiceable
-                            ? $t('time.confirmAndBill')
-                            : $t('time.confirmTime')
-                    }}
-                </Button>
-                <p
-                    v-if="issue.confirmedMinutes != null"
-                    class="text-xs text-muted-foreground"
-                >
-                    {{
-                        $t('time.confirmedSummary', {
-                            duration: formatDuration(issue.confirmedMinutes),
-                            date: formatDate(issue.confirmedAt!),
-                        })
-                    }}
-                </p>
-            </div>
-        </SheetContent>
-    </Sheet>
 
     <section class="p-4 pt-0">
         <div class="flex flex-col gap-4 lg:max-w-2xl">

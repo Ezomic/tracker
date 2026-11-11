@@ -6,13 +6,11 @@ import { useI18n } from 'vue-i18n';
 import ActiveProjects from '@/components/dashboard/ActiveProjects.vue';
 import AttentionList from '@/components/dashboard/AttentionList.vue';
 import CompletedPerWeek from '@/components/dashboard/CompletedPerWeek.vue';
-import EstimateAccuracyPanel from '@/components/dashboard/EstimateAccuracyPanel.vue';
 import Panel from '@/components/dashboard/Panel.vue';
 import ProjectWeekMatrix from '@/components/dashboard/ProjectWeekMatrix.vue';
 import StaleList from '@/components/dashboard/StaleList.vue';
 import StatTile from '@/components/dashboard/StatTile.vue';
 import StatusThroughput from '@/components/dashboard/StatusThroughput.vue';
-import TimePanel from '@/components/dashboard/TimePanel.vue';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 import { index as projectsIndex } from '@/routes/projects';
@@ -21,9 +19,7 @@ import type {
     CompletedByWeek,
     DashboardMetrics,
     DashboardStats,
-    DashboardTime,
     IssueRow,
-    EstimateAccuracyData,
     StaleRow,
     StatusBreakdown,
 } from '@/types';
@@ -37,8 +33,6 @@ const props = defineProps<{
     stale: StaleRow[];
     completedByWeek: CompletedByWeek;
     metrics: DashboardMetrics;
-    time: DashboardTime;
-    accuracy: EstimateAccuracyData;
 }>();
 
 defineOptions({
@@ -119,10 +113,6 @@ const cycleValue = computed(() =>
         <CompletedPerWeek :data="completedByWeek" />
 
         <ProjectWeekMatrix :data="completedByWeek" />
-
-        <TimePanel :time="time" />
-
-        <EstimateAccuracyPanel :accuracy="accuracy" />
 
         <div class="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
             <div class="flex flex-col gap-4">

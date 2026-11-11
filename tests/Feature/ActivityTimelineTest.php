@@ -72,18 +72,6 @@ it('records archive and unarchive', function () {
     expect($issue->activities()->where('type', 'unarchived')->count())->toBe(1);
 });
 
-it('records logged time', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $user = member($project, ProjectLevel::Write);
-    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
-
-    $this->actingAs($user)->post("/issues/{$issue->identifier}/time", ['duration' => '1h 30m']);
-
-    $activity = $issue->activities()->where('type', 'time_logged')->firstOrFail();
-    expect($activity->data)->toBe(['minutes' => 90])
-        ->and($activity->user_id)->toBe($user->id);
-});
-
 it('records a priority change with from and to', function () {
     $project = Project::factory()->create(['key' => 'THI']);
     $user = member($project, ProjectLevel::Write);
@@ -108,19 +96,6 @@ it('records a type change', function () {
 
     $activity = $issue->activities()->where('type', 'type_changed')->firstOrFail();
     expect($activity->data)->toBe(['from' => 'feature', 'to' => 'fix']);
-});
-
-it('records an estimate change in minutes', function () {
-    $project = Project::factory()->create(['key' => 'THI']);
-    $user = member($project, ProjectLevel::Write);
-    $issue = (new CreateIssueAction)->handle($project, 'Task', IssueType::Feature);
-
-    $this->actingAs($user)->patch("/issues/{$issue->identifier}", updatePayload($issue, [
-        'estimate' => '2h 30m',
-    ]));
-
-    $activity = $issue->activities()->where('type', 'estimate_changed')->firstOrFail();
-    expect($activity->data)->toBe(['from' => null, 'to' => 150]);
 });
 
 it('records a parent change with identifiers', function () {

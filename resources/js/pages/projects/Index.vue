@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { Archive, Clock, Plus, Search, Users } from '@lucide/vue';
+import { Archive, Plus, Search, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
@@ -30,7 +30,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { formatDuration } from '@/lib/duration';
 import { board, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
 import type { Project, ProjectCategory, ProjectTypeOption } from '@/types';
@@ -94,10 +93,6 @@ const filtered = computed(() => {
     return matches.sort((a, b) => {
         if (sort.value === 'name') {
             return a.name.localeCompare(b.name);
-        }
-
-        if (sort.value === 'logged') {
-            return b.loggedMinutes - a.loggedMinutes;
         }
 
         return b.openCount - a.openCount;
@@ -400,9 +395,6 @@ function archiveLabel(days: number | null): string {
                     <SelectItem value="name">{{
                         $t('projects.sortName')
                     }}</SelectItem>
-                    <SelectItem value="logged">{{
-                        $t('projects.sortMostLogged')
-                    }}</SelectItem>
                 </SelectContent>
             </Select>
         </div>
@@ -449,15 +441,6 @@ function archiveLabel(days: number | null): string {
                         class="hidden w-16 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:block"
                     >
                         {{ $t('projects.openCount', { n: project.openCount }) }}
-                    </span>
-                    <span
-                        class="hidden w-16 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums sm:flex"
-                        :title="`${formatDuration(project.loggedMinutes)} ${$t('time.logged').toLowerCase()}`"
-                    >
-                        <template v-if="project.loggedMinutes > 0">
-                            <Clock class="size-3.5" />
-                            {{ formatDuration(project.loggedMinutes) }}
-                        </template>
                     </span>
                     <span
                         class="hidden w-24 shrink-0 items-center justify-end gap-1 text-xs text-muted-foreground md:flex"

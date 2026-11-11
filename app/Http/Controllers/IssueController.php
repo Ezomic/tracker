@@ -33,12 +33,10 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\ProjectType;
 use App\Models\SavedView;
-use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\WorkflowState;
 use App\Services\CurrentOrganization;
 use App\Support\Cast;
-use App\Support\Duration;
 use App\Support\IssueSearch;
 use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
@@ -72,7 +70,6 @@ class IssueController extends Controller
                 // of while staying reachable at their own URL (TRACK-236).
                 ->when($project === null && ! isset($filters['project_id']), fn (Builder $query) => $query->inActiveProject())
                 ->withCount('children')
-                ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee'])
                 ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 ->when($request->string('search')->toString() ?: null, fn (Builder $query, string $search) => IssueSearch::apply($query, $search))
@@ -178,13 +175,11 @@ class IssueController extends Controller
         $issue->load([
             'project', 'owner', 'assignee', 'parent', 'labels', 'template',
             'children' => fn (Relation $query) => $query->orderBy('number'),
-            'timeEntries' => fn (Relation $query) => $query->with('user')->orderByDesc('spent_on')->orderByDesc('id'),
             'comments' => fn (Relation $query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
             'links' => fn (Relation $query) => $query->with('relatedIssue')->orderBy('relation')->orderBy('id'),
             'activities' => fn (Relation $query) => $query->with('user')->orderBy('created_at')->orderBy('id'),
             'commits' => fn (Relation $query) => $query->orderBy('committed_at')->orderBy('id'),
         ]);
-        $issue->loadSum('timeEntries', 'minutes');
 
         return Inertia::render('issues/Show', [
             'issue' => $this->serialize($issue),
@@ -192,8 +187,6 @@ class IssueController extends Controller
             'members' => $this->projectMembers($issue->project),
             'epics' => $this->eligibleParents($this->currentUser($request), $issue),
             'labels' => Label::query()->forProject($issue->project)->orderBy('name')->get(['id', 'name', 'color']),
-            'canLogTime' => $this->currentUser($request)->can('update', $issue),
-            'canManageTime' => $this->currentUser($request)->can('delete', $issue),
             'canModerateComments' => $this->currentUser($request)->can('delete', $issue),
             'canArchive' => $this->currentUser($request)->can('update', $issue),
             'currentUserId' => $this->currentUser($request)->id,
@@ -246,12 +239,8 @@ class IssueController extends Controller
     {
         $this->authorize('update', $issue);
 
-        $issue->update(collect($request->validated())->except(['labels', 'estimate'])->all());
+        $issue->update(collect($request->validated())->except(['labels'])->all());
         $issue->syncLabelsWithActivity($this->intList($request->validated('labels', [])));
-
-        if ($request->has('estimate')) {
-            $issue->forceFill(['estimate_minutes' => Duration::toMinutes($request->string('estimate')->toString() ?: null)])->save();
-        }
 
         // The detail page autosaves on every change, so a toast per save would be noise —
         // it shows an inline saved indicator instead.
@@ -274,7 +263,6 @@ class IssueController extends Controller
                 ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
                 ->when($project === null, fn (Builder $query) => $query->inActiveProject())
                 ->withCount(['children', 'children as children_done_count' => fn (Builder $children) => $children->where('status', IssueStatus::Done)])
-                ->withSum('timeEntries', 'minutes')
                 ->with(['project', 'labels', 'assignee', 'parent'])
                 ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 // Position first, then creation date as the tiebreak so lanes
@@ -551,11 +539,6 @@ class IssueController extends Controller
             'identifier' => $issue->identifier,
             'title' => $issue->title,
             'description' => $issue->description,
-            'estimateMinutes' => $issue->estimate_minutes,
-            'loggedMinutes' => Cast::int($issue->getAttribute('time_entries_sum_minutes') ?? 0),
-            'invoiceable' => $issue->invoiceable,
-            'confirmedMinutes' => $issue->confirmed_minutes,
-            'confirmedAt' => $issue->confirmed_at?->toIso8601String(),
             'type' => $issue->type->value,
             'template' => $issue->relationLoaded('template') && $issue->template !== null
                 ? ['name' => $issue->template->name]
@@ -570,7 +553,6 @@ class IssueController extends Controller
             'project' => [
                 'key' => $issue->project->key,
                 'name' => $issue->project->name,
-                'billrLinked' => $issue->project->billrLinked(),
             ],
             'owner' => $this->serializeUser($issue->relationLoaded('owner') ? $issue->owner : null),
             'externalReporter' => $issue->external_reporter,
@@ -611,13 +593,6 @@ class IssueController extends Controller
                 'id' => $label->id,
                 'name' => $label->name,
                 'color' => $label->color->value,
-            ])->all() : [],
-            'timeEntries' => $issue->relationLoaded('timeEntries') ? $issue->timeEntries->map(fn (TimeEntry $entry) => [
-                'id' => $entry->id,
-                'minutes' => $entry->minutes,
-                'note' => $entry->note,
-                'spentOn' => $entry->spent_on->toDateString(),
-                'user' => $this->serializeUser($entry->relationLoaded('user') ? $entry->user : null),
             ])->all() : [],
             'comments' => $issue->relationLoaded('comments') ? $issue->comments->map(fn (Comment $comment) => [
                 'id' => $comment->id,

@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Carbon;
 
@@ -32,8 +31,6 @@ use Illuminate\Support\Carbon;
  * @property int|null $stale_after_days
  * @property list<string>|null $github_repos
  * @property string|null $production_url
- * @property int|null $billr_project_id
- * @property int|null $billr_client_id
  * @property int $next_number
  * @property Carbon|null $archived_at
  */
@@ -73,16 +70,6 @@ class Project extends Model
     public function issues(): HasMany
     {
         return $this->hasMany(Issue::class);
-    }
-
-    /**
-     * Every time entry logged against any of the project's issues.
-     *
-     * @return HasManyThrough<TimeEntry, Issue, $this>
-     */
-    public function timeEntries(): HasManyThrough
-    {
-        return $this->hasManyThrough(TimeEntry::class, Issue::class);
     }
 
     /**
@@ -208,11 +195,6 @@ class Project extends Model
     public function hasIssues(): bool
     {
         return $this->issues()->exists();
-    }
-
-    public function billrLinked(): bool
-    {
-        return $this->billr_project_id !== null;
     }
 
     /**

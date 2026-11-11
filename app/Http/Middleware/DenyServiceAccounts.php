@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Service accounts exist to file issues. Everything else on the API - projects,
- * members, labels, templates, categories, time - stays closed to them, so a
+ * members, labels, templates, categories - stays closed to them, so a
  * leaked ingest token cannot reshape the workspace.
  */
 class DenyServiceAccounts

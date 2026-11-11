@@ -9,7 +9,6 @@ use App\Actions\ArchiveIssueAction;
 use App\Actions\BulkUpdateIssuesAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LinkIssuesAction;
-use App\Actions\LogTimeAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\ResolveWorkflowStateAction;
 use App\Enums\IssuePriority;
@@ -23,7 +22,6 @@ use App\Http\Requests\FilterIssuesApiRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreIssueLinkRequest;
 use App\Http\Requests\StoreIssueRequest;
-use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Requests\UpdateCommentRequest;
 use App\Http\Requests\UpdateIssueApiRequest;
 use App\Http\Requests\UpdateIssueStatusApiRequest;
@@ -34,10 +32,8 @@ use App\Models\IssueLink;
 use App\Models\IssueTemplate;
 use App\Models\Label;
 use App\Models\Project;
-use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\WorkflowState;
-use App\Support\Duration;
 use App\Support\IssueSearch;
 use App\Support\Staleness;
 use Illuminate\Database\Eloquent\Builder;
@@ -138,7 +134,6 @@ class IssueController extends Controller
 
         $template = $this->resolveTemplate($project, $request->string('template')->toString() ?: null);
         $priority = $request->string('priority')->toString() ?: null;
-        $estimate = $request->string('estimate')->toString() ?: null;
         $labels = $this->stringList($request->validated('labels'));
 
         $issue = $action->handle(
@@ -161,12 +156,6 @@ class IssueController extends Controller
             $issue->labels()->sync($this->resolveLabelIds($project, $labels));
         } elseif ($template !== null) {
             $issue->labels()->sync($template->labels->pluck('id')->all());
-        }
-
-        if ($estimate !== null) {
-            $issue->forceFill([
-                'estimate_minutes' => Duration::toMinutes($estimate),
-            ])->save();
         }
 
         return response()->json($this->payload($issue), 201);
@@ -231,11 +220,6 @@ class IssueController extends Controller
 
         if ($request->has('assignee')) {
             $attributes['assignee_id'] = $this->resolveAssignee($request->string('assignee')->toString() ?: null)?->id;
-        }
-
-        if ($request->has('estimate')) {
-            $estimate = $request->string('estimate')->toString() ?: null;
-            $attributes['estimate_minutes'] = $estimate === null ? null : Duration::toMinutes($estimate);
         }
 
         $issue->forceFill($attributes)->save();
@@ -333,8 +317,8 @@ class IssueController extends Controller
     }
 
     /**
-     * The third strand of the issue timeline. Comments and time entries were
-     * already reachable; the activity behind them was not, so a consumer could
+     * The third strand of the issue timeline. Comments were already
+     * reachable; the activity behind them was not, so a consumer could
      * read what an issue is now and nothing about how it got there.
      *
      * Oldest first, matching how the timeline reads on the page.
@@ -416,63 +400,6 @@ class IssueController extends Controller
         $action->unlink($issue, $link->relatedIssue, $link->relation);
 
         return response()->json(status: 204);
-    }
-
-    public function listTime(Request $request, Issue $issue): JsonResponse
-    {
-        $this->authorize('view', $issue);
-
-        $entries = $issue->timeEntries()
-            ->with('user:id,name')
-            ->orderByDesc('spent_on')
-            ->orderByDesc('id')
-            ->get()
-            ->map(fn (TimeEntry $entry): array => [
-                'id' => $entry->id,
-                'minutes' => $entry->minutes,
-                'spentOn' => $entry->spent_on->toDateString(),
-                'note' => $entry->note,
-                'user' => $entry->user?->name,
-            ]);
-
-        return response()->json($entries);
-    }
-
-    public function deleteTime(Request $request, Issue $issue, TimeEntry $timeEntry): JsonResponse
-    {
-        abort_unless($timeEntry->issue_id === $issue->id, 404);
-
-        // You can always remove your own entry; otherwise it takes project admin.
-        if ($timeEntry->user_id !== $this->currentUser($request)->id) {
-            $this->authorize('delete', $issue);
-        } else {
-            $this->authorize('view', $issue);
-        }
-
-        $timeEntry->delete();
-
-        return response()->json(status: 204);
-    }
-
-    public function logTime(StoreTimeEntryRequest $request, Issue $issue, LogTimeAction $action): JsonResponse
-    {
-        $this->authorize('update', $issue);
-
-        $entry = $action->handle(
-            $issue,
-            $this->currentUser($request),
-            $request->string('duration')->toString(),
-            $request->string('spent_on')->toString() ?: null,
-            $request->string('note')->toString() ?: null,
-        );
-
-        return response()->json([
-            'id' => $entry->id,
-            'issue' => $issue->identifier,
-            'minutes' => $entry->minutes,
-            'spentOn' => $entry->spent_on->toDateString(),
-            'note' => $entry->note,
-        ], 201);
     }
 
     public function destroy(Request $request, Issue $issue): JsonResponse
@@ -583,7 +510,6 @@ class IssueController extends Controller
             'project' => $issue->project->key,
             'parent' => $issue->parent?->identifier,
             'assignee' => $issue->assignee?->email,
-            'estimate_minutes' => $issue->estimate_minutes,
             'labels' => $issue->labels->pluck('name')->all(),
             'url' => url("/issues/{$issue->identifier}"),
             'created_at' => $issue->created_at?->toIso8601String(),
@@ -610,7 +536,6 @@ class IssueController extends Controller
             // Deprecated, sunsets 2026-09-30: read workflow_state instead.
             'status' => $issue->status->value,
             'workflow_state' => $this->statePayload($issue),
-            'estimate_minutes' => $issue->estimate_minutes,
             'labels' => $issue->labels->pluck('name')->all(),
             'branch_name' => $issue->branch_name,
             'github_pr_url' => $issue->github_pr_url,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, ChevronDown } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PriorityBars from '@/components/PriorityBars.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -10,7 +10,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { getInitials } from '@/composables/useInitials';
 import type { Issue, IssueUser } from '@/types';
 
@@ -18,7 +17,6 @@ const status = defineModel<Issue['status']>('status', { required: true });
 const priority = defineModel<Issue['priority']>('priority', { required: true });
 const type = defineModel<Issue['type']>('type', { required: true });
 const assigneeId = defineModel<string>('assigneeId', { required: true });
-const estimate = defineModel<string>('estimate', { required: true });
 
 const props = defineProps<{
     members: IssueUser[];
@@ -51,14 +49,6 @@ const statusDot: Record<Issue['status'], string> = {
 const assignee = computed(() =>
     props.members.find((person) => String(person.id) === assigneeId.value),
 );
-
-const editingEstimate = ref(false);
-
-// The estimate is the one free-text property here, so it swaps the pill for an
-// input rather than opening a menu; blur commits it like the other controls.
-function commitEstimate() {
-    editingEstimate.value = false;
-}
 
 const pill =
     'inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 text-xs text-foreground transition-colors hover:bg-accent';
@@ -163,32 +153,5 @@ const pill =
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-
-        <Input
-            v-if="editingEstimate"
-            v-model="estimate"
-            autofocus
-            class="h-7 w-28 rounded-full px-2.5 text-xs"
-            :placeholder="t('issue.estimatePlaceholder')"
-            @blur="commitEstimate"
-            @keydown.enter.prevent="commitEstimate"
-            @keydown.esc="commitEstimate"
-        />
-        <button
-            v-else
-            type="button"
-            :class="pill"
-            @click="editingEstimate = true"
-        >
-            <template v-if="estimate">
-                {{ estimate }}
-                <span class="text-muted-foreground">
-                    {{ t('issue.estimate').toLowerCase() }}
-                </span>
-            </template>
-            <span v-else class="text-muted-foreground">
-                {{ t('issue.addEstimate') }}
-            </span>
-        </button>
     </div>
 </template>
