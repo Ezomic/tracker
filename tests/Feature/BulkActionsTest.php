@@ -57,6 +57,47 @@ it('sets priority and assignee', function () {
         ->and($this->one->fresh()->assignee_id)->toBe($assignee->id);
 });
 
+it('refuses an assignee who is not a member of the project', function () {
+    $outsider = User::factory()->create();
+
+    $response = $this->actingAs($this->user, 'sanctum')->patchJson('/api/issues/bulk', [
+        'issues' => ['THI-1'],
+        'assignee_id' => $outsider->id,
+    ])->assertOk();
+
+    expect($response->json('updated'))->toBe([])
+        ->and($response->json('skipped'))->toBe([['issue' => 'THI-1', 'reason' => 'assignee is not a project member']])
+        ->and($this->one->fresh()->assignee_id)->toBeNull();
+});
+
+it('checks the assignee against each issue project in a mixed selection', function () {
+    $other = Project::factory()->create(['key' => 'OTH']);
+    joinProjects($this->user, $other);
+    Issue::factory()->for($other)->create(['number' => 1, 'identifier' => 'OTH-1']);
+    $assignee = member($this->project);
+
+    $response = $this->actingAs($this->user, 'sanctum')->patchJson('/api/issues/bulk', [
+        'issues' => ['THI-1', 'OTH-1'],
+        'assignee_id' => $assignee->id,
+    ])->assertOk();
+
+    expect($response->json('updated'))->toBe(['THI-1'])
+        ->and($response->json('skipped'))->toBe([['issue' => 'OTH-1', 'reason' => 'assignee is not a project member']])
+        ->and($this->one->fresh()->assignee_id)->toBe($assignee->id);
+});
+
+it('still unassigns with a null assignee', function () {
+    $assignee = member($this->project);
+    $this->one->forceFill(['assignee_id' => $assignee->id])->save();
+
+    $this->actingAs($this->user, 'sanctum')->patchJson('/api/issues/bulk', [
+        'issues' => ['THI-1'],
+        'assignee_id' => null,
+    ])->assertOk();
+
+    expect($this->one->fresh()->assignee_id)->toBeNull();
+});
+
 it('adds and removes labels without touching the others', function () {
     $keep = Label::factory()->create(['name' => 'keep', 'organization_id' => $this->project->organization_id]);
     $add = Label::factory()->create(['name' => 'add', 'organization_id' => $this->project->organization_id]);
