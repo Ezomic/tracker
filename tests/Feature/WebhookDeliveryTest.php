@@ -8,12 +8,14 @@ use App\Jobs\DeliverWebhookJob;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\ProjectWebhook;
+use App\Services\Webhooks\WebhookTargetRefused;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->project = Project::factory()->create(['key' => 'THI']);
     $this->user = member($this->project);
+    resolveHosts(['snag.test' => ['93.184.216.34'], 'flare.test' => ['93.184.216.35']]);
 });
 
 it('queues a delivery to every active endpoint when an issue changes status', function () {
@@ -82,7 +84,7 @@ it('signs the body with the endpoint secret', function () {
     Http::fake(['*' => Http::response('', 200)]);
     $webhook = ProjectWebhook::factory()->for($this->project)->create(['secret' => 'shhh']);
 
-    (new DeliverWebhookAction)->handle($webhook, 'ping', ['event' => 'ping']);
+    app(DeliverWebhookAction::class)->handle($webhook, 'ping', ['event' => 'ping']);
 
     Http::assertSent(function ($request) {
         $expected = 'sha256='.hash_hmac('sha256', $request->body(), 'shhh');
@@ -96,7 +98,7 @@ it('records the outcome of a successful delivery', function () {
     Http::fake(['*' => Http::response('', 204)]);
     $webhook = ProjectWebhook::factory()->for($this->project)->create();
 
-    (new DeliverWebhookAction)->handle($webhook, 'ping', []);
+    app(DeliverWebhookAction::class)->handle($webhook, 'ping', []);
 
     expect($webhook->fresh()->last_status)->toBe(204)
         ->and($webhook->fresh()->last_error)->toBeNull()
@@ -107,11 +109,38 @@ it('records the failure and throws so the queue retries', function () {
     Http::fake(['*' => Http::response('endpoint exploded', 500)]);
     $webhook = ProjectWebhook::factory()->for($this->project)->create();
 
-    expect(fn () => (new DeliverWebhookAction)->handle($webhook, 'ping', []))
+    expect(fn () => app(DeliverWebhookAction::class)->handle($webhook, 'ping', []))
         ->toThrow(RuntimeException::class);
 
     expect($webhook->fresh()->last_status)->toBe(500)
         ->and($webhook->fresh()->last_error)->toBe('endpoint exploded');
+});
+
+it('refuses to deliver to a host that now resolves to a private address', function () {
+    Http::fake();
+    resolveHosts(['snag.test' => ['127.0.0.1']]);
+    $webhook = ProjectWebhook::factory()->for($this->project)->create();
+
+    expect(fn () => app(DeliverWebhookAction::class)->handle($webhook, 'ping', []))
+        ->toThrow(WebhookTargetRefused::class);
+
+    Http::assertNothingSent();
+    expect($webhook->fresh()->last_status)->toBeNull()
+        ->and($webhook->fresh()->last_error)->toBe('The webhook host points at a private or reserved address.');
+});
+
+it('does not follow a redirect to another address', function () {
+    Http::fake([
+        'snag.test/*' => Http::response('', 302, ['Location' => 'http://127.0.0.1:5184/internal']),
+        '*' => Http::response('internal secrets', 200),
+    ]);
+    $webhook = ProjectWebhook::factory()->for($this->project)->create();
+
+    expect(fn () => app(DeliverWebhookAction::class)->handle($webhook, 'ping', []))
+        ->toThrow(RuntimeException::class);
+
+    Http::assertSentCount(1);
+    expect($webhook->fresh()->last_status)->toBe(302);
 });
 
 it('gives up after four attempts rather than retrying forever', function () {

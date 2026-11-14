@@ -11,6 +11,42 @@ use Illuminate\Support\Facades\Http;
 beforeEach(function () {
     $this->project = Project::factory()->create(['key' => 'THI']);
     $this->admin = member($this->project);
+    resolveHosts([
+        'snag.test' => ['93.184.216.34'],
+        'internal.example' => ['10.0.0.5'],
+        'mixed.example' => ['93.184.216.34', '127.0.0.1'],
+        'mapped.example' => ['::ffff:127.0.0.1'],
+        'v6local.example' => ['fd00::1'],
+    ]);
+});
+
+it('refuses an endpoint that resolves to a non-public address', function (string $url) {
+    $this->actingAs($this->admin)
+        ->post('/projects/THI/webhooks', ['url' => $url])
+        ->assertSessionHasErrors('url');
+
+    expect(ProjectWebhook::query()->count())->toBe(0);
+})->with([
+    'private name' => 'https://internal.example/hook',
+    'one private address among public ones' => 'https://mixed.example/hook',
+    'v4-mapped loopback' => 'https://mapped.example/hook',
+    'unique-local v6' => 'https://v6local.example/hook',
+    'loopback literal' => 'https://127.0.0.1:5184/hook',
+    'link-local literal' => 'https://169.254.169.254/latest',
+    'v6 loopback literal' => 'https://[::1]/hook',
+    'unresolvable name' => 'https://nowhere.example/hook',
+]);
+
+it('reports a ping to a refused address without sending anything', function () {
+    Http::fake();
+    $webhook = ProjectWebhook::factory()->for($this->project)->create(['url' => 'https://internal.example/hook']);
+
+    $this->actingAs($this->admin)
+        ->post("/projects/THI/webhooks/{$webhook->id}/test")
+        ->assertRedirect('/projects/THI/webhooks');
+
+    Http::assertNothingSent();
+    expect($webhook->fresh()->last_error)->toBe('The webhook host points at a private or reserved address.');
 });
 
 it('adds a webhook and shows the signing secret once', function () {
