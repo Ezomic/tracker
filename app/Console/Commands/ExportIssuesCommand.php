@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Actions\ExportIssuesToCsvAction;
+use App\Support\Cast;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -15,7 +16,7 @@ class ExportIssuesCommand extends Command
 {
     public function handle(ExportIssuesToCsvAction $action): int
     {
-        $count = $action->handle($this->argument('path'));
+        $count = $action->handle(Cast::string($this->argument('path')));
 
         $this->info("Exported {$count} issue(s).");
 
