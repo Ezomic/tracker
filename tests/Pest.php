@@ -5,6 +5,7 @@ use App\Enums\ProjectLevel;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\Webhooks\HostResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -65,6 +66,26 @@ function configureSso(): void
     config()->set('services.thijssensoftware.base_url', 'https://id.example.test');
     config()->set('services.thijssensoftware.client_id', 'client-id');
     config()->set('services.thijssensoftware.client_secret', 'client-secret');
+}
+
+/**
+ * Answer webhook host lookups from a fixed map instead of DNS. A host missing
+ * from the map does not resolve.
+ *
+ * @param  array<string, list<string>>  $map
+ */
+function resolveHosts(array $map): void
+{
+    app()->instance(HostResolver::class, new class($map) implements HostResolver
+    {
+        /** @param array<string, list<string>> $map */
+        public function __construct(private array $map) {}
+
+        public function resolve(string $host): array
+        {
+            return $this->map[$host] ?? [];
+        }
+    });
 }
 
 /**
