@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Actions\ReassignIssuesAction;
+use App\Support\Cast;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -16,7 +17,7 @@ class ReassignIssuesCommand extends Command
 {
     public function handle(ReassignIssuesAction $action): int
     {
-        $path = $this->argument('path');
+        $path = Cast::string($this->argument('path'));
 
         $contents = @file_get_contents($path);
 
