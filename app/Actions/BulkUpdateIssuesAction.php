@@ -43,7 +43,9 @@ class BulkUpdateIssuesAction
         $updated = [];
         $skipped = [];
 
-        DB::transaction(function () use ($identifiers, $changes, $actor, &$updated, &$skipped): void {
+        $assignee = $this->assignee($changes);
+
+        DB::transaction(function () use ($identifiers, $changes, $actor, $assignee, &$updated, &$skipped): void {
             foreach (array_unique($identifiers) as $identifier) {
                 $issue = Issue::query()->where('identifier', $identifier)->first();
 
@@ -59,12 +61,30 @@ class BulkUpdateIssuesAction
                     continue;
                 }
 
+                // Per issue, because a selection can span projects; the
+                // single-issue paths refuse an assignee outside the project too.
+                if ($assignee !== null && ! $issue->project->hasMember($assignee)) {
+                    $skipped[] = ['issue' => $identifier, 'reason' => 'assignee is not a project member'];
+
+                    continue;
+                }
+
                 $this->apply($issue, $changes, $actor);
                 $updated[] = $identifier;
             }
         });
 
         return ['updated' => $updated, 'skipped' => $skipped];
+    }
+
+    /**
+     * @param  array<string, mixed>  $changes
+     */
+    private function assignee(array $changes): ?User
+    {
+        $id = $changes['assignee_id'] ?? null;
+
+        return $id === null ? null : User::query()->findOrFail(Cast::int($id));
     }
 
     /**
