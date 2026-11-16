@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\ProjectWebhook;
+use App\Services\Webhooks\WebhookTargetGuard;
+use App\Services\Webhooks\WebhookTargetRefused;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -13,6 +15,8 @@ class DeliverWebhookAction
     public const SIGNATURE_HEADER = 'X-Tracker-Signature-256';
 
     public const EVENT_HEADER = 'X-Tracker-Event';
+
+    public function __construct(private readonly WebhookTargetGuard $guard) {}
 
     /**
      * POST a signed payload to the endpoint. The signature is computed over the
@@ -26,13 +30,37 @@ class DeliverWebhookAction
      */
     public function handle(ProjectWebhook $webhook, string $event, array $payload): void
     {
+        // Checked again at delivery, not only at save: the name may resolve
+        // somewhere else by now.
+        try {
+            $target = $this->guard->resolve($webhook->url);
+        } catch (WebhookTargetRefused $refused) {
+            $webhook->forceFill([
+                'last_delivered_at' => now(),
+                'last_status' => null,
+                'last_error' => $refused->getMessage(),
+            ])->save();
+
+            throw $refused;
+        }
+
         $body = json_encode($payload, JSON_THROW_ON_ERROR);
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             self::EVENT_HEADER => $event,
             self::SIGNATURE_HEADER => 'sha256='.hash_hmac('sha256', $body, $webhook->secret),
-        ])->timeout(10)->withBody($body, 'application/json')->post($webhook->url);
+        ])
+            // A redirect would lead the request past the address check.
+            ->withoutRedirecting()
+            ->withOptions([
+                // An environment proxy would resolve the name itself and ignore the pin.
+                'proxy' => '',
+                'curl' => [CURLOPT_RESOLVE => [$target->pin()]],
+            ])
+            ->timeout(10)
+            ->withBody($body, 'application/json')
+            ->post($webhook->url);
 
         $webhook->forceFill([
             'last_delivered_at' => now(),
