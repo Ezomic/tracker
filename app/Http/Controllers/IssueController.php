@@ -23,6 +23,7 @@ use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStateRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
 use App\Models\Activity;
+use App\Models\Attachment;
 use App\Models\Comment;
 use App\Models\Commit;
 use App\Models\Issue;
@@ -190,7 +191,32 @@ class IssueController extends Controller
             'canModerateComments' => $this->currentUser($request)->can('delete', $issue),
             'canArchive' => $this->currentUser($request)->can('update', $issue),
             'currentUserId' => $this->currentUser($request)->id,
+            'attachments' => $this->serializeAttachments($this->currentUser($request), $issue),
         ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function serializeAttachments(User $viewer, Issue $issue): array
+    {
+        return $issue->attachments()
+            ->with('user')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get()
+            ->each(fn (Attachment $attachment) => $attachment->setRelation('issue', $issue))
+            ->map(fn (Attachment $attachment): array => [
+                'id' => $attachment->id,
+                'name' => $attachment->name,
+                'size' => $attachment->size,
+                'isImage' => $attachment->isImage(),
+                'url' => route('issues.attachments.show', ['issue' => $issue->identifier, 'attachment' => $attachment->id]),
+                'user' => $this->serializeUser($attachment->user),
+                'createdAt' => $attachment->created_at->toIso8601String(),
+                'canDelete' => $viewer->can('delete', $attachment),
+            ])
+            ->all();
     }
 
     /**

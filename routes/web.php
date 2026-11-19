@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
@@ -68,6 +69,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('issues/{issue:identifier}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
     Route::patch('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'update'])->name('issues.comments.update');
     Route::delete('issues/{issue:identifier}/comments/{comment}', [CommentController::class, 'destroy'])->name('issues.comments.destroy');
+
+    Route::post('issues/{issue:identifier}/attachments', [AttachmentController::class, 'store'])->name('issues.attachments.store');
+    Route::get('issues/{issue:identifier}/attachments/{attachment}', [AttachmentController::class, 'show'])->name('issues.attachments.show');
+    Route::delete('issues/{issue:identifier}/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('issues.attachments.destroy');
 
     Route::post('saved-views', [SavedViewController::class, 'store'])->name('saved-views.store');
     Route::delete('saved-views/{savedView}', [SavedViewController::class, 'destroy'])->name('saved-views.destroy');

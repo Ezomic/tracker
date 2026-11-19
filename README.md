@@ -19,6 +19,7 @@ It replaced Linear once that hit its free-tier active-issue cap. The goals were 
 - Projects with a short key (`TRACK`, `CMS`) and per-project sequential numbering (`TRACK-42`)
 - Projects organised into a hierarchical **category tree** in the sidebar; uncategorised projects sit in their own collapsible group
 - Issues with type, priority, status, description, labels, owner (reporter) and assignee
+- File **attachments** on issues (any type, 20 MB each), with image thumbnails
 - Epics: one level of parent/child, with progress on the epic
 - Board, list and a three-view dashboard (Focus / Metrics / Board), filtering, and a command palette (`⌘K`)
 - **Saved views** — store the current filters as a named, reusable view
@@ -129,7 +130,19 @@ PATCH  /api/issues/{identifier}/status
 DELETE /api/issues/{identifier}          # soft-archive, reversible
 POST   /api/issues/{identifier}/restore  # undo the archive
 GET    /api/issues/{identifier}/activity # how it got to be the way it is
+GET    /api/issues/{identifier}/attachments
+POST   /api/issues/{identifier}/attachments       # multipart, field `file`, 20 MB max
+GET    /api/issues/{identifier}/attachments/{id}  # the file itself
+DELETE /api/issues/{identifier}/attachments/{id}  # uploader or project admin
 ```
+
+Attachments take any file type and live on the private `local` disk under
+`storage/app/private/attachments/{issue id}/`, so the server backup of `storage/app` covers them.
+PNG, JPEG, GIF and WebP are served inline; everything else, SVG and HTML included, downloads, with
+`nosniff` and a sandbox CSP so nothing renders as a page on the tracker's origin. The 20 MB limit
+also needs PHP's `upload_max_filesize`/`post_max_size` and nginx's `client_max_body_size` to allow
+it; on the shared server that is the tracker's `fpm.upload_mb` and `nginx.client_max_body_size` in
+the infra repo.
 
 `GET /api/issues` is paginated and returns `{"data": [...], "meta": {...}}`. It takes these filters, combinable:
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\IssueController;
 use App\Http\Controllers\Api\LabelController;
@@ -44,6 +45,8 @@ Route::middleware(['auth:sanctum', 'throttle:api-read'])->group(function (): voi
         Route::get('/labels', [LabelController::class, 'index']);
         Route::get('/members', [MemberController::class, 'index']);
         Route::get('/issues/{issue}/comments', [IssueController::class, 'listComments']);
+        Route::get('/issues/{issue}/attachments', [AttachmentController::class, 'index']);
+        Route::get('/issues/{issue}/attachments/{attachment}', [AttachmentController::class, 'show']);
     });
 });
 
@@ -78,6 +81,8 @@ Route::middleware(['auth:sanctum', 'throttle:api-write'])->group(function (): vo
         Route::delete('/issues/{issue}/links/{link}', [IssueController::class, 'destroyLink']);
         Route::post('/issues/{issue}/comments', [IssueController::class, 'storeComment']);
         Route::patch('/issues/{issue}/comments/{comment}', [IssueController::class, 'updateComment']);
+        Route::post('/issues/{issue}/attachments', [AttachmentController::class, 'store']);
+        Route::delete('/issues/{issue}/attachments/{attachment}', [AttachmentController::class, 'destroy']);
         Route::delete('/issues/{issue}', [IssueController::class, 'destroy']);
         Route::post('/issues/{issue}/restore', [IssueController::class, 'restore']);
     });

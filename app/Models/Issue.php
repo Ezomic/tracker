@@ -252,6 +252,14 @@ class Issue extends Model
     }
 
     /**
+     * @return HasMany<Attachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class);
+    }
+
+    /**
      * @return HasMany<Activity, $this>
      */
     public function activities(): HasMany

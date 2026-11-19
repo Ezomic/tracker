@@ -21,6 +21,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
+import IssueAttachments from '@/components/IssueAttachments.vue';
 import IssuePropertyBar from '@/components/IssuePropertyBar.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import MarkdownEditor from '@/components/MarkdownEditor.vue';
@@ -68,6 +69,7 @@ import { destroy as destroyLink } from '@/routes/issues/links';
 import type {
     EpicOption,
     Issue,
+    IssueAttachment,
     IssueComment,
     IssueLabel,
     IssueUser,
@@ -83,6 +85,7 @@ const props = defineProps<{
     canModerateComments: boolean;
     canArchive: boolean;
     currentUserId: number;
+    attachments: IssueAttachment[];
 }>();
 
 const { t } = useI18n();
@@ -355,6 +358,10 @@ function describeActivity(
             return t('activity.labelAdded', { name: data.name });
         case 'label_removed':
             return t('activity.labelRemoved', { name: data.name });
+        case 'attachment_added':
+            return t('activity.attachmentAdded', { name: data.name });
+        case 'attachment_removed':
+            return t('activity.attachmentRemoved', { name: data.name });
         case 'pr_opened':
             return t('activity.prOpened');
         case 'pr_merged':
@@ -544,6 +551,13 @@ const statusDot: Record<Issue['status'], string> = {
                     <span class="truncate">{{ child.title }}</span>
                 </Link>
             </div>
+
+            <IssueAttachments
+                class="border-t border-sidebar-border/70 pt-5 dark:border-sidebar-border"
+                :issue-identifier="issue.identifier"
+                :attachments="attachments"
+                :can-upload="canArchive"
+            />
 
             <div
                 class="flex flex-col gap-4 border-t border-sidebar-border/70 pt-5 dark:border-sidebar-border"
