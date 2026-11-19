@@ -301,7 +301,12 @@
         "watching": "Watching",
         "watchingOn": "Watching",
         "watchingOff": "Watch",
-        "links": "Linked issues"
+        "links": "Linked issues",
+        "attachments": "Attachments",
+        "attachFile": "Attach file",
+        "attaching": "Uploading…",
+        "noAttachments": "No attachments yet.",
+        "removeAttachment": "Remove {name}"
     },
     "newIssue": {
         "title": "New issue",
@@ -343,6 +348,8 @@
         "parentCleared": "removed the parent link",
         "labelAdded": "added the {name} label",
         "labelRemoved": "removed the {name} label",
+        "attachmentAdded": "attached {name}",
+        "attachmentRemoved": "removed the attachment {name}",
         "prOpened": "opened a pull request",
         "prMerged": "merged the pull request",
         "committed": "committed",

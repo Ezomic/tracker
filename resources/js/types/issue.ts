@@ -13,6 +13,18 @@ export interface IssueComment {
     user: IssueUser | null;
 }
 
+export interface IssueAttachment {
+    id: number;
+    name: string;
+    size: number;
+    /** Raster images are served inline, so they get a thumbnail. */
+    isImage: boolean;
+    url: string;
+    user: IssueUser | null;
+    createdAt: string;
+    canDelete: boolean;
+}
+
 export type TimelineItem =
     | {
           kind: 'comment';

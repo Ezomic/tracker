@@ -301,7 +301,12 @@
         "watching": "Volgen",
         "watchingOn": "Je volgt dit",
         "watchingOff": "Volgen",
-        "links": "Gekoppelde tickets"
+        "links": "Gekoppelde tickets",
+        "attachments": "Bijlagen",
+        "attachFile": "Bestand toevoegen",
+        "attaching": "Uploaden…",
+        "noAttachments": "Nog geen bijlagen.",
+        "removeAttachment": "{name} verwijderen"
     },
     "newIssue": {
         "title": "Nieuw ticket",
@@ -343,6 +348,8 @@
         "parentCleared": "verwijderde de bovenliggende koppeling",
         "labelAdded": "voegde het label {name} toe",
         "labelRemoved": "verwijderde het label {name}",
+        "attachmentAdded": "voegde de bijlage {name} toe",
+        "attachmentRemoved": "verwijderde de bijlage {name}",
         "prOpened": "opende een pull request",
         "prMerged": "voegde de pull request samen",
         "committed": "committe",

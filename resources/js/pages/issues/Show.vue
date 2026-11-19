@@ -9,6 +9,7 @@ import { index } from '@/routes/issues';
 import type {
     EpicOption,
     Issue,
+    IssueAttachment,
     IssueLabel,
     IssueUser,
     TimelineItem,
@@ -23,6 +24,7 @@ const props = defineProps<{
     canModerateComments: boolean;
     canArchive: boolean;
     currentUserId: number;
+    attachments: IssueAttachment[];
 }>();
 
 // Temporary scaffolding for comparing the TRACK-137 redesign against what it

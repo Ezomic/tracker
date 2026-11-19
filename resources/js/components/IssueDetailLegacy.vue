@@ -14,6 +14,7 @@ import { useI18n } from 'vue-i18n';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
 import AutoTextarea from '@/components/AutoTextarea.vue';
 import InputError from '@/components/InputError.vue';
+import IssueAttachments from '@/components/IssueAttachments.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
 import MarkdownEditor from '@/components/MarkdownEditor.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -46,6 +47,7 @@ import {
 import type {
     EpicOption,
     Issue,
+    IssueAttachment,
     IssueComment,
     IssueLabel,
     IssueUser,
@@ -61,6 +63,7 @@ const props = defineProps<{
     canModerateComments: boolean;
     canArchive: boolean;
     currentUserId: number;
+    attachments: IssueAttachment[];
 }>();
 
 const { t } = useI18n();
@@ -107,6 +110,10 @@ function describeActivity(
             return t('activity.labelAdded', { name: data.name });
         case 'label_removed':
             return t('activity.labelRemoved', { name: data.name });
+        case 'attachment_added':
+            return t('activity.attachmentAdded', { name: data.name });
+        case 'attachment_removed':
+            return t('activity.attachmentRemoved', { name: data.name });
         case 'pr_opened':
             return t('activity.prOpened');
         case 'pr_merged':
@@ -565,6 +572,13 @@ const statusDot: Record<Issue['status'], string> = {
     </Form>
 
     <section class="p-4 pt-0">
+        <IssueAttachments
+            class="mb-6 lg:max-w-2xl"
+            :issue-identifier="issue.identifier"
+            :attachments="attachments"
+            :can-upload="canArchive"
+        />
+
         <div class="flex flex-col gap-4 lg:max-w-2xl">
             <h2 class="text-sm font-medium">{{ $t('activity.title') }}</h2>
 
