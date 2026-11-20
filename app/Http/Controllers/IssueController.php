@@ -279,17 +279,26 @@ class IssueController extends Controller
             $this->authorize('view', $project);
         }
 
-        $organization = $current->for($this->currentUser($request));
+        $user = $this->currentUser($request);
+        $organization = $current->for($user);
         $showArchived = $request->boolean('archived');
+        $onBoard = Issue::query()
+            ->visibleTo($user)
+            ->inOrganization($organization)
+            ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
+            ->when($project === null, fn (Builder $query) => $query->inActiveProject());
+        // Id subqueries rather than scopes inside the relations: the children
+        // count is a self-join where visibleTo's `issues.` columns would bind
+        // to the parent row instead of the child.
+        $visibleIds = Issue::query()->visibleTo($user)->inOrganization($organization)->select('issues.id');
+        $boardIds = (clone $onBoard)->select('issues.id');
 
         return Inertia::render('issues/Board', [
-            'issues' => Issue::query()
-                ->visibleTo($this->currentUser($request))
-                ->inOrganization($organization)
-                ->when(! $showArchived, fn (Builder $query) => $query->notArchived())
-                ->when($project === null, fn (Builder $query) => $query->inActiveProject())
-                ->withCount(['children', 'children as children_done_count' => fn (Builder $children) => $children->where('status', IssueStatus::Done)])
-                ->with(['project', 'labels', 'assignee', 'parent'])
+            'issues' => $onBoard
+                // The epic panel and the chips on child cards name the parent,
+                // so it must pass the same filters as the cards themselves.
+                ->withCount(['children' => fn (Builder $children) => $children->whereIn($children->qualifyColumn('id'), $visibleIds)])
+                ->with(['project', 'labels', 'assignee', 'parent' => fn (Relation $parent) => $parent->whereIn('issues.id', $boardIds)])
                 ->when($project?->id, fn (Builder $query, int $projectId) => $query->where('project_id', $projectId))
                 // Position first, then creation date as the tiebreak so lanes
                 // that have never been reordered look exactly as they did.
@@ -562,6 +571,7 @@ class IssueController extends Controller
         $repoBase = $this->githubRepoBase($issue);
 
         return [
+            'id' => $issue->id,
             'identifier' => $issue->identifier,
             'title' => $issue->title,
             'description' => $issue->description,
