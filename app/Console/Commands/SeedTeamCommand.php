@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\Project;
+use App\Support\Cast;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -15,7 +16,7 @@ class SeedTeamCommand extends Command
 {
     public function handle(): int
     {
-        $key = strtoupper($this->argument('key'));
+        $key = strtoupper(Cast::string($this->argument('key')));
         $name = $this->argument('name');
         $requestedNumber = (int) $this->argument('next_number');
 

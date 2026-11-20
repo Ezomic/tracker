@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Actions\ImportIssuesFromCsvAction;
+use App\Support\Cast;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -15,7 +16,7 @@ class ImportIssuesCommand extends Command
 {
     public function handle(ImportIssuesFromCsvAction $action): int
     {
-        $result = $action->handle($this->argument('path'));
+        $result = $action->handle(Cast::string($this->argument('path')));
 
         $this->info("Imported {$result['imported']} issue(s), skipped {$result['skipped']}.");
 
