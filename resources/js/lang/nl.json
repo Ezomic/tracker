@@ -210,7 +210,16 @@
         "newIssue": "Nieuw ticket",
         "empty": "Nog geen tickets.",
         "emptyColumn": "Geen tickets",
-        "noProject": "Geen project"
+        "noProject": "Geen project",
+        "epics": "Epics",
+        "epicsDescription": "Klik op een epic om alleen de subtickets op het bord te tonen.",
+        "noEpic": "Geen epic",
+        "showAllEpics": "Alle epics tonen",
+        "noOpenEpics": "Geen epics met open werk.",
+        "noEpics": "Nog geen epics.",
+        "hideEpics": "Epics verbergen",
+        "showEpics": "Epics tonen",
+        "otherStates": "Andere statussen"
     },
     "savedViews": {
         "label": "Weergaven",

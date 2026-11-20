@@ -210,7 +210,16 @@
         "newIssue": "New issue",
         "empty": "No issues yet.",
         "emptyColumn": "No issues",
-        "noProject": "No project"
+        "noProject": "No project",
+        "epics": "Epics",
+        "epicsDescription": "Click an epic to show only its sub-issues on the board.",
+        "noEpic": "No epic",
+        "showAllEpics": "Show all epics",
+        "noOpenEpics": "No epics with open work.",
+        "noEpics": "No epics yet.",
+        "hideEpics": "Hide epics",
+        "showEpics": "Show epics",
+        "otherStates": "Other states"
     },
     "savedViews": {
         "label": "Views",

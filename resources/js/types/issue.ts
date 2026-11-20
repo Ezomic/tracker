@@ -55,6 +55,7 @@ export type TimelineItem =
       };
 
 export interface Issue {
+    id: number;
     identifier: string;
     title: string;
     description: string | null;
