@@ -14,6 +14,7 @@ use App\Services\CurrentOrganization;
 use App\Services\Integrations;
 use App\Services\Portal\IdPortalClient;
 use App\Support\Cast;
+use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -135,15 +136,22 @@ class HandleInertiaRequests extends Middleware
             return ['tree' => [], 'uncategorized' => []];
         }
 
+        // Epics live in the board's epic panel, not its columns, so they are
+        // left out here too; their sub-issues are still counted.
+        $countable = fn (IssueStatus $status): Closure => fn (Builder $query) => $query
+            ->whereNull('archived_at')
+            ->where('status', $status->value)
+            ->whereDoesntHave('children');
+
         $projects = $user->projects()
             ->notArchived()
             ->inOrganization($organization)
             ->select(['projects.id', 'key', 'name', 'color', 'category_id'])
             ->withCount([
-                'issues as backlog_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Backlog->value),
-                'issues as in_progress_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InProgress->value),
-                'issues as in_review_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::InReview->value),
-                'issues as done_count' => fn (Builder $query) => $query->whereNull('archived_at')->where('status', IssueStatus::Done->value),
+                'issues as backlog_count' => $countable(IssueStatus::Backlog),
+                'issues as in_progress_count' => $countable(IssueStatus::InProgress),
+                'issues as in_review_count' => $countable(IssueStatus::InReview),
+                'issues as done_count' => $countable(IssueStatus::Done),
             ])
             ->orderBy('key')
             ->get();

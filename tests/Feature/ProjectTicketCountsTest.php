@@ -29,6 +29,23 @@ it('shares a per-status ticket breakdown per project', function () {
         );
 });
 
+it('leaves epics out of the sidebar counts but keeps their sub-issues', function () {
+    $project = Project::factory()->create(['key' => 'THI']);
+    $epic = Issue::factory()->for($project)->create(['status' => IssueStatus::InProgress]);
+    Issue::factory()->for($project)->create(['status' => IssueStatus::InProgress, 'parent_id' => $epic->id]);
+    Issue::factory()->for($project)->create(['status' => IssueStatus::Done, 'parent_id' => $epic->id]);
+    Issue::factory()->for($project)->create(['status' => IssueStatus::Backlog]);
+
+    $this->actingAs(member($project))
+        ->get('/issues')
+        ->assertInertia(fn ($page) => $page
+            ->where('sidebarCategories.uncategorized.0.counts.backlog', 1)
+            ->where('sidebarCategories.uncategorized.0.counts.in_progress', 1)
+            ->where('sidebarCategories.uncategorized.0.counts.in_review', 0)
+            ->where('sidebarCategories.uncategorized.0.counts.done', 1)
+        );
+});
+
 it('reports zero counts for a project with no tickets', function () {
     $project = Project::factory()->create(['key' => 'THI']);
 
