@@ -70,6 +70,14 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * @return HasMany<ProjectVisit, $this>
+     */
+    public function projectVisits(): HasMany
+    {
+        return $this->hasMany(ProjectVisit::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
