@@ -202,20 +202,22 @@ export type EpicDropTarget = EpicSummary | 'none';
 export type ParentChange = { parent: string | null };
 
 /**
- * Mirrors the server rules, so a refused row fades instead of sending a
- * request that would only come back as a validation error.
+ * Mirrors the server rules a board can check, so a refused row fades instead
+ * of sending a request. Epics may span projects, and every row on the board
+ * is in the board's organization, so the server keeps the organization check.
  */
 export function canDropOnEpic(card: Issue, target: EpicDropTarget): boolean {
+    // Its epic is unknown here, so neither the no-op check nor Undo would
+    // know what to restore.
+    if (card.parentOffBoard) {
+        return false;
+    }
+
     if (target === 'none') {
         return true;
     }
 
-    return (
-        !isEpic(card) &&
-        target.id !== card.id &&
-        target.project !== null &&
-        target.project.key === card.project.key
-    );
+    return !isEpic(card) && target.id !== card.id;
 }
 
 /** The request body for a drop, or null when it would change nothing. */

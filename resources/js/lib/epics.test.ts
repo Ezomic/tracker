@@ -366,17 +366,17 @@ describe('canDropOnEpic', () => {
         expect(canDropOnEpic(issue(), summary(epic()))).toBe(true);
     });
 
-    it('refuses an epic in another project', () => {
+    it('accepts an epic in another project, since epics span projects', () => {
         const other = epic({ project: { key: 'OTH', name: 'Other' } });
 
-        expect(canDropOnEpic(issue(), summary(other))).toBe(false);
+        expect(canDropOnEpic(issue(), summary(other))).toBe(true);
     });
 
-    it('refuses an epic whose project the board does not know', () => {
+    it('accepts an epic the board only knows through its children', () => {
         const absent = issue();
-        const [unknown] = summarizeEpics([childOf(absent)], legacyLanes);
+        const [known] = summarizeEpics([childOf(absent)], legacyLanes);
 
-        expect(canDropOnEpic(issue(), unknown)).toBe(false);
+        expect(canDropOnEpic(issue(), known)).toBe(true);
     });
 
     it('refuses dropping a card onto itself', () => {
@@ -391,7 +391,14 @@ describe('canDropOnEpic', () => {
         expect(canDropOnEpic(card, summary(epic()))).toBe(false);
     });
 
-    it('always accepts the no-epic row', () => {
+    it('refuses every row for a card whose epic is off the board', () => {
+        const card = issue({ parentOffBoard: true });
+
+        expect(canDropOnEpic(card, summary(epic()))).toBe(false);
+        expect(canDropOnEpic(card, 'none')).toBe(false);
+    });
+
+    it('accepts the no-epic row for loose and epic-less cards', () => {
         expect(canDropOnEpic(issue(), 'none')).toBe(true);
         expect(canDropOnEpic(issue({ childrenCount: 2 }), 'none')).toBe(true);
     });
@@ -425,10 +432,10 @@ describe('parentAfterDrop', () => {
     });
 
     it('is a no-op on an invalid target', () => {
-        const other = epic({ project: { key: 'OTH', name: 'Other' } });
-        const [target] = summarizeEpics([other], legacyLanes);
+        const card = issue({ childrenCount: 2 });
+        const [target] = summarizeEpics([epic()], legacyLanes);
 
-        expect(parentAfterDrop(issue(), target)).toBeNull();
+        expect(parentAfterDrop(card, target)).toBeNull();
     });
 });
 

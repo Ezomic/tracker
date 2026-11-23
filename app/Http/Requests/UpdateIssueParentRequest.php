@@ -25,7 +25,7 @@ class UpdateIssueParentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'parent' => ['present', 'nullable', 'string', $this->validParent(...)],
+            'parent' => ['present', 'nullable', 'bail', 'string', $this->validParent(...)],
         ];
     }
 
@@ -51,13 +51,24 @@ class UpdateIssueParentRequest extends FormRequest
 
         if ($parent->is($issue)) {
             $fail(__('An issue cannot be its own epic.'));
-        } elseif ($parent->project_id !== $issue->project_id) {
-            $fail(__('The epic must belong to the same project.'));
+        } elseif (! $this->sameOrganization($parent, $issue)) {
+            $fail(__('The epic must belong to the same organization.'));
         } elseif ($parent->parent_id !== null) {
             $fail(__('A sub-issue cannot be an epic.'));
         } elseif ($issue->children()->exists()) {
             $fail(__('An issue with sub-issues cannot itself be assigned to an epic.'));
         }
+    }
+
+    // Epics may span projects, but never organizations. A project outside any
+    // organization has no siblings to share an epic with.
+    private function sameOrganization(Issue $parent, Issue $issue): bool
+    {
+        $organizationId = $issue->project->organization_id;
+
+        return $organizationId === null
+            ? $parent->project_id === $issue->project_id
+            : $parent->project->organization_id === $organizationId;
     }
 
     private function findVisible(string $identifier): ?Issue

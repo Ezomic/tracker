@@ -307,7 +307,12 @@ class IssueController extends Controller
                 ->orderBy('board_position')
                 ->latest()
                 ->get()
-                ->map($this->serialize(...)),
+                // A parent filtered off the board reads as no parent, so the
+                // card must not offer drops that Undo would get wrong.
+                ->map(fn (Issue $issue): array => [
+                    ...$this->serialize($issue),
+                    'parentOffBoard' => $issue->parent_id !== null && $issue->parent === null,
+                ]),
             'project' => $project === null ? null : [
                 'key' => $project->key,
                 'name' => $project->name,

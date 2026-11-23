@@ -30,7 +30,7 @@
     "They already have access to this project.": "Zij hebben al toegang tot dit project.",
     "That epic does not exist.": "Die epic bestaat niet.",
     "An issue cannot be its own epic.": "Een ticket kan niet zijn eigen epic zijn.",
-    "The epic must belong to the same project.": "De epic moet in hetzelfde project staan.",
+    "The epic must belong to the same organization.": "De epic moet in dezelfde organisatie staan.",
     "A sub-issue cannot be an epic.": "Een subticket kan geen epic zijn.",
     "An issue with sub-issues cannot itself be assigned to an epic.": "Een ticket met subtickets kan zelf niet aan een epic worden gekoppeld."
 }

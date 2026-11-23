@@ -98,6 +98,8 @@ export interface Issue {
     archiveReason: string | null;
     childrenCount: number;
     childrenDoneCount: number;
+    /** Board only: the card has an epic, but it is not on the board. */
+    parentOffBoard?: boolean;
     parent: {
         id: number;
         identifier: string;
