@@ -53,7 +53,9 @@ class UpdateIssueRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('issues', 'id')->where('parent_id', null),
+                Rule::exists('issues', 'id')
+                    ->where('parent_id', null)
+                    ->where('project_id', $issue->project_id),
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
                     if (Cast::int($value) === $issue->id) {
                         $fail('An issue cannot be its own epic.');

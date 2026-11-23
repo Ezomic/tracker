@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\IssueType;
 use App\Models\Project;
+use App\Support\Cast;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -49,7 +50,9 @@ class StoreIssueWebRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('issues', 'id')->where('parent_id', null),
+                Rule::exists('issues', 'id')
+                    ->where('parent_id', null)
+                    ->where('project_id', Cast::int($this->input('project_id'))),
             ],
             'template_id' => [
                 'nullable',

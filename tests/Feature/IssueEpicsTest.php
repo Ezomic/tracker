@@ -132,3 +132,39 @@ it('only offers top-level issues as eligible epics', function () {
             ->where('epics.0.identifier', $epic->identifier)
         );
 });
+
+it('rejects creating an issue under an epic from another project', function (bool $sameOrganization) {
+    $team = Project::factory()->create(['key' => 'THI']);
+    $user = member($team);
+    $other = $sameOrganization
+        ? Project::factory()->create(['key' => 'OTH', 'organization_id' => $team->organization_id])
+        : Project::factory()->create(['key' => 'OTH']);
+    $foreignEpic = (new CreateIssueAction)->handle($other, 'Foreign epic', IssueType::Feature);
+
+    $this->actingAs($user)->post('/issues', [
+        'project_id' => $team->id,
+        'title' => 'Sub-task',
+        'type' => 'feature',
+        'parent_id' => $foreignEpic->id,
+    ])->assertSessionHasErrors('parent_id');
+
+    expect(Issue::query()->where('title', 'Sub-task')->exists())->toBeFalse();
+})->with(['same organization' => true, 'other organization' => false]);
+
+it('rejects assigning an issue to an epic from another project via update', function (bool $sameOrganization) {
+    $team = Project::factory()->create(['key' => 'THI']);
+    $issue = (new CreateIssueAction)->handle($team, 'Standalone issue', IssueType::Feature);
+    $other = $sameOrganization
+        ? Project::factory()->create(['key' => 'OTH', 'organization_id' => $team->organization_id])
+        : Project::factory()->create(['key' => 'OTH']);
+    $foreignEpic = (new CreateIssueAction)->handle($other, 'Foreign epic', IssueType::Feature);
+
+    $this->actingAs(member($team))->patch("/issues/{$issue->identifier}", [
+        'title' => $issue->title,
+        'type' => 'feature',
+        'priority' => 'none',
+        'parent_id' => $foreignEpic->id,
+    ])->assertSessionHasErrors('parent_id');
+
+    expect($issue->fresh()->parent_id)->toBeNull();
+})->with(['same organization' => true, 'other organization' => false]);
