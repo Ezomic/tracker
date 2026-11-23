@@ -109,7 +109,7 @@ it('writes to a storage path containing spaces and quotes', function () {
     $backups = File::files($root.'/backups');
     expect($backups)->toHaveCount(1)
         ->and(openBackup($backups[0]->getPathname())->query('SELECT COUNT(*) FROM notes')->fetchColumn())->toBe(3);
-});
+})->skipOnWindows('Windows does not allow double quotes in folder names; Linux CI covers it.');
 
 it('reads a source database whose path contains spaces and quotes', function () {
     $dir = $this->workDir."/src it's";
