@@ -84,7 +84,11 @@ export async function requestIssueDraft(
     }
 
     if (response.ok) {
-        return { draft: (await response.json()) as IssueDraft };
+        try {
+            return { draft: (await response.json()) as IssueDraft };
+        } catch {
+            return { error: 'failed' };
+        }
     }
 
     const error = errorFor(response.status);
@@ -96,7 +100,9 @@ export async function requestIssueDraft(
 
 /**
  * Fill the form from a draft. A template the user already chose stays; an
- * empty or missing field leaves what the form had.
+ * empty or missing field leaves what the form had. Claude answers "none" when
+ * the text gives no hint of urgency, so that never overrides a priority the
+ * form or the picked template already has.
  */
 export function applyDraft(
     form: DraftForm,
@@ -112,7 +118,12 @@ export function applyDraft(
         template: picked,
         title: draft.title || form.title,
         type: draft.type ?? form.type,
-        priority: draft.priority ?? form.priority,
+        priority:
+            draft.priority && draft.priority !== 'none'
+                ? draft.priority
+                : form.priority !== 'none'
+                  ? form.priority
+                  : (picked?.priority ?? 'none'),
         description: draft.description || form.description,
     };
 }

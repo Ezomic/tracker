@@ -15,6 +15,7 @@ use App\Enums\IssueType;
 use App\Models\IssueTemplate;
 use App\Models\Project;
 use App\Support\Cast;
+use Closure;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Container\Attributes\Give;
 use Illuminate\Support\Collection;
@@ -49,7 +50,7 @@ final class ClaudeIssueDrafter implements IssueDrafter
 
     public function draft(string $text, Project $project, Collection $templates, ?IssueTemplate $template): array
     {
-        $message = $this->send($text, $this->instructions($project, $templates, $template));
+        $message = $this->send($text, fn (): string => $this->instructions($project, $templates, $template));
         $usage = [
             'model' => $message->model,
             'input_tokens' => $message->usage->inputTokens,
@@ -71,16 +72,20 @@ final class ClaudeIssueDrafter implements IssueDrafter
         return get_object_vars($draft);
     }
 
-    private function send(string $text, string $instructions): Message
+    /**
+     * @param  Closure(): string  $instructions
+     */
+    private function send(string $text, Closure $instructions): Message
     {
-        $client = new Client(
-            apiKey: Cast::string(config('services.anthropic.key')),
-            requestOptions: RequestOptions::with(maxRetries: 0, transporter: $this->transporter),
-            // Tracing can export message content, and the pasted text must not leave this request.
-            openTelemetry: false,
-        );
-
+        // Everything is built inside the try: anything that escapes is reported along with the request input.
         try {
+            $client = new Client(
+                apiKey: Cast::string(config('services.anthropic.key')),
+                requestOptions: RequestOptions::with(maxRetries: 0, transporter: $this->transporter),
+                // Tracing can export message content, and the pasted text must not leave this request.
+                openTelemetry: false,
+            );
+
             return $client->messages->create(
                 maxTokens: self::MAX_TOKENS,
                 messages: [['role' => 'user', 'content' => $text]],
@@ -89,10 +94,9 @@ final class ClaudeIssueDrafter implements IssueDrafter
                     effort: 'low',
                     format: JSONOutputFormat::with(schema: $this->schema()),
                 ),
-                system: $instructions,
+                system: $instructions(),
             );
         } catch (Throwable $exception) {
-            // Caught whole: anything that escapes is reported along with the request input.
             $this->fail('api_error', ['exception' => $exception::class]);
         }
     }

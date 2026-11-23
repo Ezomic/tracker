@@ -222,6 +222,17 @@ it('fails without retrying when the API errors', function (int $status) {
         && is_string($context['exception']));
 })->with([401, 429, 500, 529]);
 
+it('fails without calling Claude when a template cannot be sent', function () {
+    $history = [];
+    $drafter = drafterAnswering([claudeReply('{}')], $history);
+    $broken = new Collection([IssueTemplate::factory()->for($this->organization)->make(['description' => "\xB1\x31"])]);
+
+    expect(fn () => $drafter->draft('x', $this->project, $broken, null))
+        ->toThrow(IssueDraftFailed::class, 'api_error');
+
+    expect($history)->toBe([]);
+});
+
 it('fails when the connection times out', function () {
     $drafter = drafterAnswering([new ConnectException('Operation timed out', new Psr7Request('POST', 'https://api.anthropic.com/v1/messages'))]);
 

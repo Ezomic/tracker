@@ -69,6 +69,15 @@ const draftText = ref('');
 const drafting = ref(false);
 const draftError = ref<string | null>(null);
 const drafted = ref(false);
+// Bumped whenever the form is reset, so a draft that lands afterwards is dropped.
+let draftRun = 0;
+
+function resetDraft() {
+    draftRun++;
+    drafting.value = false;
+    drafted.value = false;
+    draftError.value = null;
+}
 
 const selectedProject = computed(() =>
     props.projects.find((project) => String(project.id) === projectId.value),
@@ -77,11 +86,12 @@ const selectedProject = computed(() =>
 // Reset each time it opens, so navigating between projects re-preselects and a
 // previous pick doesn't linger.
 watch(open, (isOpen) => {
+    resetDraft();
+
     if (isOpen) {
         step.value = 'choose';
         chosen.value = null;
         draftText.value = '';
-        draftError.value = null;
         projectId.value = props.defaultProjectId
             ? String(props.defaultProjectId)
             : undefined;
@@ -118,9 +128,13 @@ function choose(template: IssueTemplate | null) {
     description.value = template?.description ?? '';
     type.value = template?.type ?? 'feature';
     priority.value = template?.priority ?? 'none';
-    draftError.value = null;
-    drafted.value = false;
+    resetDraft();
     step.value = 'form';
+}
+
+function back() {
+    resetDraft();
+    step.value = 'choose';
 }
 
 async function draft() {
@@ -128,6 +142,7 @@ async function draft() {
         return;
     }
 
+    const run = ++draftRun;
     drafting.value = true;
     draftError.value = null;
 
@@ -137,6 +152,10 @@ async function draft() {
             template_id: chosen.value?.id ?? null,
             text: draftText.value,
         });
+
+        if (run !== draftRun) {
+            return;
+        }
 
         if ('error' in result) {
             draftError.value =
@@ -164,7 +183,9 @@ async function draft() {
         description.value = filled.description;
         drafted.value = true;
     } finally {
-        drafting.value = false;
+        if (run === draftRun) {
+            drafting.value = false;
+        }
     }
 }
 </script>
@@ -295,7 +316,7 @@ async function draft() {
                     <button
                         type="button"
                         class="inline-flex items-center gap-1 hover:text-foreground"
-                        @click="step = 'choose'"
+                        @click="back"
                     >
                         <ArrowLeft class="size-3.5" />
                         {{ $t('newIssue.back') }}

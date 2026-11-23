@@ -172,6 +172,47 @@ describe('applyDraft', () => {
         ).toBeNull();
     });
 
+    it('does not let "none" override a priority the form already has', () => {
+        const form = {
+            ...blankForm,
+            template: template(1),
+            priority: 'high' as const,
+        };
+
+        expect(
+            applyDraft(form, { ...draft, priority: 'none' }, [template(1)])
+                .priority,
+        ).toBe('high');
+    });
+
+    it('falls back to the picked template\'s priority when Claude says "none"', () => {
+        expect(
+            applyDraft(blankForm, { ...draft, priority: 'none' }, [template(2)])
+                .priority,
+        ).toBe('high');
+    });
+
+    it('leaves the priority at none when nothing has one', () => {
+        expect(
+            applyDraft(
+                blankForm,
+                { ...draft, template_id: null, priority: 'none' },
+                [],
+            ).priority,
+        ).toBe('none');
+    });
+
+    it('reports a successful response that is not JSON as failed', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue(new Response('<html>', { status: 200 })),
+        );
+
+        expect(await requestIssueDraft('/issues/draft', request, '')).toEqual({
+            error: 'failed',
+        });
+    });
+
     it('keeps what the form had where the draft is empty', () => {
         const form: DraftForm = {
             template: null,
