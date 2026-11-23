@@ -13,6 +13,7 @@ import { index as indexCategories } from '@/routes/categories';
 import { index as indexLabels } from '@/routes/labels';
 import { edit as editLanguage } from '@/routes/language';
 import { index as indexMembers } from '@/routes/members';
+import { edit as editOrganization } from '@/routes/organization';
 import { edit as editProfile } from '@/routes/profile';
 import { index as indexProjectTypes } from '@/routes/project-types';
 import { edit as editSecurity } from '@/routes/security';
@@ -45,6 +46,10 @@ const navGroups = computed<NavGroup[]>(() =>
             items: [
                 ...(page.props.currentOrganization?.canManage
                     ? [
+                          {
+                              title: t('settingsNav.general'),
+                              href: editOrganization(),
+                          },
                           {
                               title: t('settingsNav.members'),
                               href: indexMembers(),

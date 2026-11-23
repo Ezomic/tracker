@@ -77,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api-read', fn (Request $request): Limit => Limit::perMinute(1200)->by($this->apiRateKey($request)));
 
         RateLimiter::for('api-write', fn (Request $request): Limit => Limit::perMinute(600)->by($this->apiRateKey($request)));
+
+        // Each draft is a paid call to Claude.
+        RateLimiter::for('issue-drafts', fn (Request $request): Limit => Limit::perHour(20)->by($this->apiRateKey($request)));
     }
 
     private function apiRateKey(Request $request): string

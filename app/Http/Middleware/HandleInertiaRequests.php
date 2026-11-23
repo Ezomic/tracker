@@ -80,6 +80,7 @@ class HandleInertiaRequests extends Middleware
                 // A non-null organization only resolves for an authenticated user.
                 'canManage' => $organization->roleFor($request->user())?->manages() ?? false,
                 'canViewLibrary' => $request->user()->can('viewLibrary', $organization),
+                'aiDrafting' => $this->integrations->drafting($organization),
             ],
             'organizations' => fn () => $request->user() === null ? [] : $request->user()
                 ->organizations()

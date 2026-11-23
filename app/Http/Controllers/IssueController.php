@@ -11,6 +11,7 @@ use App\Actions\LinkIssuesAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\ReorderIssueAction;
 use App\Actions\WatchIssueAction;
+use App\Enums\IssuePriority;
 use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
@@ -144,10 +145,11 @@ class IssueController extends Controller
         $this->authorize('createIssue', $project);
 
         $parent = $this->findParent($request->validated('parent_id'));
-        // Title, type and description are prefilled client-side and editable;
-        // priority and labels have no field on the form, so they come straight
+        // Title, type, priority and description are prefilled client-side and
+        // editable; labels have no field on the form, so they come straight
         // off the template here.
         $template = $this->findTemplate($request->validated('template_id'));
+        $priority = $request->validated('priority');
 
         $issue = $action->handle(
             project: $project,
@@ -156,7 +158,7 @@ class IssueController extends Controller
             description: $request->string('description')->toString() ?: null,
             parent: $parent,
             owner: $this->currentUser($request),
-            priority: $template?->priority,
+            priority: $priority === null ? $template?->priority : IssuePriority::from(Cast::string($priority)),
             template: $template,
         );
 

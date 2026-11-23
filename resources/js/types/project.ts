@@ -110,4 +110,5 @@ export interface OrganizationSummary {
     slug: string;
     canManage: boolean;
     canViewLibrary: boolean;
+    aiDrafting: boolean;
 }
