@@ -361,6 +361,7 @@
         "attachmentRemoved": "verwijderde de bijlage {name}",
         "prOpened": "opende een pull request",
         "prMerged": "voegde de pull request samen",
+        "notionSyncFailed": "Notion-sync mislukt: {message}",
         "committed": "committe",
         "someone": "Iemand",
         "edited": "bewerkt",
@@ -655,6 +656,20 @@
         "read": "Lezen",
         "write": "Schrijven",
         "admin": "Beheer"
+    },
+    "notion": {
+        "title": "Notion-database",
+        "description": "Spiegel de tickets van {project} naar een Notion-database. Alleen in één richting: wijzigingen in Notion worden overschreven zodra een ticket weer verandert.",
+        "linkedTitle": "Wordt gespiegeld naar Notion",
+        "counts": "Gespiegeld: {mirrored}. Wachten op hun eerste sync: {pending}.",
+        "syncExisting": "Bestaande tickets synchroniseren",
+        "unlink": "Ontkoppelen",
+        "unlinkConfirm": "Stoppen met spiegelen van dit project? De rijen die al in Notion staan blijven zoals ze zijn.",
+        "databaseLabel": "Link of ID van de Notion-database",
+        "changeLabel": "Een andere database koppelen",
+        "help": "Deel de database eerst met de integratie in Notion (menu met de drie puntjes, dan Connecties). Hij moet precies één databron hebben.",
+        "link": "Database koppelen",
+        "change": "Database wijzigen"
     },
     "webhooks": {
         "title": "Webhooks",

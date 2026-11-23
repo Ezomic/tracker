@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Actions\MirrorIssueToNotionAction;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
@@ -48,6 +49,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $closed_at
  * @property Carbon|null $archived_at
  * @property string|null $archive_reason
+ * @property string|null $notion_page_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Project $project
@@ -153,6 +155,8 @@ class Issue extends Model
         if ($added === [] && $removed === []) {
             return;
         }
+
+        app(MirrorIssueToNotionAction::class)->handle($this);
 
         $names = Label::query()
             ->whereIn('id', array_merge($added, $removed))

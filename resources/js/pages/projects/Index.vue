@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
-import { Archive, Plus, Search, Users } from '@lucide/vue';
+import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { Archive, Database, Plus, Search, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ProjectsController from '@/actions/App/Http/Controllers/ProjectsController';
@@ -32,7 +32,10 @@ import {
 } from '@/components/ui/select';
 import { board, index } from '@/routes/projects';
 import { index as membersIndex } from '@/routes/projects/members';
+import { index as notionIndex } from '@/routes/projects/notion';
 import type { Project, ProjectCategory, ProjectTypeOption } from '@/types';
+
+const notionEnabled = computed(() => usePage().props.integrations.notion);
 
 const props = defineProps<{
     projects: Project[];
@@ -471,6 +474,24 @@ function archiveLabel(days: number | null): string {
                                     <Users class="size-4" />
                                     <span class="sr-only">{{
                                         $t('projects.members')
+                                    }}</span>
+                                </Link>
+                            </Button>
+                            <Button
+                                v-if="notionEnabled"
+                                variant="ghost"
+                                size="icon"
+                                class="size-8"
+                                as-child
+                            >
+                                <Link
+                                    :href="
+                                        notionIndex({ project: project.key })
+                                    "
+                                >
+                                    <Database class="size-4" />
+                                    <span class="sr-only">{{
+                                        $t('notion.title')
                                     }}</span>
                                 </Link>
                             </Button>

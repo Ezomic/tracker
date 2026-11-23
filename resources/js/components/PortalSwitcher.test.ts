@@ -4,7 +4,7 @@ import { i18n, setLocale } from '@/i18n';
 import PortalSwitcher from './PortalSwitcher.vue';
 
 const pageProps = vi.hoisted(() => ({
-    integrations: { sso: false },
+    integrations: { sso: false, notion: false },
     portalApps: [],
     portalCategories: [],
 }));

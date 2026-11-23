@@ -6,7 +6,12 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\Webhooks\HostResolver;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Http\Client\Request;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /*
@@ -137,4 +142,70 @@ function projectInOrganization(Organization $organization, User $member, array $
     joinProjects($member, $project);
 
     return $project;
+}
+
+function configureNotion(): void
+{
+    config()->set('services.notion.api_key', 'secret_test_token');
+}
+
+/**
+ * Answer Notion requests by "METHOD /path" (fnmatch wildcards allowed). Falls
+ * back to a one-data-source database with just a title column, and pages that
+ * are created with a fixed id. Anything in $routes wins, as a Response or an
+ * array body.
+ *
+ * @param  array<string, Response|PromiseInterface|array<string, mixed>>  $routes
+ */
+function fakeNotion(array $routes = []): void
+{
+    $defaults = [
+        'GET /v1/databases/*' => ['object' => 'database', 'data_sources' => [['id' => 'ds-1', 'name' => 'Tasks']]],
+        'GET /v1/data_sources/*' => ['object' => 'data_source', 'properties' => ['Name' => ['name' => 'Name', 'type' => 'title']]],
+        'PATCH /v1/data_sources/*' => ['object' => 'data_source'],
+        'POST /v1/pages' => ['object' => 'page', 'id' => 'page-1'],
+        'PATCH /v1/pages/*' => ['object' => 'page', 'id' => 'page-1'],
+    ];
+
+    Http::swap(new HttpFactory);
+
+    Http::fake(function (Request $request) use ($routes, $defaults) {
+        $key = $request->method().' '.parse_url($request->url(), PHP_URL_PATH);
+
+        foreach ($routes + $defaults as $pattern => $response) {
+            if (fnmatch($pattern, $key)) {
+                return $response instanceof PromiseInterface || $response instanceof Response
+                    ? $response
+                    : Http::response($response);
+            }
+        }
+
+        return Http::response(['object' => 'error', 'code' => 'object_not_found', 'message' => 'unexpected '.$key], 404);
+    });
+}
+
+/**
+ * Link a project to the fake Notion database, with the integration on.
+ */
+function linkToNotion(Project $project): Project
+{
+    configureNotion();
+
+    $project->forceFill([
+        'notion_database_id' => '0123456789abcdef0123456789abcdef',
+        'notion_data_source_id' => 'ds-1',
+        'notion_title_property' => 'Name',
+    ])->save();
+
+    return $project;
+}
+
+/**
+ * A new project already linked to the fake Notion database.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function notionProject(array $attributes = []): Project
+{
+    return linkToNotion(Project::factory()->create(['key' => 'MIR', ...$attributes]));
 }

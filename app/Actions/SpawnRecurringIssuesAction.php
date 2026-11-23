@@ -50,6 +50,7 @@ class SpawnRecurringIssuesAction
             );
 
             $issue->labels()->sync($template->labels->pluck('id')->all());
+            app(MirrorIssueToNotionAction::class)->handle($issue);
 
             $next = $template->next_run_at;
 

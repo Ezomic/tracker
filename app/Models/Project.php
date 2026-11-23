@@ -32,6 +32,9 @@ use Illuminate\Support\Carbon;
  * @property list<string>|null $github_repos
  * @property string|null $production_url
  * @property int $next_number
+ * @property string|null $notion_database_id
+ * @property string|null $notion_data_source_id
+ * @property string|null $notion_title_property
  * @property Carbon|null $archived_at
  */
 #[Fillable(['key', 'name', 'description', 'color', 'github_repos', 'production_url', 'archive_after_days', 'stale_after_days', 'category_id'])]
@@ -190,6 +193,11 @@ class Project extends Model
         return $organization === null
             ? $query
             : $query->where('projects.organization_id', $organization->id);
+    }
+
+    public function isLinkedToNotion(): bool
+    {
+        return $this->notion_data_source_id !== null && $this->notion_title_property !== null;
     }
 
     public function hasIssues(): bool

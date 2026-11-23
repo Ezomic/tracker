@@ -362,6 +362,8 @@ function describeActivity(
             return t('activity.attachmentAdded', { name: data.name });
         case 'attachment_removed':
             return t('activity.attachmentRemoved', { name: data.name });
+        case 'notion_sync_failed':
+            return t('activity.notionSyncFailed', { message: data.message });
         case 'pr_opened':
             return t('activity.prOpened');
         case 'pr_merged':

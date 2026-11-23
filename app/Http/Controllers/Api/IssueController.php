@@ -9,6 +9,7 @@ use App\Actions\ArchiveIssueAction;
 use App\Actions\BulkUpdateIssuesAction;
 use App\Actions\CreateIssueAction;
 use App\Actions\LinkIssuesAction;
+use App\Actions\MirrorIssueToNotionAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\ResolveWorkflowStateAction;
 use App\Enums\IssuePriority;
@@ -157,6 +158,8 @@ class IssueController extends Controller
         } elseif ($template !== null) {
             $issue->labels()->sync($template->labels->pluck('id')->all());
         }
+
+        app(MirrorIssueToNotionAction::class)->handle($issue);
 
         return response()->json($this->payload($issue), 201);
     }

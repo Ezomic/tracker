@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Actions\MirrorIssueToNotionAction;
 use App\Actions\NotifyIssueWebhooksAction;
 use App\Actions\ReorderIssueAction;
 use App\Actions\WatchIssueAction;
@@ -32,12 +33,18 @@ class IssueObserver
         app(WatchIssueAction::class)->autoWatch($issue, $issue->owner);
 
         IssueSearch::index($issue);
+
+        app(MirrorIssueToNotionAction::class)->handle($issue);
     }
 
     public function updated(Issue $issue): void
     {
         if ($issue->wasChanged(['title', 'description', 'identifier'])) {
             IssueSearch::index($issue);
+        }
+
+        if ($issue->wasChanged(['title', 'identifier', 'status', 'workflow_state_id', 'priority', 'assignee_id', 'archived_at'])) {
+            app(MirrorIssueToNotionAction::class)->handle($issue);
         }
 
         if ($issue->wasChanged('status')) {
@@ -109,6 +116,7 @@ class IssueObserver
     public function deleted(Issue $issue): void
     {
         IssueSearch::forget($issue);
+        app(MirrorIssueToNotionAction::class)->forget($issue);
     }
 
     /**

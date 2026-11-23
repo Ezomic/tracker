@@ -24,6 +24,14 @@ class Integrations
     }
 
     /**
+     * The one-way mirror of a project's issues into a Notion database.
+     */
+    public function notion(): bool
+    {
+        return $this->allFilled(['services.notion.api_key']);
+    }
+
+    /**
      * @param  list<string>  $keys
      */
     private function allFilled(array $keys): bool

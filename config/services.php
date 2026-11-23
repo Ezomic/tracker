@@ -18,6 +18,11 @@ return [
         'webhook_secret' => env('GITHUB_WEBHOOK_SECRET'),
     ],
 
+    'notion' => [
+        'api_key' => env('NOTION_API_KEY'),
+        'version' => '2026-03-11',
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
