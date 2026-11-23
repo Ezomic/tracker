@@ -114,7 +114,13 @@ class Notion
             'properties' => $properties,
         ]);
 
-        return Cast::string($page['id'] ?? null);
+        $id = Cast::string($page['id'] ?? null);
+
+        if ($id === '') {
+            throw new NotionException('Notion did not return the id of the new page.');
+        }
+
+        return $id;
     }
 
     /**

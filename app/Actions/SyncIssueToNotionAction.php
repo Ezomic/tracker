@@ -6,6 +6,7 @@ namespace App\Actions;
 
 use App\Models\Issue;
 use App\Services\Notion;
+use App\Services\NotionException;
 use App\Support\NotionIssueProperties;
 
 class SyncIssueToNotionAction
@@ -30,9 +31,17 @@ class SyncIssueToNotionAction
         $archived = $issue->archived_at !== null;
 
         if ($issue->notion_page_id !== null) {
-            $this->notion->updatePage($issue->notion_page_id, $properties, $archived);
+            try {
+                $this->notion->updatePage($issue->notion_page_id, $properties, $archived);
 
-            return;
+                return;
+            } catch (NotionException $e) {
+                if ($e->status !== 404 || $archived) {
+                    throw $e;
+                }
+
+                $this->storePageId($issue, null);
+            }
         }
 
         if ($archived) {
@@ -41,6 +50,12 @@ class SyncIssueToNotionAction
 
         $pageId = $this->notion->createPage((string) $project->notion_data_source_id, $properties);
 
-        $issue->forceFill(['notion_page_id' => $pageId])->saveQuietly();
+        $this->storePageId($issue, $pageId);
+    }
+
+    private function storePageId(Issue $issue, ?string $pageId): void
+    {
+        Issue::query()->whereKey($issue->id)->toBase()->update(['notion_page_id' => $pageId]);
+        $issue->setAttribute('notion_page_id', $pageId);
     }
 }

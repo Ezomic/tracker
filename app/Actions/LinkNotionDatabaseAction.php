@@ -27,7 +27,7 @@ class LinkNotionDatabaseAction
         $titleProperty = $this->notion->prepareSchema($dataSourceId);
 
         if ($project->notion_database_id !== $databaseId) {
-            $project->issues()->update(['notion_page_id' => null]);
+            $project->issues()->toBase()->update(['notion_page_id' => null]);
         }
 
         $project->forceFill([

@@ -24,7 +24,9 @@ class BackfillIssuesToNotionAction
         $queued = 0;
 
         foreach ($project->issues()->whereNull('notion_page_id')->whereNull('archived_at')->orderBy('id')->lazyById() as $issue) {
-            SyncIssueToNotionJob::dispatch($issue)->delay(now()->addMilliseconds($queued * self::SPACING_MILLISECONDS));
+            $delay = intdiv($queued * self::SPACING_MILLISECONDS, 1000);
+
+            SyncIssueToNotionJob::dispatch($issue, $delay)->delay(now()->addMilliseconds($queued * self::SPACING_MILLISECONDS));
             $queued++;
         }
 

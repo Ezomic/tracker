@@ -261,13 +261,13 @@ it('records a failed sync on the issue timeline without the token', function () 
         ->and(json_encode($activity->data))->not->toContain('secret_test_token');
 });
 
-it('caps the failure message it records', function () {
+it('records only a fixed message for errors that do not come from Notion', function () {
     configureNotion();
     $issue = mirrored(Project::factory()->create());
 
     (new SyncIssueToNotionJob($issue))->failed(new RuntimeException(str_repeat('x', 1000)));
 
-    expect(mb_strlen($issue->activities()->where('type', 'notion_sync_failed')->firstOrFail()->data['message']))->toBe(255);
+    expect($issue->activities()->where('type', 'notion_sync_failed')->firstOrFail()->data['message'])->toBe('Unexpected error, see the failed jobs.');
 });
 
 it('releases the job for Retry-After seconds on a rate limit instead of failing', function () {
@@ -331,3 +331,45 @@ function lastWrite(string $method): array
 
     return $writes[array_key_last($writes)];
 }
+
+it('recreates the page when Notion no longer has it', function () {
+    fakeNotion(['POST /v1/pages' => ['id' => 'page-new']]);
+    $issue = mirrored(notionProject());
+    $issue->fresh()->forceFill(['notion_page_id' => 'page-gone'])->saveQuietly();
+    fakeNotion([
+        'PATCH /v1/pages/page-gone' => Http::response(['code' => 'object_not_found', 'message' => 'gone'], 404),
+        'POST /v1/pages' => ['id' => 'page-new'],
+    ]);
+
+    $issue->fresh()->update(['title' => 'Renamed']);
+
+    expect($issue->fresh()->notion_page_id)->toBe('page-new');
+});
+
+it('does not recreate the page of an archived issue Notion no longer has', function () {
+    fakeNotion();
+    $issue = mirrored(notionProject());
+    fakeNotion(['PATCH /v1/pages/*' => Http::response(['code' => 'object_not_found', 'message' => 'gone'], 404)]);
+
+    expect(fn () => (new ArchiveIssueAction)->handle($issue->fresh()))->not->toThrow(Throwable::class);
+    Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+});
+
+it('refuses a create response without a page id and stores nothing', function () {
+    fakeNotion(['POST /v1/pages' => ['object' => 'page']]);
+
+    $issue = mirrored(notionProject());
+
+    expect($issue->fresh()->notion_page_id)->toBeNull();
+});
+
+it('does not bump updated_at when it stores the page id', function () {
+    fakeNotion();
+    $project = notionProject();
+    $issue = Issue::withoutEvents(fn () => (new CreateIssueAction)->handle($project, 'Old', IssueType::Fix));
+    Issue::query()->whereKey($issue->id)->toBase()->update(['updated_at' => '2020-01-01 00:00:00']);
+
+    (new SyncIssueToNotionJob($issue->fresh()))->handle(app(SyncIssueToNotionAction::class));
+
+    expect($issue->fresh()->updated_at->year)->toBe(2020)->and($issue->fresh()->notion_page_id)->toBe('page-1');
+});

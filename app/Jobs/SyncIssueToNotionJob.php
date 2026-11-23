@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Actions\SyncIssueToNotionAction;
 use App\Models\Issue;
+use App\Services\NotionException;
 use App\Services\NotionRateLimited;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
@@ -28,7 +29,13 @@ class SyncIssueToNotionJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 
     public int $maxExceptions = 3;
 
-    public function __construct(public readonly Issue $issue) {}
+    /**
+     * A lock that outlives a dispatch that never reached the queue (a rolled
+     * back transaction) would otherwise silence the issue until the cache is cleared.
+     */
+    public int $uniqueFor = 60;
+
+    public function __construct(public readonly Issue $issue, public readonly int $startsInSeconds = 0) {}
 
     /**
      * Rate limits are waited out for as long as Notion asks, which is why the
@@ -37,7 +44,7 @@ class SyncIssueToNotionJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
      */
     public function retryUntil(): CarbonImmutable
     {
-        return now()->addMinutes(30);
+        return now()->addMinutes(30)->addSeconds($this->startsInSeconds);
     }
 
     /**
@@ -77,7 +84,9 @@ class SyncIssueToNotionJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
     public function failed(Throwable $exception): void
     {
         $this->issue->recordActivity('notion_sync_failed', [
-            'message' => mb_substr($exception->getMessage(), 0, 255),
+            'message' => $exception instanceof NotionException
+                ? mb_substr($exception->getMessage(), 0, 255)
+                : 'Unexpected error, see the failed jobs.',
         ]);
     }
 }
