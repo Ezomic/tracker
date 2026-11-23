@@ -221,3 +221,23 @@ it('points at an epic in another project when viewing one project board', functi
     expect($cards)->not->toHaveKey($epic->identifier)
         ->and($cards[$child->identifier]['parent']['id'])->toBe($epic->id);
 });
+
+it('flags a card whose epic is filtered off the board', function () {
+    $project = Project::factory()->create();
+    $epic = epicIn($project, ['archived_at' => now()]);
+    $hidden = childOf($epic);
+    $loose = Issue::factory()->for($project)->create();
+    $listed = childOf(epicIn($project));
+    $this->actingAs(member($project));
+
+    $cards = boardCards($this->get('/issues/board'));
+
+    expect($cards[$hidden->identifier]['parent'])->toBeNull()
+        ->and($cards[$hidden->identifier]['parentOffBoard'])->toBeTrue()
+        ->and($cards[$loose->identifier]['parentOffBoard'])->toBeFalse()
+        ->and($cards[$listed->identifier]['parentOffBoard'])->toBeFalse();
+
+    $cards = boardCards($this->get('/issues/board?archived=1'));
+
+    expect($cards[$hidden->identifier]['parentOffBoard'])->toBeFalse();
+});

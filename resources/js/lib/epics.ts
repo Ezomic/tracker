@@ -195,3 +195,45 @@ export function groupEpicsByProject(epics: EpicSummary[]): EpicProjectGroup[] {
 
     return [...groups.values()];
 }
+
+export type EpicDropTarget = EpicSummary | 'none';
+
+// A type alias, not an interface, so it satisfies Inertia's payload type.
+export type ParentChange = { parent: string | null };
+
+/**
+ * Mirrors the server rules a board can check, so a refused row fades instead
+ * of sending a request. Epics may span projects, and every row on the board
+ * is in the board's organization, so the server keeps the organization check.
+ */
+export function canDropOnEpic(card: Issue, target: EpicDropTarget): boolean {
+    // Its epic is unknown here, so neither the no-op check nor Undo would
+    // know what to restore.
+    if (card.parentOffBoard) {
+        return false;
+    }
+
+    if (target === 'none') {
+        return true;
+    }
+
+    return !isEpic(card) && target.id !== card.id;
+}
+
+/** The request body for a drop, or null when it would change nothing. */
+export function parentAfterDrop(
+    card: Issue,
+    target: EpicDropTarget,
+): ParentChange | null {
+    if (!canDropOnEpic(card, target)) {
+        return null;
+    }
+
+    const parent = target === 'none' ? null : target.identifier;
+
+    return parent === (card.parent?.identifier ?? null) ? null : { parent };
+}
+
+export function undoParentChange(card: Issue): ParentChange {
+    return { parent: card.parent?.identifier ?? null };
+}

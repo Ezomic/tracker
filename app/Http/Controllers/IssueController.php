@@ -10,6 +10,7 @@ use App\Actions\CreateIssueAction;
 use App\Actions\LinkIssuesAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\ReorderIssueAction;
+use App\Actions\SetIssueParentAction;
 use App\Actions\WatchIssueAction;
 use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
@@ -19,6 +20,7 @@ use App\Http\Requests\BulkUpdateIssuesRequest;
 use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueLinkRequest;
 use App\Http\Requests\StoreIssueWebRequest;
+use App\Http\Requests\UpdateIssueParentRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStateRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
@@ -305,7 +307,12 @@ class IssueController extends Controller
                 ->orderBy('board_position')
                 ->latest()
                 ->get()
-                ->map($this->serialize(...)),
+                // A parent filtered off the board reads as no parent, so the
+                // card must not offer drops that Undo would get wrong.
+                ->map(fn (Issue $issue): array => [
+                    ...$this->serialize($issue),
+                    'parentOffBoard' => $issue->parent_id !== null && $issue->parent === null,
+                ]),
             'project' => $project === null ? null : [
                 'key' => $project->key,
                 'name' => $project->name,
@@ -357,6 +364,13 @@ class IssueController extends Controller
         // Dropping between lanes should land where it was dropped, not at a
         // position inherited from the lane it came from.
         $reorder->handle($issue->refresh(), $this->anchorFor($request));
+
+        return back();
+    }
+
+    public function updateParent(UpdateIssueParentRequest $request, Issue $issue, SetIssueParentAction $action): RedirectResponse
+    {
+        $action->handle($issue, $request->parentIssue());
 
         return back();
     }

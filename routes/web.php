@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('issues/{issue:identifier}/status', [IssueController::class, 'updateStatus'])->name('issues.updateStatus');
     Route::patch('issues/{issue:identifier}/reorder', [IssueController::class, 'reorder'])->name('issues.reorder');
     Route::patch('issues/{issue:identifier}/state', [IssueController::class, 'updateState'])->name('issues.updateState');
+    Route::patch('issues/{issue:identifier}/parent', [IssueController::class, 'updateParent'])->name('issues.updateParent');
     Route::post('issues/{issue:identifier}/archive', [IssueController::class, 'archive'])->name('issues.archive');
     Route::post('issues/{issue:identifier}/unarchive', [IssueController::class, 'unarchive'])->name('issues.unarchive');
     Route::post('issues/{issue:identifier}/links', [IssueController::class, 'link'])->name('issues.links.store');

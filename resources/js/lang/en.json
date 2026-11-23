@@ -222,7 +222,10 @@
         "noEpics": "No epics yet.",
         "hideEpics": "Hide epics",
         "showEpics": "Show epics",
-        "otherStates": "Other states"
+        "otherStates": "Other states",
+        "addedToEpic": "{issue} added to {epic}",
+        "removedFromEpic": "{issue} removed from {epic}",
+        "undo": "Undo"
     },
     "savedViews": {
         "label": "Views",
