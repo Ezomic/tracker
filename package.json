@@ -32,6 +32,7 @@
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-vue": "^9.32.0",
         "happy-dom": "^20.11.0",
+        "jsdom": "^31.0.1",
         "playwright": "^1.61.1",
         "prettier": "^3.4.2",
         "prettier-plugin-tailwindcss": "^0.6.11",

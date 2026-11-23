@@ -582,6 +582,26 @@
         "projectTickets": "{key} tickets",
         "projectBoard": "{key} bord"
     },
+    "notes": {
+        "title": "Notities",
+        "headTitle": "Notities van {project}",
+        "search": "Notities zoeken",
+        "new": "Nieuwe notitie",
+        "titleLabel": "Titel",
+        "bodyLabel": "Notitie",
+        "empty": "Nog geen notities.",
+        "noResults": "Geen notities gevonden.",
+        "unknownAuthor": "Onbekende auteur",
+        "updated": "Bijgewerkt {when}",
+        "noBody": "Deze notitie is leeg.",
+        "backToNotes": "Alle notities",
+        "backToBoard": "Terug naar het bord",
+        "manage": "Alle notities en nieuwe notitie",
+        "hide": "Notities verbergen",
+        "show": "Notities tonen",
+        "panelDescription": "Notities, nieuwste eerst.",
+        "deleteConfirm": "De notitie \"{title}\" verwijderen?"
+    },
     "markdown": {
         "write": "Schrijven",
         "preview": "Voorbeeld",

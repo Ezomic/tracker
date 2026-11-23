@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Layers, PanelRightClose, PanelRightOpen } from '@lucide/vue';
+import {
+    Layers,
+    NotebookText,
+    PanelRightClose,
+    PanelRightOpen,
+} from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EpicPanel from '@/components/EpicPanel.vue';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
+import NotesPanel from '@/components/NotesPanel.vue';
 import PriorityBars from '@/components/PriorityBars.vue';
 import ProjectLinks from '@/components/ProjectLinks.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -37,7 +43,11 @@ import {
     updateState,
     updateStatus,
 } from '@/routes/issues';
-import type { Issue, ProjectLinks as ProjectLinksType } from '@/types';
+import type {
+    BoardNote,
+    Issue,
+    ProjectLinks as ProjectLinksType,
+} from '@/types';
 
 interface WorkflowStateColumn {
     id: number;
@@ -51,6 +61,7 @@ const props = defineProps<{
     project?: { key: string; name: string; links: ProjectLinksType } | null;
     workflowStates: WorkflowStateColumn[];
     showArchived: boolean;
+    notes: BoardNote[];
 }>();
 
 function toggleArchived(value: boolean) {
@@ -134,7 +145,12 @@ const shownEpics = computed(() =>
 );
 const epicHover = ref<EpicFocus>(null);
 const epicSheetOpen = ref(false);
+const notesSheetOpen = ref(false);
 const epicPanelCollapsed = useEpicPanelCollapsed(usePage().props.auth.user.id);
+const notesPanelCollapsed = useEpicPanelCollapsed(
+    usePage().props.auth.user.id,
+    'notesPanel',
+);
 
 // Epics live in the panel, so the columns only hold the work itself.
 const cards = computed(() =>
@@ -284,7 +300,33 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                 <Layers class="size-4" />
                 {{ $t('board.epics') }}
             </Button>
+            <Button
+                variant="outline"
+                size="sm"
+                class="lg:hidden"
+                @click="notesSheetOpen = true"
+            >
+                <NotebookText class="size-4" />
+                {{ $t('notes.title') }}
+            </Button>
         </div>
+
+        <Sheet v-model:open="notesSheetOpen">
+            <SheetContent side="right" class="w-80 gap-0 p-0">
+                <SheetHeader class="border-b">
+                    <SheetTitle>{{ $t('notes.title') }}</SheetTitle>
+                    <SheetDescription class="sr-only">
+                        {{ $t('notes.panelDescription') }}
+                    </SheetDescription>
+                </SheetHeader>
+                <NotesPanel
+                    class="min-h-0 flex-1"
+                    :notes="notes"
+                    :show-project="!project"
+                    :project-key="project?.key"
+                />
+            </SheetContent>
+        </Sheet>
 
         <Sheet v-model:open="epicSheetOpen">
             <SheetContent side="right" class="w-80 gap-0 p-0">
@@ -527,6 +569,47 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                 <PanelRightOpen class="size-3.5" />
                 <span class="[writing-mode:vertical-rl]">{{
                     $t('board.epics')
+                }}</span>
+            </button>
+
+            <aside
+                v-if="!notesPanelCollapsed"
+                class="sticky top-4 hidden max-h-[calc(100svh-10rem)] w-72 shrink-0 flex-col overflow-hidden rounded-xl border border-sidebar-border/70 lg:flex dark:border-sidebar-border"
+            >
+                <h2
+                    class="flex shrink-0 items-center gap-2 border-b px-3 py-2.5 text-xs font-medium"
+                >
+                    <NotebookText class="size-3.5 text-muted-foreground" />
+                    <span class="tracking-tight">{{ $t('notes.title') }}</span>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="ml-auto size-6"
+                        :aria-label="$t('notes.hide')"
+                        :title="$t('notes.hide')"
+                        @click="notesPanelCollapsed = true"
+                    >
+                        <PanelRightClose class="size-3.5" />
+                    </Button>
+                </h2>
+                <NotesPanel
+                    class="min-h-0 flex-1"
+                    :notes="notes"
+                    :show-project="!project"
+                    :project-key="project?.key"
+                />
+            </aside>
+            <button
+                v-else
+                type="button"
+                class="hidden w-9 shrink-0 flex-col items-center gap-2 rounded-xl border border-sidebar-border/70 py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground lg:flex dark:border-sidebar-border"
+                :aria-label="$t('notes.show')"
+                :title="$t('notes.show')"
+                @click="notesPanelCollapsed = false"
+            >
+                <PanelRightOpen class="size-3.5" />
+                <span class="[writing-mode:vertical-rl]">{{
+                    $t('notes.title')
                 }}</span>
             </button>
         </div>

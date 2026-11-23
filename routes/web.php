@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectMemberController;
@@ -88,6 +89,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('{project:key}/board', [IssueController::class, 'board'])
         ->where('project', '[A-Z]{2,10}')
         ->name('projects.board');
+
+    Route::scopeBindings()->group(function () {
+        Route::get('{project:key}/notes', [NoteController::class, 'index'])
+            ->where('project', '[A-Z]{2,10}')
+            ->name('projects.notes.index');
+        Route::post('{project:key}/notes', [NoteController::class, 'store'])
+            ->where('project', '[A-Z]{2,10}')
+            ->name('projects.notes.store');
+        Route::get('{project:key}/notes/{note}', [NoteController::class, 'show'])
+            ->where('project', '[A-Z]{2,10}')
+            ->name('projects.notes.show');
+        Route::patch('{project:key}/notes/{note}', [NoteController::class, 'update'])
+            ->where('project', '[A-Z]{2,10}')
+            ->name('projects.notes.update');
+        Route::delete('{project:key}/notes/{note}', [NoteController::class, 'destroy'])
+            ->where('project', '[A-Z]{2,10}')
+            ->name('projects.notes.destroy');
+    });
 });
 
 require __DIR__.'/settings.php';

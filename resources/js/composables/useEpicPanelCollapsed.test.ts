@@ -24,6 +24,15 @@ describe('useEpicPanelCollapsed', () => {
         expect(useEpicPanelCollapsed(2).value).toBe(false);
     });
 
+    it("keeps another panel's state apart from the epic panel", async () => {
+        const notes = useEpicPanelCollapsed(1, 'notesPanel');
+        notes.value = true;
+        await nextTick();
+
+        expect(localStorage.getItem('board.notesPanel.collapsed.1')).toBe('1');
+        expect(useEpicPanelCollapsed(1).value).toBe(false);
+    });
+
     it('stores expanding again', async () => {
         localStorage.setItem('board.epicPanel.collapsed.1', '1');
         const collapsed = useEpicPanelCollapsed(1);
