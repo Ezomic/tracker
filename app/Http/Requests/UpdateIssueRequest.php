@@ -6,8 +6,10 @@ namespace App\Http\Requests;
 
 use App\Enums\IssuePriority;
 use App\Enums\IssueType;
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\Issue;
 use App\Models\User;
+use App\Rules\AssignableEpic;
 use App\Support\Cast;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -16,6 +18,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateIssueRequest extends FormRequest
 {
+    use ResolvesCurrentUser;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -53,9 +57,7 @@ class UpdateIssueRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('issues', 'id')
-                    ->where('parent_id', null)
-                    ->where('project_id', $issue->project_id),
+                AssignableEpic::in($issue->project->organization_id, $this->currentUser()),
                 function (string $attribute, mixed $value, Closure $fail) use ($issue): void {
                     if (Cast::int($value) === $issue->id) {
                         $fail('An issue cannot be its own epic.');
