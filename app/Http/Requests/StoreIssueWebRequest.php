@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\IssueType;
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\Project;
+use App\Rules\AssignableEpic;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreIssueWebRequest extends FormRequest
 {
+    use ResolvesCurrentUser;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -49,7 +53,7 @@ class StoreIssueWebRequest extends FormRequest
             'parent_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('issues', 'id')->where('parent_id', null),
+                AssignableEpic::in($organizationId, $this->currentUser()),
             ],
             'template_id' => [
                 'nullable',
