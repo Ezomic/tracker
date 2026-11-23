@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Layers, PanelRightClose, PanelRightOpen } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { toast } from 'vue-sonner';
 import EpicPanel from '@/components/EpicPanel.vue';
 import IssueViewToggle from '@/components/IssueViewToggle.vue';
 import LabelBadge from '@/components/LabelBadge.vue';
@@ -22,18 +23,21 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useEpicPanelCollapsed } from '@/composables/useEpicPanelCollapsed';
 import { getInitials } from '@/composables/useInitials';
-import type { EpicFocus } from '@/lib/epics';
+import type { EpicDropTarget, EpicFocus, ParentChange } from '@/lib/epics';
 import {
     epicColor,
     isEpic,
     matchesEpicFocus,
     panelEpics,
+    parentAfterDrop,
     summarizeEpics,
+    undoParentChange,
 } from '@/lib/epics';
 import {
     board,
     reorder,
     show,
+    updateParent,
     updateState,
     updateStatus,
 } from '@/routes/issues';
@@ -203,6 +207,53 @@ function onDragEnd() {
     draggingId.value = null;
     dragOverKey.value = null;
     dropAfter.value = null;
+}
+
+const draggingIssue = computed(
+    () => props.issues.find((i) => i.identifier === draggingId.value) ?? null,
+);
+
+function sendParent(
+    card: Issue,
+    change: ParentChange,
+    onSuccess: () => void = () => {},
+) {
+    router.patch(updateParent.url({ issue: card.identifier }), change, {
+        ...RELOAD,
+        onSuccess,
+        onError: (errors) => toast.error(Object.values(errors)[0]),
+    });
+}
+
+function onEpicDrop(target: EpicDropTarget) {
+    const card = draggingIssue.value;
+    onDragEnd();
+
+    const change = card ? parentAfterDrop(card, target) : null;
+
+    if (!card || !change) {
+        return;
+    }
+
+    const message =
+        target === 'none'
+            ? t('board.removedFromEpic', {
+                  issue: card.identifier,
+                  epic: card.parent?.title,
+              })
+            : t('board.addedToEpic', {
+                  issue: card.identifier,
+                  epic: target.title,
+              });
+
+    sendParent(card, change, () =>
+        toast(message, {
+            action: {
+                label: t('board.undo'),
+                onClick: () => sendParent(card, undoParentChange(card)),
+            },
+        }),
+    );
 }
 
 // The card the pointer is currently over, so a drop lands where it looks like
@@ -512,8 +563,10 @@ function onDrop(event: DragEvent, column: BoardColumn) {
                     :epics="shownEpics"
                     :grouped="!project"
                     :focus="epicFocus"
+                    :dragging="draggingIssue"
                     @toggle="toggleEpicFocus"
                     @hover="epicHover = $event"
+                    @drop="onEpicDrop"
                 />
             </aside>
             <button

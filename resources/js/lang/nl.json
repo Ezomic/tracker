@@ -222,7 +222,10 @@
         "noEpics": "Nog geen epics.",
         "hideEpics": "Epics verbergen",
         "showEpics": "Epics tonen",
-        "otherStates": "Andere statussen"
+        "otherStates": "Andere statussen",
+        "addedToEpic": "{issue} toegevoegd aan {epic}",
+        "removedFromEpic": "{issue} verwijderd uit {epic}",
+        "undo": "Ongedaan maken"
     },
     "savedViews": {
         "label": "Weergaven",
