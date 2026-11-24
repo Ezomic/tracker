@@ -606,6 +606,26 @@
         "projectTickets": "{key} tickets",
         "projectBoard": "{key} board"
     },
+    "notes": {
+        "title": "Notes",
+        "headTitle": "{project} notes",
+        "search": "Search notes",
+        "new": "New note",
+        "titleLabel": "Title",
+        "bodyLabel": "Note",
+        "empty": "No notes yet.",
+        "noResults": "No notes match your search.",
+        "unknownAuthor": "Unknown author",
+        "updated": "Updated {when}",
+        "noBody": "This note is empty.",
+        "backToNotes": "All notes",
+        "backToBoard": "Back to board",
+        "manage": "All notes and new note",
+        "hide": "Hide notes",
+        "show": "Show notes",
+        "panelDescription": "Notes, newest first.",
+        "deleteConfirm": "Delete the note \"{title}\"?"
+    },
     "markdown": {
         "write": "Write",
         "preview": "Preview",

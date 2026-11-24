@@ -1,8 +1,8 @@
 import type { Ref } from 'vue';
 import { ref, watch } from 'vue';
 
-function storageKey(userId: number): string {
-    return `board.epicPanel.collapsed.${userId}`;
+function storageKey(userId: number, panel: string): string {
+    return `board.${panel}.collapsed.${userId}`;
 }
 
 // Storage can be blocked (private mode, site data off); the panel then simply
@@ -23,8 +23,11 @@ function write(key: string, collapsed: boolean): void {
     }
 }
 
-export function useEpicPanelCollapsed(userId: number): Ref<boolean> {
-    const key = storageKey(userId);
+export function useEpicPanelCollapsed(
+    userId: number,
+    panel = 'epicPanel',
+): Ref<boolean> {
+    const key = storageKey(userId, panel);
     const collapsed = ref(read(key));
 
     watch(collapsed, (value) => write(key, value));
