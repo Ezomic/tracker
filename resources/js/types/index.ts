@@ -3,6 +3,7 @@ export * from './dashboard';
 export * from './integrations';
 export * from './issue';
 export * from './navigation';
+export * from './note';
 export * from './portal';
 export * from './project';
 export * from './ui';

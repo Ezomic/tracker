@@ -33,6 +33,7 @@ use App\Models\Issue;
 use App\Models\IssueLink;
 use App\Models\IssueTemplate;
 use App\Models\Label;
+use App\Models\Note;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\ProjectType;
@@ -322,7 +323,37 @@ class IssueController extends Controller
             ],
             'workflowStates' => $this->boardStates($project, $organization),
             'showArchived' => $showArchived,
+            'notes' => $this->boardNotes($user, $organization, $project),
         ]);
+    }
+
+    /**
+     * The newest-edited notes of the project in view, or of every active
+     * project the user can see. Titles only: the body stays on the note page.
+     *
+     * @return array<int, array{id: int, title: string, projectKey: string, projectName: string, updatedAt: string}>
+     */
+    private function boardNotes(User $user, ?Organization $organization, ?Project $project): array
+    {
+        return Note::query()
+            ->visibleTo($user, $organization)
+            ->when($project !== null, fn (Builder $query) => $query->where('project_id', $project?->id))
+            ->when($project === null, fn (Builder $query) => $query->whereHas('project', fn (Builder $p) => $p->notArchived()))
+            ->select(['id', 'project_id', 'title', 'updated_at'])
+            ->with('project:id,key,name')
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get()
+            ->map(fn (Note $note): array => [
+                'id' => $note->id,
+                'title' => $note->title,
+                'projectKey' => $note->project->key,
+                'projectName' => $note->project->name,
+                'updatedAt' => $note->updated_at->toIso8601String(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
