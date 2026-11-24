@@ -39,6 +39,7 @@ const { t } = useI18n();
 const page = usePage();
 const projects = computed<SidebarProject[]>(() => {
     const categories = page.props.sidebarCategories ?? {
+        recent: [],
         tree: [],
         uncategorized: [],
     };

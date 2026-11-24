@@ -38,7 +38,12 @@ const { ready: snagReady, open: openSnag } = useSnag();
 const { t } = useI18n();
 const page = usePage();
 const categories = computed<SidebarCategories>(
-    () => page.props.sidebarCategories ?? { tree: [], uncategorized: [] },
+    () =>
+        page.props.sidebarCategories ?? {
+            recent: [],
+            tree: [],
+            uncategorized: [],
+        },
 );
 
 const newIssueOpen = ref(false);
@@ -115,11 +120,7 @@ const mainNavItems = computed<NavItem[]>(() => [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavCategories
-                :tree="categories.tree"
-                :uncategorized="categories.uncategorized"
-                :current-project-id="currentProjectId"
-            />
+            <NavCategories :categories="categories" />
         </SidebarContent>
 
         <SidebarFooter>

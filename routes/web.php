@@ -5,6 +5,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\IssueDraftController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
@@ -64,6 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');
+    Route::post('issues/draft', IssueDraftController::class)->middleware('throttle:issue-drafts')->name('issues.draft');
     Route::patch('issues/bulk', [IssueController::class, 'bulk'])->name('issues.bulk');
     Route::get('issues/board', [IssueController::class, 'board'])->name('issues.board');
     Route::get('issues/search', [IssueController::class, 'search'])->name('issues.search');
@@ -72,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('issues/{issue:identifier}/status', [IssueController::class, 'updateStatus'])->name('issues.updateStatus');
     Route::patch('issues/{issue:identifier}/reorder', [IssueController::class, 'reorder'])->name('issues.reorder');
     Route::patch('issues/{issue:identifier}/state', [IssueController::class, 'updateState'])->name('issues.updateState');
+    Route::patch('issues/{issue:identifier}/parent', [IssueController::class, 'updateParent'])->name('issues.updateParent');
     Route::post('issues/{issue:identifier}/archive', [IssueController::class, 'archive'])->name('issues.archive');
     Route::post('issues/{issue:identifier}/unarchive', [IssueController::class, 'unarchive'])->name('issues.unarchive');
     Route::post('issues/{issue:identifier}/links', [IssueController::class, 'link'])->name('issues.links.store');

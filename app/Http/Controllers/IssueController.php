@@ -11,7 +11,9 @@ use App\Actions\LinkIssuesAction;
 use App\Actions\MirrorIssueToNotionAction;
 use App\Actions\MoveIssueToStateAction;
 use App\Actions\ReorderIssueAction;
+use App\Actions\SetIssueParentAction;
 use App\Actions\WatchIssueAction;
+use App\Enums\IssuePriority;
 use App\Enums\IssueRelation;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
@@ -20,6 +22,7 @@ use App\Http\Requests\BulkUpdateIssuesRequest;
 use App\Http\Requests\FilterIssuesRequest;
 use App\Http\Requests\StoreIssueLinkRequest;
 use App\Http\Requests\StoreIssueWebRequest;
+use App\Http\Requests\UpdateIssueParentRequest;
 use App\Http\Requests\UpdateIssueRequest;
 use App\Http\Requests\UpdateIssueStateRequest;
 use App\Http\Requests\UpdateIssueStatusRequest;
@@ -145,10 +148,11 @@ class IssueController extends Controller
         $this->authorize('createIssue', $project);
 
         $parent = $this->findParent($request->validated('parent_id'));
-        // Title, type and description are prefilled client-side and editable;
-        // priority and labels have no field on the form, so they come straight
+        // Title, type, priority and description are prefilled client-side and
+        // editable; labels have no field on the form, so they come straight
         // off the template here.
         $template = $this->findTemplate($request->validated('template_id'));
+        $priority = $request->validated('priority');
 
         $issue = $action->handle(
             project: $project,
@@ -157,7 +161,7 @@ class IssueController extends Controller
             description: $request->string('description')->toString() ?: null,
             parent: $parent,
             owner: $this->currentUser($request),
-            priority: $template?->priority,
+            priority: $priority === null ? $template?->priority : IssuePriority::from(Cast::string($priority)),
             template: $template,
         );
 
@@ -307,7 +311,12 @@ class IssueController extends Controller
                 ->orderBy('board_position')
                 ->latest()
                 ->get()
-                ->map($this->serialize(...)),
+                // A parent filtered off the board reads as no parent, so the
+                // card must not offer drops that Undo would get wrong.
+                ->map(fn (Issue $issue): array => [
+                    ...$this->serialize($issue),
+                    'parentOffBoard' => $issue->parent_id !== null && $issue->parent === null,
+                ]),
             'project' => $project === null ? null : [
                 'key' => $project->key,
                 'name' => $project->name,
@@ -359,6 +368,13 @@ class IssueController extends Controller
         // Dropping between lanes should land where it was dropped, not at a
         // position inherited from the lane it came from.
         $reorder->handle($issue->refresh(), $this->anchorFor($request));
+
+        return back();
+    }
+
+    public function updateParent(UpdateIssueParentRequest $request, Issue $issue, SetIssueParentAction $action): RedirectResponse
+    {
+        $action->handle($issue, $request->parentIssue());
 
         return back();
     }

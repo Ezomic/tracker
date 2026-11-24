@@ -1,24 +1,36 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import type { EpicFocus, EpicSegment, EpicSummary } from '@/lib/epics';
-import { groupEpicsByProject } from '@/lib/epics';
+import type {
+    EpicDropTarget,
+    EpicFocus,
+    EpicSegment,
+    EpicSummary,
+} from '@/lib/epics';
+import { canDropOnEpic, groupEpicsByProject } from '@/lib/epics';
 import { show } from '@/routes/issues';
+import type { Issue } from '@/types';
 
-const props = defineProps<{
-    epics: EpicSummary[];
-    grouped: boolean;
-    focus: EpicFocus;
-}>();
+const props = withDefaults(
+    defineProps<{
+        epics: EpicSummary[];
+        grouped: boolean;
+        focus: EpicFocus;
+        /** The card being dragged; only the desktop panel takes drops. */
+        dragging?: Issue | null;
+    }>(),
+    { dragging: null },
+);
 
 const showAll = defineModel<boolean>('showAll', { required: true });
 
 const emit = defineEmits<{
     toggle: [focus: number | 'none'];
     hover: [focus: EpicFocus];
+    drop: [target: EpicDropTarget];
 }>();
 
 const { t } = useI18n();
@@ -28,6 +40,69 @@ const groups = computed(() =>
         ? groupEpicsByProject(props.epics)
         : [{ key: '', name: '', epics: props.epics }],
 );
+
+const dropOver = ref<number | 'none' | null>(null);
+
+watch(
+    () => props.dragging,
+    () => (dropOver.value = null),
+);
+
+function targetKey(target: EpicDropTarget): number | 'none' {
+    return target === 'none' ? 'none' : target.id;
+}
+
+function accepts(target: EpicDropTarget): boolean {
+    return props.dragging !== null && canDropOnEpic(props.dragging, target);
+}
+
+function dropClass(target: EpicDropTarget): string {
+    if (props.dragging === null) {
+        return '';
+    }
+
+    if (!accepts(target)) {
+        return 'opacity-40';
+    }
+
+    return dropOver.value === targetKey(target)
+        ? 'bg-primary/10 ring-2 ring-primary ring-inset'
+        : 'ring-1 ring-primary/40 ring-inset';
+}
+
+// Only a valid row cancels dragenter/dragover, so the browser itself refuses
+// the rest.
+function onDragOver(event: DragEvent, target: EpicDropTarget) {
+    if (!accepts(target)) {
+        return;
+    }
+
+    event.preventDefault();
+    dropOver.value = targetKey(target);
+}
+
+function onDragLeave(event: DragEvent, target: EpicDropTarget) {
+    // Moving between the row's own children fires dragleave on the row too.
+    const row = event.currentTarget as HTMLElement;
+
+    if (row.contains(event.relatedTarget as Node | null)) {
+        return;
+    }
+
+    if (dropOver.value === targetKey(target)) {
+        dropOver.value = null;
+    }
+}
+
+function onDrop(event: DragEvent, target: EpicDropTarget) {
+    if (!accepts(target)) {
+        return;
+    }
+
+    event.preventDefault();
+    dropOver.value = null;
+    emit('drop', target);
+}
 
 function segmentTitle(segment: EpicSegment): string {
     const label =
@@ -66,9 +141,14 @@ function segmentTitle(segment: EpicSegment): string {
                     :class="[
                         focus === epic.id ? 'bg-accent' : 'hover:bg-accent/50',
                         epic.archived ? 'opacity-60' : '',
+                        dropClass(epic),
                     ]"
                     @mouseenter="emit('hover', epic.id)"
                     @mouseleave="emit('hover', null)"
+                    @dragenter="onDragOver($event, epic)"
+                    @dragover="onDragOver($event, epic)"
+                    @dragleave="onDragLeave($event, epic)"
+                    @drop="onDrop($event, epic)"
                 >
                     <button
                         type="button"
@@ -139,11 +219,18 @@ function segmentTitle(segment: EpicSegment): string {
             <button
                 type="button"
                 class="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                :class="focus === 'none' ? 'bg-accent' : 'hover:bg-accent/50'"
+                :class="[
+                    focus === 'none' ? 'bg-accent' : 'hover:bg-accent/50',
+                    dropClass('none'),
+                ]"
                 :aria-pressed="focus === 'none'"
                 @click="emit('toggle', 'none')"
                 @mouseenter="emit('hover', 'none')"
                 @mouseleave="emit('hover', null)"
+                @dragenter="onDragOver($event, 'none')"
+                @dragover="onDragOver($event, 'none')"
+                @dragleave="onDragLeave($event, 'none')"
+                @drop="onDrop($event, 'none')"
             >
                 <span
                     class="size-2.5 shrink-0 rounded-full border border-dashed border-muted-foreground/60"

@@ -6,14 +6,15 @@ namespace App\Http\Middleware;
 
 use App\Enums\IssueStatus;
 use App\Models\Category;
-use App\Models\Issue;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\ProjectVisit;
 use App\Models\User;
 use App\Services\CurrentOrganization;
 use App\Services\Integrations;
 use App\Services\Portal\IdPortalClient;
 use App\Support\Cast;
+use App\Support\CurrentProject;
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -31,6 +32,11 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    private const int RECENT_LIMIT = 5;
+
+    /** A project counts as active when an issue in it changed this recently. */
+    private const int ACTIVE_DAYS = 7;
 
     public function __construct(private readonly Integrations $integrations) {}
 
@@ -75,6 +81,7 @@ class HandleInertiaRequests extends Middleware
                 // A non-null organization only resolves for an authenticated user.
                 'canManage' => $organization->roleFor($request->user())?->manages() ?? false,
                 'canViewLibrary' => $request->user()->can('viewLibrary', $organization),
+                'aiDrafting' => $this->integrations->drafting($organization),
             ],
             'organizations' => fn () => $request->user() === null ? [] : $request->user()
                 ->organizations()
@@ -85,7 +92,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $each->name,
                     'slug' => $each->slug,
                 ]),
-            'sidebarCategories' => fn () => $this->sidebarCategories($request->user(), $organization),
+            'sidebarCategories' => fn () => $this->sidebarCategories($request->user(), $organization, CurrentProject::id($request)),
             // Every project the user can file against, for the sidebar's new-issue
             // modal (which can be opened from any page).
             'newIssueProjects' => fn () => $request->user() !== null
@@ -101,7 +108,7 @@ class HandleInertiaRequests extends Middleware
                         'name' => $project->name,
                     ])
                 : [],
-            'currentProjectId' => fn () => $this->currentProjectId($request),
+            'currentProjectId' => fn () => CurrentProject::id($request),
             'notifications' => fn () => $request->user() !== null
                 ? $request->user()->notifications()->latest()->limit(15)->get()->map(fn ($notification) => [
                     'id' => $notification->id,
@@ -127,14 +134,15 @@ class HandleInertiaRequests extends Middleware
      * The organization's category tree for the sidebar: each category (in
      * depth-first order, with `depth` for indentation) carries the user's
      * launchable projects assigned directly to it, plus a separate bucket for
-     * projects with no category.
+     * projects with no category. `recent` repeats the last visited projects;
+     * the frontend decides what to show from `active` and `recent`.
      *
-     * @return array{tree: array<int, array{id: int, name: string, parentId: int|null, depth: int, projects: array<int, array<string, mixed>>}>, uncategorized: array<int, array<string, mixed>>}
+     * @return array{recent: array<int, array<string, mixed>>, tree: array<int, array{id: int, name: string, parentId: int|null, depth: int, projects: array<int, array<string, mixed>>}>, uncategorized: array<int, array<string, mixed>>}
      */
-    private function sidebarCategories(?User $user, ?Organization $organization): array
+    private function sidebarCategories(?User $user, ?Organization $organization, ?int $currentProjectId): array
     {
         if ($user === null) {
-            return ['tree' => [], 'uncategorized' => []];
+            return ['recent' => [], 'tree' => [], 'uncategorized' => []];
         }
 
         // Epics live in the board's epic panel, not its columns, so they are
@@ -154,6 +162,10 @@ class HandleInertiaRequests extends Middleware
                 'issues as in_review_count' => $countable(IssueStatus::InReview),
                 'issues as done_count' => $countable(IssueStatus::Done),
             ])
+            // Archived issues are off the board, so touching one is not activity.
+            ->withExists(['issues as active' => fn (Builder $query) => $query
+                ->whereNull('archived_at')
+                ->where('updated_at', '>=', now()->subDays(self::ACTIVE_DAYS))])
             ->orderBy('key')
             ->get();
 
@@ -162,6 +174,7 @@ class HandleInertiaRequests extends Middleware
             'key' => $project->key,
             'name' => $project->name,
             'color' => $project->color,
+            'active' => (bool) $project->getAttribute('active'),
             'counts' => [
                 'backlog' => Cast::int($project->getAttribute('backlog_count')),
                 'in_progress' => Cast::int($project->getAttribute('in_progress_count')),
@@ -185,29 +198,43 @@ class HandleInertiaRequests extends Middleware
 
         $uncategorized = $projects->whereNull('category_id')->map($map)->values()->all();
 
-        return ['tree' => $tree, 'uncategorized' => $uncategorized];
+        return [
+            'recent' => $this->recentProjects($user, $projects, $currentProjectId)->map($map)->values()->all(),
+            'tree' => $tree,
+            'uncategorized' => $uncategorized,
+        ];
     }
 
     /**
-     * The project the user is currently "inside", so the new-issue modal can
-     * preselect it. Covers project-scoped routes and issue detail pages.
+     * The last projects the user visited, most recent first, limited to the
+     * sidebar's own (already membership- and organization-scoped) projects.
+     * The project being viewed counts as the latest visit: its visit is only
+     * recorded once this response has been built.
+     *
+     * @param  Collection<int, Project>  $projects
+     * @return Collection<int, Project>
      */
-    private function currentProjectId(Request $request): ?int
+    private function recentProjects(User $user, Collection $projects, ?int $currentProjectId): Collection
     {
-        $route = $request->route();
+        $visible = $projects->keyBy('id');
 
-        if ($route === null) {
-            return null;
+        $visited = $user->projectVisits()
+            ->whereIn('project_id', $visible->keys())
+            ->orderByDesc('visited_at')
+            ->orderByDesc('id')
+            ->limit(self::RECENT_LIMIT)
+            ->get()
+            ->toBase()
+            ->map(fn (ProjectVisit $visit): int => $visit->project_id);
+
+        if ($currentProjectId !== null) {
+            $visited->prepend($currentProjectId);
         }
 
-        $project = $route->parameter('project');
-
-        if ($project instanceof Project) {
-            return $project->id;
-        }
-
-        $issue = $route->parameter('issue');
-
-        return $issue instanceof Issue ? $issue->project_id : null;
+        return $visited->unique()
+            ->map(fn (int $id): ?Project => $visible->get($id))
+            ->filter()
+            ->take(self::RECENT_LIMIT)
+            ->values();
     }
 }

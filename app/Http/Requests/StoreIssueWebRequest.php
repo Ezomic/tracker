@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueType;
+use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\Project;
+use App\Rules\AssignableEpic;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreIssueWebRequest extends FormRequest
 {
+    use ResolvesCurrentUser;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -29,6 +34,10 @@ class StoreIssueWebRequest extends FormRequest
         if ($this->input('template_id') === '') {
             $this->merge(['template_id' => null]);
         }
+
+        if ($this->input('priority') === '') {
+            $this->merge(['priority' => null]);
+        }
     }
 
     /**
@@ -45,11 +54,12 @@ class StoreIssueWebRequest extends FormRequest
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
+            'priority' => ['nullable', Rule::enum(IssuePriority::class)],
             'description' => ['nullable', 'string'],
             'parent_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('issues', 'id')->where('parent_id', null),
+                AssignableEpic::in($organizationId, $this->currentUser()),
             ],
             'template_id' => [
                 'nullable',

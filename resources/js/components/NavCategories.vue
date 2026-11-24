@@ -17,15 +17,15 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { visibleCategories } from '@/lib/categoryTree';
-import type { SidebarCategory, SidebarProject } from '@/types';
+import { projectCount, sidebarSections } from '@/lib/sidebarProjects';
+import type { SidebarCategories } from '@/types';
 
 const props = defineProps<{
-    tree: SidebarCategory[];
-    uncategorized: SidebarProject[];
-    currentProjectId: number | null;
+    categories: SidebarCategories;
 }>();
 
 const STORAGE_KEY = 'sidebar:expandedCategories';
+const SHOW_ALL_KEY = 'sidebar:showAllProjects';
 
 // Reserved expand-state key for the synthetic "Uncategorized" section. It is not
 // a real category (real ids start at 1), just a collapsible view of projects
@@ -60,6 +60,26 @@ watch(
     { deep: true },
 );
 
+function loadShowAll(): boolean {
+    try {
+        return localStorage.getItem(SHOW_ALL_KEY) === 'true';
+    } catch {
+        return false;
+    }
+}
+
+const showAll = ref(loadShowAll());
+
+function toggleShowAll(): void {
+    showAll.value = !showAll.value;
+
+    try {
+        localStorage.setItem(SHOW_ALL_KEY, String(showAll.value));
+    } catch {
+        // Storage can be blocked; the choice then lasts until reload.
+    }
+}
+
 function setOpen(id: number, open: boolean): void {
     expanded.value = { ...expanded.value, [id]: open };
 }
@@ -68,55 +88,39 @@ function indent(depth: number): Record<string, string> {
     return { paddingLeft: `${0.5 + depth * 0.75}rem` };
 }
 
+// The server always puts the project being viewed at the top of Recent, so it
+// stays visible without expanding its category.
+const sections = computed(() =>
+    sidebarSections(props.categories, showAll.value),
+);
+
+const total = computed(() => projectCount(props.categories));
+
 // Hide any category whose ancestor chain isn't fully expanded, so collapsing a
 // parent hides its whole subtree (the tree is rendered as a flat list).
 const visibleTree = computed(() =>
-    visibleCategories(props.tree, expanded.value),
-);
-
-// Auto-expand the category holding the current project, plus its ancestors, so
-// the active project is always visible on navigation.
-watch(
-    () => props.currentProjectId,
-    (id) => {
-        if (id === null) {
-            return;
-        }
-
-        // Current project sits directly in the uncategorized bucket.
-        if (props.uncategorized.some((project) => project.id === id)) {
-            expanded.value = { ...expanded.value, [UNCATEGORIZED_KEY]: true };
-
-            return;
-        }
-
-        const owning = props.tree.find((category) =>
-            category.projects.some((project) => project.id === id),
-        );
-
-        if (!owning) {
-            return;
-        }
-
-        const parentOf = new Map(
-            props.tree.map((category) => [category.id, category.parentId]),
-        );
-
-        const next = { ...expanded.value };
-        let cursor: number | null = owning.id;
-
-        while (cursor !== null) {
-            next[cursor] = true;
-            cursor = parentOf.get(cursor) ?? null;
-        }
-
-        expanded.value = next;
-    },
-    { immediate: true },
+    visibleCategories(sections.value.tree, expanded.value),
 );
 </script>
 
 <template>
+    <SidebarGroup
+        v-if="sections.recent.length"
+        class="px-2 py-0 group-data-[collapsible=icon]:hidden"
+    >
+        <SidebarGroupLabel>{{ $t('nav.recent') }}</SidebarGroupLabel>
+        <SidebarMenu>
+            <SidebarMenuSub class="mx-0 translate-x-0 border-l-0 px-0">
+                <SidebarMenuSubItem
+                    v-for="project in sections.recent"
+                    :key="project.id"
+                >
+                    <NavProjectLink :project="project" />
+                </SidebarMenuSubItem>
+            </SidebarMenuSub>
+        </SidebarMenu>
+    </SidebarGroup>
+
     <SidebarGroup class="px-2 py-0 group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel>{{ $t('nav.projects') }}</SidebarGroupLabel>
         <SidebarMenu>
@@ -149,7 +153,7 @@ watch(
                         </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                        <SidebarMenuSub>
+                        <SidebarMenuSub v-if="category.projects.length">
                             <SidebarMenuSubItem
                                 v-for="project in category.projects"
                                 :key="project.id"
@@ -162,7 +166,7 @@ watch(
             </Collapsible>
 
             <Collapsible
-                v-if="uncategorized.length"
+                v-if="sections.uncategorized.length"
                 as-child
                 :open="expanded[UNCATEGORIZED_KEY] ?? false"
                 @update:open="
@@ -187,14 +191,14 @@ watch(
                             <span
                                 class="ml-auto text-xs text-muted-foreground tabular-nums"
                             >
-                                {{ uncategorized.length }}
+                                {{ sections.uncategorized.length }}
                             </span>
                         </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                         <SidebarMenuSub>
                             <SidebarMenuSubItem
-                                v-for="project in uncategorized"
+                                v-for="project in sections.uncategorized"
                                 :key="project.id"
                             >
                                 <NavProjectLink :project="project" />
@@ -203,6 +207,19 @@ watch(
                     </CollapsibleContent>
                 </SidebarMenuItem>
             </Collapsible>
+
+            <SidebarMenuItem v-if="showAll || sections.hidden > 0">
+                <SidebarMenuButton
+                    class="text-xs text-muted-foreground"
+                    @click="toggleShowAll()"
+                >
+                    {{
+                        showAll
+                            ? $t('nav.showActiveProjects')
+                            : $t('nav.showAllProjects', { count: total })
+                    }}
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>
 </template>

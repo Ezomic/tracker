@@ -6,7 +6,9 @@ use App\Actions\CreateIssueAction;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\User;
 
 it('creates an issue assigned to an epic', function () {
     $team = Project::factory()->create(['key' => 'THI']);
@@ -132,3 +134,87 @@ it('only offers top-level issues as eligible epics', function () {
             ->where('epics.0.identifier', $epic->identifier)
         );
 });
+
+/**
+ * An epic in another project than THI, with the acting user granted access to
+ * that project or not. "other organization" keeps the grant, so only the
+ * organization boundary can refuse it.
+ *
+ * @return array{0: Project, 1: Issue, 2: User}
+ */
+function foreignEpicCase(bool $sameOrganization, bool $canSeeEpic): array
+{
+    $organization = Organization::factory()->create();
+    $team = Project::factory()->create(['key' => 'THI', 'organization_id' => $organization->id]);
+    $user = member($team);
+    $other = Project::factory()->create([
+        'key' => 'OTH',
+        'organization_id' => $sameOrganization ? $organization->id : Organization::factory()->create()->id,
+    ]);
+    $epic = (new CreateIssueAction)->handle($other, 'Foreign epic', IssueType::Feature);
+
+    if ($canSeeEpic) {
+        joinProjects($user, $other);
+    }
+
+    return [$team, $epic, $user];
+}
+
+$refusedEpics = [
+    'same organization, epic not visible' => [true, false],
+    'other organization, epic visible' => [false, true],
+];
+
+it('creates an issue under a visible epic from another project in the same organization', function () {
+    [$team, $epic, $user] = foreignEpicCase(sameOrganization: true, canSeeEpic: true);
+
+    $this->actingAs($user)->post('/issues', [
+        'project_id' => $team->id,
+        'title' => 'Sub-task',
+        'type' => 'feature',
+        'parent_id' => $epic->id,
+    ])->assertSessionHasNoErrors();
+
+    expect(Issue::query()->where('title', 'Sub-task')->value('parent_id'))->toBe($epic->id);
+});
+
+it('assigns an issue to a visible epic from another project in the same organization', function () {
+    [$team, $epic, $user] = foreignEpicCase(sameOrganization: true, canSeeEpic: true);
+    $issue = (new CreateIssueAction)->handle($team, 'Standalone issue', IssueType::Feature);
+
+    $this->actingAs($user)->patch("/issues/{$issue->identifier}", [
+        'title' => $issue->title,
+        'type' => 'feature',
+        'priority' => 'none',
+        'parent_id' => $epic->id,
+    ])->assertSessionHasNoErrors();
+
+    expect($issue->fresh()->parent_id)->toBe($epic->id);
+});
+
+it('rejects creating an issue under an epic from another organization or one it cannot see', function (bool $sameOrganization, bool $canSeeEpic) {
+    [$team, $epic, $user] = foreignEpicCase($sameOrganization, $canSeeEpic);
+
+    $this->actingAs($user)->post('/issues', [
+        'project_id' => $team->id,
+        'title' => 'Sub-task',
+        'type' => 'feature',
+        'parent_id' => $epic->id,
+    ])->assertSessionHasErrors('parent_id');
+
+    expect(Issue::query()->where('title', 'Sub-task')->exists())->toBeFalse();
+})->with($refusedEpics);
+
+it('rejects assigning an issue to an epic from another organization or one it cannot see', function (bool $sameOrganization, bool $canSeeEpic) {
+    [$team, $epic, $user] = foreignEpicCase($sameOrganization, $canSeeEpic);
+    $issue = (new CreateIssueAction)->handle($team, 'Standalone issue', IssueType::Feature);
+
+    $this->actingAs($user)->patch("/issues/{$issue->identifier}", [
+        'title' => $issue->title,
+        'type' => 'feature',
+        'priority' => 'none',
+        'parent_id' => $epic->id,
+    ])->assertSessionHasErrors('parent_id');
+
+    expect($issue->fresh()->parent_id)->toBeNull();
+})->with($refusedEpics);

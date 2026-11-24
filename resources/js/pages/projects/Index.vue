@@ -438,6 +438,12 @@ function archiveLabel(days: number | null): string {
                         :title="project.description ?? undefined"
                     >
                         {{ project.name }}
+                        <span
+                            v-if="project.description"
+                            class="ml-2 text-muted-foreground"
+                        >
+                            {{ project.description }}
+                        </span>
                     </span>
 
                     <span

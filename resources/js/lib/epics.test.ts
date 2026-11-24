@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Issue } from '@/types';
 import type { EpicLane } from './epics';
 import {
+    canDropOnEpic,
     EPIC_PALETTE,
     epicColor,
     epicProgress,
@@ -9,7 +10,9 @@ import {
     isEpic,
     matchesEpicFocus,
     panelEpics,
+    parentAfterDrop,
     summarizeEpics,
+    undoParentChange,
 } from './epics';
 
 let sequence = 0;
@@ -353,5 +356,99 @@ describe('groupEpicsByProject', () => {
                 epics: [expect.objectContaining({ id: absent.id })],
             },
         ]);
+    });
+});
+
+describe('canDropOnEpic', () => {
+    const summary = (parent: Issue) => summarizeEpics([parent], legacyLanes)[0];
+
+    it('accepts an epic in the same project', () => {
+        expect(canDropOnEpic(issue(), summary(epic()))).toBe(true);
+    });
+
+    it('accepts an epic in another project, since epics span projects', () => {
+        const other = epic({ project: { key: 'OTH', name: 'Other' } });
+
+        expect(canDropOnEpic(issue(), summary(other))).toBe(true);
+    });
+
+    it('accepts an epic the board only knows through its children', () => {
+        const absent = issue();
+        const [known] = summarizeEpics([childOf(absent)], legacyLanes);
+
+        expect(canDropOnEpic(issue(), known)).toBe(true);
+    });
+
+    it('refuses dropping a card onto itself', () => {
+        const card = epic();
+
+        expect(canDropOnEpic(card, summary(card))).toBe(false);
+    });
+
+    it('refuses every epic for a card that has sub-issues', () => {
+        const card = issue({ childrenCount: 2 });
+
+        expect(canDropOnEpic(card, summary(epic()))).toBe(false);
+    });
+
+    it('refuses every row for a card whose epic is off the board', () => {
+        const card = issue({ parentOffBoard: true });
+
+        expect(canDropOnEpic(card, summary(epic()))).toBe(false);
+        expect(canDropOnEpic(card, 'none')).toBe(false);
+    });
+
+    it('accepts the no-epic row for loose and epic-less cards', () => {
+        expect(canDropOnEpic(issue(), 'none')).toBe(true);
+        expect(canDropOnEpic(issue({ childrenCount: 2 }), 'none')).toBe(true);
+    });
+});
+
+describe('parentAfterDrop', () => {
+    it('links the card to the epic it was dropped on', () => {
+        const parent = epic();
+        const [target] = summarizeEpics([parent], legacyLanes);
+
+        expect(parentAfterDrop(issue(), target)).toEqual({
+            parent: parent.identifier,
+        });
+    });
+
+    it('detaches the card when dropped on the no-epic row', () => {
+        const card = childOf(epic());
+
+        expect(parentAfterDrop(card, 'none')).toEqual({ parent: null });
+    });
+
+    it('is a no-op on the epic the card already belongs to', () => {
+        const parent = epic();
+        const [target] = summarizeEpics([parent], legacyLanes);
+
+        expect(parentAfterDrop(childOf(parent), target)).toBeNull();
+    });
+
+    it('is a no-op when a loose card is dropped on the no-epic row', () => {
+        expect(parentAfterDrop(issue(), 'none')).toBeNull();
+    });
+
+    it('is a no-op on an invalid target', () => {
+        const card = issue({ childrenCount: 2 });
+        const [target] = summarizeEpics([epic()], legacyLanes);
+
+        expect(parentAfterDrop(card, target)).toBeNull();
+    });
+});
+
+describe('undoParentChange', () => {
+    it('restores the epic the card had before the drop', () => {
+        const parent = epic();
+
+        expect(undoParentChange(childOf(parent))).toEqual({
+            parent: parent.identifier,
+        });
+    });
+
+    it('restores no epic for a card that was loose', () => {
+        expect(undoParentChange(issue())).toEqual({ parent: null });
     });
 });

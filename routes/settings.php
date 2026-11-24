@@ -8,6 +8,7 @@ use App\Http\Controllers\Settings\EmailConfirmationController;
 use App\Http\Controllers\Settings\IssueTemplateController;
 use App\Http\Controllers\Settings\LabelController;
 use App\Http\Controllers\Settings\LocaleController;
+use App\Http\Controllers\Settings\OrganizationSettingsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\ProjectTypeController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -43,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings/templates', [IssueTemplateController::class, 'store'])->name('templates.store');
     Route::patch('settings/templates/{template}', [IssueTemplateController::class, 'update'])->name('templates.update');
     Route::delete('settings/templates/{template}', [IssueTemplateController::class, 'destroy'])->name('templates.destroy');
+
+    Route::get('settings/organization', [OrganizationSettingsController::class, 'edit'])->name('organization.edit');
+    Route::patch('settings/organization', [OrganizationSettingsController::class, 'update'])->name('organization.update');
 
     Route::get('settings/members', [OrganizationMemberController::class, 'index'])->name('members.index');
     Route::patch('settings/members/{user}', [OrganizationMemberController::class, 'update'])->name('members.update');

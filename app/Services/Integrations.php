@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Organization;
+
 /**
  * The optional third-party integrations. Each one is on only when every
  * setting it needs is filled in, so a fresh install with the env vars left
@@ -29,6 +31,17 @@ class Integrations
     public function notion(): bool
     {
         return $this->allFilled(['services.notion.api_key']);
+    }
+
+    /**
+     * Drafting issues from pasted text with Claude: needs the API key on the
+     * server and the organization to have switched it on.
+     */
+    public function drafting(?Organization $organization): bool
+    {
+        return $organization !== null
+            && $organization->ai_drafting_enabled
+            && $this->allFilled(['services.anthropic.key']);
     }
 
     /**

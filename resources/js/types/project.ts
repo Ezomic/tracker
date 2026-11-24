@@ -10,6 +10,7 @@ export interface SidebarProject {
     key: string;
     name: string;
     color: string;
+    active: boolean;
     counts: SidebarProjectCounts;
 }
 
@@ -22,6 +23,7 @@ export interface SidebarCategory {
 }
 
 export interface SidebarCategories {
+    recent: SidebarProject[];
     tree: SidebarCategory[];
     uncategorized: SidebarProject[];
 }
@@ -108,4 +110,5 @@ export interface OrganizationSummary {
     slug: string;
     canManage: boolean;
     canViewLibrary: boolean;
+    aiDrafting: boolean;
 }

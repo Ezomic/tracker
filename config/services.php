@@ -52,4 +52,9 @@ return [
         'portal_cache_ttl' => (int) env('THIJSSENSOFTWARE_ID_PORTAL_TTL', 300),
     ],
 
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL') ?: 'claude-opus-5-5',
+    ],
+
 ];

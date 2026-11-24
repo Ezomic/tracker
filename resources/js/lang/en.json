@@ -29,6 +29,9 @@
         "board": "Board",
         "projects": "Projects",
         "uncategorized": "Uncategorized",
+        "recent": "Recent",
+        "showAllProjects": "Show all {count} projects",
+        "showActiveProjects": "Show active projects only",
         "search": "Search",
         "newIssue": "New issue",
         "toggleSidebar": "Toggle sidebar",
@@ -65,12 +68,19 @@
         "apiTokens": "API tokens",
         "appearance": "Appearance",
         "language": "Language",
+        "general": "Organization",
         "members": "Members",
         "serviceAccounts": "Service accounts",
         "categories": "Categories",
         "labels": "Labels",
         "templates": "Templates",
         "projectTypes": "Project types"
+    },
+    "organizationSettings": {
+        "title": "Organization",
+        "description": "Settings for {name}",
+        "aiDrafting": "Draft issues from text with Claude",
+        "aiDraftingHelp": "Adds a Draft from text box to the New issue dialog. The pasted text is sent to Anthropic to write the draft and is not stored."
     },
     "projectTypes": {
         "title": "Project types",
@@ -219,7 +229,10 @@
         "noEpics": "No epics yet.",
         "hideEpics": "Hide epics",
         "showEpics": "Show epics",
-        "otherStates": "Other states"
+        "otherStates": "Other states",
+        "addedToEpic": "{issue} added to {epic}",
+        "removedFromEpic": "{issue} removed from {epic}",
+        "undo": "Undo"
     },
     "savedViews": {
         "label": "Views",
@@ -330,7 +343,17 @@
         "noEpic": "No epic",
         "create": "Create issue",
         "titlePlaceholder": "Add per-lesson quiz question pools",
-        "descriptionPlaceholder": "Add a description…"
+        "descriptionPlaceholder": "Add a description…",
+        "draftLabel": "Paste a bug report, message or notes",
+        "draftPlaceholder": "Claude fills in the form below from this text.",
+        "draftButton": "Draft from text",
+        "draftNote": "Drafted by Claude. Check it before you create the issue.",
+        "draftError": {
+            "unavailable": "Drafting from text is not available.",
+            "tooMany": "You have drafted a lot in the last hour. Try again later.",
+            "invalid": "This text cannot be drafted from.",
+            "failed": "Claude could not draft this issue. Fill in the form yourself, or try again."
+        }
     },
     "comments": {
         "title": "Comments",
