@@ -19,12 +19,23 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property bool $ai_drafting_enabled
  */
-#[Fillable(['name', 'slug'])]
+#[Fillable(['name', 'slug', 'ai_drafting_enabled'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
     use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'ai_drafting_enabled' => 'boolean',
+        ];
+    }
 
     /**
      * @return HasMany<Project, $this>

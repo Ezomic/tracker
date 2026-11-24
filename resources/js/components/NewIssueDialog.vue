@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
-import { ArrowLeft, FilePlus2, FileText } from '@lucide/vue';
+import { Form, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, FilePlus2, FileText, Sparkles } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import IssueController from '@/actions/App/Http/Controllers/IssueController';
+import IssueDraftController from '@/actions/App/Http/Controllers/IssueDraftController';
 import InputError from '@/components/InputError.vue';
 import MarkdownEditor from '@/components/MarkdownEditor.vue';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +25,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { applyDraft, requestIssueDraft } from '@/lib/issueDraft';
 import { options as templateOptions } from '@/routes/templates';
-import type { EpicOption, IssueTemplate, Project } from '@/types';
+import type { EpicOption, Issue, IssueTemplate, Project } from '@/types';
+
+const DRAFT_TEXT_MAX = 10000;
+const priorities: Issue['priority'][] = [
+    'none',
+    'low',
+    'medium',
+    'high',
+    'urgent',
+];
 
 const props = defineProps<{
     projects: Pick<Project, 'id' | 'key' | 'name'>[];
@@ -42,8 +55,29 @@ const templates = ref<IssueTemplate[]>([]);
 const loadingTemplates = ref(false);
 const chosen = ref<IssueTemplate | null>(null);
 
+const title = ref('');
 const description = ref('');
-const type = ref('feature');
+const type = ref<Issue['type']>('feature');
+const priority = ref<Issue['priority']>('none');
+
+const page = usePage();
+const { t } = useI18n();
+const canDraft = computed(
+    () => page.props.currentOrganization?.aiDrafting ?? false,
+);
+const draftText = ref('');
+const drafting = ref(false);
+const draftError = ref<string | null>(null);
+const drafted = ref(false);
+// Bumped whenever the form is reset, so a draft that lands afterwards is dropped.
+let draftRun = 0;
+
+function resetDraft() {
+    draftRun++;
+    drafting.value = false;
+    drafted.value = false;
+    draftError.value = null;
+}
 
 const selectedProject = computed(() =>
     props.projects.find((project) => String(project.id) === projectId.value),
@@ -52,9 +86,12 @@ const selectedProject = computed(() =>
 // Reset each time it opens, so navigating between projects re-preselects and a
 // previous pick doesn't linger.
 watch(open, (isOpen) => {
+    resetDraft();
+
     if (isOpen) {
         step.value = 'choose';
         chosen.value = null;
+        draftText.value = '';
         projectId.value = props.defaultProjectId
             ? String(props.defaultProjectId)
             : undefined;
@@ -87,9 +124,69 @@ watch(open, async (isOpen) => {
 
 function choose(template: IssueTemplate | null) {
     chosen.value = template;
+    title.value = '';
     description.value = template?.description ?? '';
     type.value = template?.type ?? 'feature';
+    priority.value = template?.priority ?? 'none';
+    resetDraft();
     step.value = 'form';
+}
+
+function back() {
+    resetDraft();
+    step.value = 'choose';
+}
+
+async function draft() {
+    if (!selectedProject.value || draftText.value.trim() === '') {
+        return;
+    }
+
+    const run = ++draftRun;
+    drafting.value = true;
+    draftError.value = null;
+
+    try {
+        const result = await requestIssueDraft(IssueDraftController.url(), {
+            project_id: selectedProject.value.id,
+            template_id: chosen.value?.id ?? null,
+            text: draftText.value,
+        });
+
+        if (run !== draftRun) {
+            return;
+        }
+
+        if ('error' in result) {
+            draftError.value =
+                result.message ?? t(`newIssue.draftError.${result.error}`);
+
+            return;
+        }
+
+        const filled = applyDraft(
+            {
+                template: chosen.value,
+                title: title.value,
+                type: type.value,
+                priority: priority.value,
+                description: description.value,
+            },
+            result.draft,
+            templates.value,
+        );
+
+        chosen.value = filled.template;
+        title.value = filled.title;
+        type.value = filled.type;
+        priority.value = filled.priority;
+        description.value = filled.description;
+        drafted.value = true;
+    } finally {
+        if (run === draftRun) {
+            drafting.value = false;
+        }
+    }
 }
 </script>
 
@@ -219,7 +316,7 @@ function choose(template: IssueTemplate | null) {
                     <button
                         type="button"
                         class="inline-flex items-center gap-1 hover:text-foreground"
-                        @click="step = 'choose'"
+                        @click="back"
                     >
                         <ArrowLeft class="size-3.5" />
                         {{ $t('newIssue.back') }}
@@ -230,10 +327,48 @@ function choose(template: IssueTemplate | null) {
                     <span>{{ chosen?.name ?? $t('newIssue.blankIssue') }}</span>
                 </div>
 
+                <div
+                    v-if="canDraft"
+                    class="grid gap-2 rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border"
+                >
+                    <Label for="draft-text">{{
+                        $t('newIssue.draftLabel')
+                    }}</Label>
+                    <textarea
+                        id="draft-text"
+                        v-model="draftText"
+                        rows="3"
+                        :maxlength="DRAFT_TEXT_MAX"
+                        :disabled="drafting"
+                        :placeholder="$t('newIssue.draftPlaceholder')"
+                        class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50 dark:bg-input/30"
+                    />
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-xs text-muted-foreground">
+                            <template v-if="drafted">
+                                {{ $t('newIssue.draftNote') }}
+                            </template>
+                        </p>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            :disabled="drafting || draftText.trim() === ''"
+                            @click="draft"
+                        >
+                            <Spinner v-if="drafting" />
+                            <Sparkles v-else class="size-4" />
+                            {{ $t('newIssue.draftButton') }}
+                        </Button>
+                    </div>
+                    <InputError :message="draftError ?? undefined" />
+                </div>
+
                 <div class="grid gap-2">
                     <Label for="new-title">{{ $t('issue.title') }}</Label>
                     <Input
                         id="new-title"
+                        v-model="title"
                         name="title"
                         required
                         autofocus
@@ -260,6 +395,26 @@ function choose(template: IssueTemplate | null) {
                         </SelectContent>
                     </Select>
                     <InputError :message="errors.type" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="new-priority">{{ $t('issue.priority') }}</Label>
+                    <input type="hidden" name="priority" :value="priority" />
+                    <Select v-model="priority">
+                        <SelectTrigger id="new-priority" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="each in priorities"
+                                :key="each"
+                                :value="each"
+                            >
+                                {{ $t(`priority.${each}`) }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="errors.priority" />
                 </div>
 
                 <div v-if="epics && epics.length > 0" class="grid gap-2">

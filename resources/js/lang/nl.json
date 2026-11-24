@@ -68,12 +68,19 @@
         "apiTokens": "API-tokens",
         "appearance": "Weergave",
         "language": "Taal",
+        "general": "Organisatie",
         "members": "Leden",
         "serviceAccounts": "Serviceaccounts",
         "categories": "Categorieën",
         "labels": "Labels",
         "templates": "Sjablonen",
         "projectTypes": "Projecttypes"
+    },
+    "organizationSettings": {
+        "title": "Organisatie",
+        "description": "Instellingen voor {name}",
+        "aiDrafting": "Tickets opstellen uit tekst met Claude",
+        "aiDraftingHelp": "Voegt een vak Opstellen uit tekst toe aan het venster Nieuw ticket. De geplakte tekst gaat naar Anthropic om het concept te schrijven en wordt niet bewaard."
     },
     "projectTypes": {
         "title": "Projecttypes",
@@ -336,7 +343,17 @@
         "noEpic": "Geen epic",
         "create": "Ticket aanmaken",
         "titlePlaceholder": "Voeg quizvragen per les toe",
-        "descriptionPlaceholder": "Voeg een omschrijving toe…"
+        "descriptionPlaceholder": "Voeg een omschrijving toe…",
+        "draftLabel": "Plak een bugmelding, bericht of notities",
+        "draftPlaceholder": "Claude vult het formulier hieronder in op basis van deze tekst.",
+        "draftButton": "Opstellen uit tekst",
+        "draftNote": "Opgesteld door Claude. Controleer het voordat je het ticket aanmaakt.",
+        "draftError": {
+            "unavailable": "Opstellen uit tekst is niet beschikbaar.",
+            "tooMany": "Je hebt het afgelopen uur veel laten opstellen. Probeer het later opnieuw.",
+            "invalid": "Met deze tekst kan niets worden opgesteld.",
+            "failed": "Claude kon dit ticket niet opstellen. Vul het formulier zelf in, of probeer het opnieuw."
+        }
     },
     "comments": {
         "title": "Reacties",

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use App\Http\Requests\Concerns\ResolvesCurrentUser;
 use App\Models\Project;
@@ -33,6 +34,10 @@ class StoreIssueWebRequest extends FormRequest
         if ($this->input('template_id') === '') {
             $this->merge(['template_id' => null]);
         }
+
+        if ($this->input('priority') === '') {
+            $this->merge(['priority' => null]);
+        }
     }
 
     /**
@@ -49,6 +54,7 @@ class StoreIssueWebRequest extends FormRequest
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(IssueType::class)],
+            'priority' => ['nullable', Rule::enum(IssuePriority::class)],
             'description' => ['nullable', 'string'],
             'parent_id' => [
                 'nullable',
