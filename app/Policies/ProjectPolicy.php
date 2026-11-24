@@ -30,6 +30,11 @@ class ProjectPolicy
         return $this->atLeast($user, $project, ProjectLevel::Admin);
     }
 
+    public function manageNotion(User $user, Project $project): bool
+    {
+        return $this->atLeast($user, $project, ProjectLevel::Admin);
+    }
+
     public function delete(User $user, Project $project): bool
     {
         return $this->atLeast($user, $project, ProjectLevel::Admin);

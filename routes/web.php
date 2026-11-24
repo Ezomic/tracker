@@ -11,9 +11,11 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectMemberController;
+use App\Http\Controllers\ProjectNotionController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\ProjectWebhookController;
 use App\Http\Controllers\SavedViewController;
+use App\Http\Middleware\EnsureNotionEnabled;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -50,6 +52,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('projects.webhooks.update');
     Route::delete('projects/{project:key}/webhooks/{webhook}', [ProjectWebhookController::class, 'destroy'])
         ->name('projects.webhooks.destroy');
+
+    Route::middleware(EnsureNotionEnabled::class)->group(function () {
+        Route::get('projects/{project:key}/notion', [ProjectNotionController::class, 'index'])
+            ->name('projects.notion.index');
+        Route::put('projects/{project:key}/notion', [ProjectNotionController::class, 'update'])
+            ->name('projects.notion.update');
+        Route::delete('projects/{project:key}/notion', [ProjectNotionController::class, 'destroy'])
+            ->name('projects.notion.destroy');
+        Route::post('projects/{project:key}/notion/sync', [ProjectNotionController::class, 'sync'])
+            ->name('projects.notion.sync');
+    });
 
     Route::get('issues', [IssueController::class, 'index'])->name('issues.index');
     Route::post('issues', [IssueController::class, 'store'])->name('issues.store');

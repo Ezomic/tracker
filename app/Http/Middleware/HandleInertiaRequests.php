@@ -68,6 +68,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'integrations' => [
                 'sso' => $this->integrations->sso(),
+                'notion' => $this->integrations->notion(),
             ],
             'locale' => $request->user() === null ? app()->getLocale() : $request->user()->locale,
             'auth' => [

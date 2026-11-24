@@ -384,6 +384,7 @@
         "attachmentRemoved": "removed the attachment {name}",
         "prOpened": "opened a pull request",
         "prMerged": "merged the pull request",
+        "notionSyncFailed": "Notion sync failed: {message}",
         "committed": "committed",
         "someone": "Someone",
         "edited": "edited",
@@ -698,6 +699,20 @@
         "read": "Read",
         "write": "Write",
         "admin": "Admin"
+    },
+    "notion": {
+        "title": "Notion database",
+        "description": "Mirror the issues of {project} into a Notion database. One way only: edits made in Notion are overwritten the next time an issue changes.",
+        "linkedTitle": "Mirroring to Notion",
+        "counts": "Mirrored: {mirrored}. Waiting for their first sync: {pending}.",
+        "syncExisting": "Sync existing issues",
+        "unlink": "Unlink",
+        "unlinkConfirm": "Stop mirroring this project? The rows already in Notion stay as they are.",
+        "databaseLabel": "Notion database link or ID",
+        "changeLabel": "Link a different database",
+        "help": "Share the database with the integration in Notion first (the three dots menu, then Connections). It needs exactly one data source.",
+        "link": "Link database",
+        "change": "Change database"
     },
     "webhooks": {
         "title": "Webhooks",

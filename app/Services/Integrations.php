@@ -26,6 +26,14 @@ class Integrations
     }
 
     /**
+     * The one-way mirror of a project's issues into a Notion database.
+     */
+    public function notion(): bool
+    {
+        return $this->allFilled(['services.notion.api_key']);
+    }
+
+    /**
      * Drafting issues from pasted text with Claude: needs the API key on the
      * server and the organization to have switched it on.
      */
